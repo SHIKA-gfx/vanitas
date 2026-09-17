@@ -1,0 +1,33 @@
+# 의존성
+node_modules/
+
+# SvelteKit / Vite 빌드 산출물
+.svelte-kit/
+build/
+.output/
+.vercel/
+.netlify/
+.wrangler/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# 비밀키 — 첫 커밋부터 제외
+.env
+.env.*
+!.env.example
+!.env.test
+
+# 확률 공시 스크린샷 (게임사 저작물, 기획서 8장) — 로컬 보관만
+verification/
+
+# Python (validate.py)
+__pycache__/
+*.pyc
+.venv/
+
+# OS / 에디터
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
