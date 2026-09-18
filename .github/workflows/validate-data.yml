@@ -2,9 +2,9 @@ name: Validate game data
 
 on:
   push:
-    paths: ['data/**', 'validate.py']
+    paths: ['data/**', 'logs/**', 'validate.py']
   pull_request:
-    paths: ['data/**', 'validate.py']
+    paths: ['data/**', 'logs/**', 'validate.py']
 
 jobs:
   validate:

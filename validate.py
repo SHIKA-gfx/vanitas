@@ -189,9 +189,10 @@ def check_ap():
 
 # ---------------------------------------------------------------- 출처
 def check_sources():
-    src = load("sources.json")["sources"]
+    src = load("sources.json")["sources"]    
     for rel in ["shared/level-table.json", "shared/cafe-ranks.json",
-                "ko/game-config.json", "ko/banner-types.json", "ko/ap-config.json"]:
+                "ko/game-config.json", "ko/banner-types.json", "ko/ap-config.json",
+                "ko/income-sources.json"]:
         d = load(rel)
         for sid in d["meta"].get("sources", []):
             if sid.isdigit() and sid not in src:
@@ -200,7 +201,147 @@ def check_sources():
         if not s.get("url"):
             warn(f"sources: [{sid}] {s['publisher']} — URL 미확보")
     print(f"  sources: {len(src)}건")
+    
+# ---------------------------------------------------------------- 수급원
+PERIODS = {"daily", "weekly", "every10days", "perSeason", "perEvent", "once", "irregular"}
 
+
+def check_income_sources(strict):
+    d = load("ko/income-sources.json")
+    rows = d["sources"]
+    ids = set()
+    unverified = 0
+
+    for s in rows:
+        sid = s.get("id", "?")
+        if not sid or sid in ids:
+            err(f"income-sources: id 누락 또는 중복 ({sid})")
+        ids.add(sid)
+
+        if s.get("period") not in PERIODS:
+            err(f"income-sources: {sid} period '{s.get('period')}' 허용 목록 밖")
+
+        # amount는 계산기 기본값, tiers/amountRange/samples는 불확실성 표현
+        amt = s.get("amount")
+        alts = [k for k in ("tiers", "amountRange", "samples") if k in s]
+        if amt is None and not alts:
+            err(f"income-sources: {sid} 금액 정보 없음 (amount / tiers / amountRange / samples)")
+        if amt is None and "amount" in s and not alts:
+            err(f"income-sources: {sid} amount가 null인데 대체 표현이 없음")
+
+        if "tiers" in s:
+            tiers = s["tiers"]
+            items = list(tiers.values()) if isinstance(tiers, dict) else tiers
+            if not isinstance(items, list) or not items:
+                err(f"income-sources: {sid} tiers가 비어 있거나 형식 불명")
+            else:
+                for t in items:
+                    if isinstance(t, dict):
+                        if "amount" not in t:
+                            err(f"income-sources: {sid} tiers 항목에 amount 없음")
+                    elif not isinstance(t, (int, float)):
+                        err(f"income-sources: {sid} tiers 값이 숫자도 객체도 아님")
+                if not s.get("tierNote"):
+                    warn(f"income-sources: {sid} tiers가 있는데 tierNote 없음 — 등급 선택 안내 불가")
+
+        if "amountRange" in s:
+            r = s["amountRange"]
+            if "min" not in r or "max" not in r:
+                err(f"income-sources: {sid} amountRange에 min/max 없음")
+            elif r["min"] > r["max"]:
+                err(f"income-sources: {sid} amountRange min({r['min']}) > max({r['max']})")
+            elif amt is not None and not (r["min"] <= amt <= r["max"]):
+                err(f"income-sources: {sid} 기본값 {amt}이 범위 {r['min']}~{r['max']} 밖")
+
+        if "samples" in s:
+            if not s["samples"]:
+                err(f"income-sources: {sid} samples가 비어 있음")
+            for sm in s["samples"]:
+                if "date" not in sm or "amount" not in sm:
+                    err(f"income-sources: {sid} samples 항목에 date 또는 amount 없음")
+
+        if s.get("amountKind") == "equivalent" and not s.get("note"):
+            warn(f"income-sources: {sid} 환산가(equivalent)인데 환산 근거 note 없음")
+
+        if not s.get("verified", False):
+            unverified += 1
+
+        presets = {k: v for k, v in d.get("presets", {}).items() if not k.startswith("_")}
+        
+    for name, p in presets.items():
+        if not isinstance(p, dict):
+            err(f"income-sources: 프리셋 '{name}' 형식 오류 (객체가 아님)")
+            continue
+        if not p.get("label"):
+            err(f"income-sources: 프리셋 '{name}'에 label 없음")
+        mult = p.get("multipliers")
+        if mult is None:
+            err(f"income-sources: 프리셋 '{name}'에 multipliers 없음")
+            continue
+        if not mult:
+            warn(f"income-sources: 프리셋 '{name}' multipliers 비어 있음 — 실측 로그로 교정 필요")
+        for rid, factor in mult.items():
+            if rid not in ids:
+                err(f"income-sources: 프리셋 '{name}'이 없는 수급원 '{rid}' 참조")
+            if not isinstance(factor, (int, float)) or not (0 <= factor <= 1):
+                err(f"income-sources: 프리셋 '{name}'의 '{rid}' 계수 {factor}가 0~1 밖")
+
+    print(f"  income-sources: {len(rows)}종 / 미검증 {unverified}개 / "
+          f"프리셋 {len(presets)}종")
+          
+    if strict and unverified:
+        err(f"income-sources: --strict 모드에서 미검증 수급원 {unverified}개 발견")
+
+
+# ---------------------------------------------------------------- 일일 로그
+def check_income_log():
+    path = pathlib.Path(__file__).parent / "logs" / "daily-income.csv"
+    if not path.exists():
+        warn("logs/daily-income.csv 없음 — 검산 생략")
+        return
+
+    import csv as _csv
+    with open(path, encoding="utf-8", newline="") as f:
+        rows = list(_csv.DictReader(f))
+    if not rows:
+        warn("daily-income.csv: 기록 없음")
+        return
+
+    cols = ["balance", "spent", "monthly", "regular", "paid_special", "other"]
+    prev_date = prev_bal = None
+    mismatch = 0
+
+    for i, r in enumerate(rows):
+        d = r["date"]
+        if any(r.get(c) is None for c in cols):
+            err(f"daily-income: {d} 열 개수 부족")
+            continue
+        if prev_date and d <= prev_date:
+            err(f"daily-income: {d} 날짜가 오름차순이 아니거나 중복")
+
+        try:
+            vals = {c: int(r[c]) if r[c].strip() else None for c in cols}
+        except ValueError:
+            err(f"daily-income: {d} 숫자가 아닌 값 포함")
+            prev_date = d
+            continue
+
+        if vals["balance"] is None:
+            err(f"daily-income: {d} balance 누락")
+        elif i > 0 and prev_bal is not None:
+            income = [vals[c] for c in ("monthly", "regular", "paid_special", "other")]
+            if any(v is None for v in income):
+                warn(f"daily-income: {d} 수급 분류가 비어 있어 검산 생략")
+            else:
+                diff = vals["balance"] - prev_bal + (vals["spent"] or 0)
+                if diff != sum(income):
+                    err(f"daily-income: {d} 잔고변화+사용 {diff} != 수급합계 {sum(income)}")
+                    mismatch += 1
+
+        prev_date, prev_bal = d, vals["balance"]
+
+    print(f"  daily-income: {len(rows)}행 ({rows[0]['date']} ~ {rows[-1]['date']}) / "
+          f"검산 불일치 {mismatch}건")
 
 # ---------------------------------------------------------------- 실행
 def main():
@@ -211,7 +352,9 @@ def main():
     check_banners(strict)
     check_pool_sizes()
     check_ap()
+    check_income_sources(strict)
     check_sources()
+    check_income_log()
     print("-" * 52)
 
     for w in warnings:
