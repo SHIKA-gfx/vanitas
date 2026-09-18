@@ -26,8 +26,8 @@
     "19": { "publisher": "넥슨",           "title": "모집(픽업) 확률 공시 — 무츠키(드레스) 픽업 모집", "date": "2026-09-15", "url": "https://m.nexon.com/probability/7800?client_id=MjcwOA&language=ko", "tier": "official" },
     "20": { "publisher": "나무위키",       "title": "블루 아카이브/모집", "date": "2026-09-11", "url": "https://namu.wiki/w/블루 아카이브/모집", "tier": "community" },
     "21": { "publisher": "나무위키",       "title": "블루 아카이브/경험치 테이블", "date": "2026-09-11", "url": "https://namu.wiki/w/블루 아카이브/경험치 테이블", "tier": "community" },
-    "22": { "publisher": "디시인사이드",   "title": "찾길래 올리는 카페 랭크별 AP 정보", "date": "2022", "url": null, "tier": "community", "note": "7랭크 최대 보관 600은 오류" },
-    "23": { "publisher": "아카라이브",     "title": "(갤펌) 카페 랭크 효율", "date": "2024", "url": null, "tier": "community" }
+    "22": { "publisher": "디시인사이드",   "title": "찾길래 올리는 카페 랭크별 AP 정보", "date": "2022", "url": "https://gall.dcinside.com/mgallery/board/view/?id=projectmx&no=2316236", "tier": "community", "note": "7랭크 최대 보관 600은 오류" },
+    "23": { "publisher": "아카라이브",     "title": "(갤펌) 카페 랭크 효율", "date": "2024", "url": "https://arca.live/b/bluearchive/103840555", "tier": "community" }
   },
   "missingUrls": ["22", "23"],
   "unusedIds": ["15"]
