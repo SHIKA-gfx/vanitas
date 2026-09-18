@@ -1,0 +1,86 @@
+{
+  "$schema": "../_schema/game-config.schema.json",
+  "meta": {
+    "id": "game-config",
+    "description": "한국 서버 모집 공통 상수 및 천장 시스템 설정. 배너 타입별 확률은 banner-types.json 참조.",
+    "server": "ko",
+    "verifiedAt": "2026-09-16",
+    "sources": ["19", "20"]
+  },
+  "pitySystem": {
+    "current": "point_exchange",
+    "available": ["point_exchange", "charge"],
+    "note": "일본 서버는 2026-07-29부터 charge 방식. 한국 서버 도입 예정이므로 두 방식을 모두 지원해야 한다.",
+    "effectiveFrom": null,
+    "effectiveTo": null
+  },
+  "recruitCost": {
+    "currency": "pyroxene",
+    "single": 120,
+    "ten": 1200,
+    "tenPullGuarantee": {
+      "minRarity": 2,
+      "slot": 10,
+      "note": "10회 모집 시 10번째 자리에 ★2 이상 1명 확정"
+    },
+    "ticketRules": {
+      "tenSingleTicketsAsTenPull": true,
+      "mixTicketsWithPyroxene": true
+    }
+  },
+  "recruitPoint": {
+    "perPull": 1,
+    "pityThreshold": 200,
+    "resetOnPickupObtained": false,
+    "resetNote": "모집 중 픽업 학생을 획득해도 모집 포인트는 초기화되지 않는다. (charge 방식과 정반대)",
+    "lowStockAlertThreshold": 100
+  },
+  "ratePrecision": {
+    "decimalPlaces": 6,
+    "roundingAt": 7,
+    "normalizedTo": 100,
+    "note": "세부 확률은 소수점 7번째 자리에서 반올림하며 실제 합산 확률은 100%로 보정된다."
+  },
+  "firstClearBonus": {
+    "eleph": 100,
+    "scope": "banner",
+    "rerunEligible": true,
+    "exception": "A·B 동시 픽업 중 A 배너에서 B를 획득하면 B의 초회 보너스는 지급되지 않는다.",
+    "recollectException": "리콜렉트 모집은 대상별 1회가 아니라 리콜렉트 기간 중 1회만 지급된다."
+  },
+  "duplicateRewards": [
+    { "rarity": 1, "isPickup": false, "eligma": 1,  "eleph": 1 },
+    { "rarity": 2, "isPickup": false, "eligma": 10, "eleph": 5 },
+    { "rarity": 2, "isPickup": true,  "eligma": 10, "eleph": 20 },
+    { "rarity": 3, "isPickup": false, "eligma": 50, "eleph": 30 },
+    { "rarity": 3, "isPickup": true,  "eligma": 50, "eleph": 100 }
+  ],
+  "eligmaFragment": {
+    "fragmentsPerStone": 10,
+    "note": "모집 포인트 만료 시 포인트 1당 기동석 조각 1개로 변환. 조각 10개 = 기동석 1개"
+  },
+  "chargeSystem": {
+    "_status": "unverified",
+    "_note": "일본 서버 현행. 한국 도입 시 pitySystem.current를 charge로 전환하고 effectiveFrom을 기입할 것.",
+    "softPity": { "count": 100, "guaranteedRarity": 3, "pickupChance": 0.5 },
+    "hardPity": { "count": 200 },
+    "chargeTypes": [
+      { "id": "normal",  "name": "모집 차지",      "appliesTo": ["pickup_normal"] },
+      { "id": "limited", "name": "한정·모집 차지", "appliesTo": ["pickup_limited", "fes", "recollect", "encore"] }
+    ],
+    "sharedBetweenTypes": false,
+    "carryOver": true,
+    "resetOnPickupObtained": true,
+    "milestoneRewards": { "carryOver": false, "resetOnBannerEnd": true },
+    "effectivePityCostPyroxene": 19200,
+    "nominalPityCostPyroxene": 24000
+  },
+  "changeLog": [
+    { "date": "2021-11-09", "server": "ko", "change": "서비스 개시. 천장 200포인트" },
+    { "date": "2022-11-08", "server": "ko", "change": "★3 확률 2.5% → 3% (1주년)" },
+    { "date": "2025-09-23", "server": "ko", "change": "아카이브 모집 조기 도입 / 픽업 ★3 초회 엘레프 100 지급 시작" },
+    { "date": "2026-05-05", "server": "ko", "change": "리콜렉트 모집 첫 진행" },
+    { "date": "2026-07-29", "server": "jp", "change": "모집 포인트 폐지 → 모집 차지(반천장) / 상시 모집 폐지" },
+    { "date": null, "server": "ko", "change": "모집 차지 도입 예정", "status": "pending" }
+  ]
+}

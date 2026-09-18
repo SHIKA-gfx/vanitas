@@ -1,0 +1,145 @@
+{
+  "$schema": "../_schema/income-sources.schema.json",
+  "meta": {
+    "id": "income-sources",
+    "description": "청휘석 수급원. 플레이 강도 프리셋의 기본값이 되며, 사용자가 개별 값을 덮어쓸 수 있어야 한다.",
+    "server": "ko",
+    "currency": "pyroxene",
+    "verifiedAt": "2026-09-17",
+    "sources": ["게임화면"],
+    "notes": [
+      "이 데이터는 게임 내 확인을 마쳤으나, 실제 수급량은 플레이 패턴에 따라 달라진다.",
+      "일일 실측 로그가 쌓이면 presets의 계수를 교정할 것.",
+      "정기점검 보상과 이벤트는 부정기이므로 프리셋에서 월 평균으로 환산해 사용한다."
+    ]
+  },
+  "sources": [
+    {
+      "id": "daily-mission",
+      "name": "일일 임무",
+      "category": "daily",
+      "amount": 20,
+      "period": "daily",
+      "verified": true
+    },
+    {
+      "id": "weekly-mission",
+      "name": "주간 임무",
+      "category": "weekly",
+      "amount": 120,
+      "period": "weekly",
+      "verified": true
+    },
+    {
+      "id": "arona-attendance",
+      "name": "아로나 출석부",
+      "category": "daily",
+      "amount": 150,
+      "period": "every10days",
+      "verified": true
+    },
+    {
+      "id": "tactical-tournament",
+      "name": "전술대회",
+      "category": "content",
+      "amount": 20,
+      "amountRange": { "min": 10, "max": 45 },
+      "period": "daily",
+      "varianceNote": "순위에 따라 변동. 기본값은 평균 추정치 20.",
+      "verified": true
+    },
+    {
+      "id": "monthly-pass-instant",
+      "name": "월정액 (즉시 지급)",
+      "category": "subscription",
+      "amount": 392,
+      "period": "once",
+      "paid": true,
+      "verified": true
+    },
+    {
+      "id": "half-pass-instant",
+      "name": "반정액 (즉시 지급)",
+      "category": "subscription",
+      "amount": 176,
+      "period": "once",
+      "paid": true,
+      "verified": true
+    },
+    {
+      "id": "pass-daily",
+      "name": "월/반정액 일일 수령",
+      "category": "subscription",
+      "amount": 60,
+      "breakdown": { "monthly": 40, "half": 20 },
+      "period": "daily",
+      "durationDays": 30,
+      "paid": true,
+      "verified": true
+    },
+    {
+      "id": "raid-score",
+      "name": "총력전 점수 보상",
+      "category": "content",
+      "amount": 650,
+      "amountNote": "최대치",
+      "period": "perSeason",
+      "verified": true
+    },
+    {
+      "id": "raid-rank",
+      "name": "총력전 최종 보상",
+      "category": "content",
+      "period": "perSeason",
+      "tiers": [600, 800, 1000, 1200],
+      "tierNote": "등급별 상이. 사용자가 자신의 등급을 선택하게 한다.",
+      "verified": true
+    },
+    {
+      "id": "eliminate-raid-score",
+      "name": "대결전 점수 보상",
+      "category": "content",
+      "amount": 650,
+      "amountNote": "최대치",
+      "period": "perSeason",
+      "verified": true
+    },
+    {
+      "id": "eliminate-raid-reward",
+      "name": "대결전 보상",
+      "category": "content",
+      "amount": 1200,
+      "amountKind": "equivalent",
+      "actualReward": "10회 모집 티켓 1장",
+      "period": "perSeason",
+      "verified": true,
+      "note": "청휘석이 아니라 티켓으로 지급된다. 환산가 1,200. 잔고와 티켓을 분리 관리한다면 별도 처리 필요."
+    },
+    {
+      "id": "maintenance-compensation",
+      "name": "정기점검 보상",
+      "category": "irregular",
+      "amount": null,
+      "period": "irregular",
+      "samples": [{ "date": "2026-09-08", "amount": 480 }],
+      "verified": true,
+      "note": "부정기. 프리셋에서는 월 평균으로 환산하거나 0으로 둔다."
+    },
+    {
+      "id": "event",
+      "name": "이벤트",
+      "category": "event",
+      "amount": null,
+      "amountRange": { "min": 1200, "max": 2000 },
+      "period": "perEvent",
+      "verified": false,
+      "note": "이벤트당 추정 범위. 최근 3개 이벤트 실측 평균으로 교체할 것. (실측 로그 대상)"
+    }
+  ],
+  "presets": {
+    "_comment": "플레이 강도 프리셋. 각 수급원에 적용할 계수. 실측 로그로 교정 대상.",
+    "full": { "label": "전체 임무", "multipliers": {} },
+    "major": { "label": "주요 임무만", "multipliers": {} },
+    "loginOnly": { "label": "로그인만", "multipliers": {} }
+  }
+}

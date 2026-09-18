@@ -1,0 +1,584 @@
+{
+  "$schema": "../_schema/level-table.schema.json",
+  "meta": {
+    "id": "level-table",
+    "description": "선생(계정) 레벨별 필요 경험치 및 AP 최대치. 서버 공통.",
+    "server": "shared",
+    "levelCap": 90,
+    "verifiedAt": "2026-09-16",
+    "verifiedBy": "게임 내 스팟 대조 (전수 아님)",
+    "sources": [
+      "21"
+    ],
+    "notes": [
+      "expCumulative는 해당 레벨에 '도달'하기까지 필요한 누적 경험치 (레벨 1은 0).",
+      "expToNext는 해당 레벨에서 다음 레벨로 가는 데 필요한 경험치. 레벨 90은 null.",
+      "경험치 : AP 교환비가 1:1이므로 expToNext는 소요 AP와 동일하다.",
+      "apMax 규칙: 1레벨 24, 20레벨까지 레벨업당 +4, 20레벨 이후 +2."
+    ]
+  },
+  "apMaxRule": {
+    "base": 24,
+    "increments": [
+      {
+        "fromLevel": 1,
+        "toLevel": 20,
+        "perLevel": 4
+      },
+      {
+        "fromLevel": 20,
+        "toLevel": 90,
+        "perLevel": 2
+      }
+    ]
+  },
+  "derived": {
+    "totalExpToCap": 294784,
+    "totalApToCap": 294784,
+    "levelUpBonusApTotal": 13186,
+    "netApToCap": 281598,
+    "_comment": "derived 값은 levels 배열에서 재계산 가능. 검산 참조용으로만 둔다."
+  },
+  "levels": [
+    {
+      "level": 1,
+      "expToNext": 8,
+      "expCumulative": 0,
+      "apMax": 24
+    },
+    {
+      "level": 2,
+      "expToNext": 10,
+      "expCumulative": 8,
+      "apMax": 28
+    },
+    {
+      "level": 3,
+      "expToNext": 15,
+      "expCumulative": 18,
+      "apMax": 32
+    },
+    {
+      "level": 4,
+      "expToNext": 21,
+      "expCumulative": 33,
+      "apMax": 36
+    },
+    {
+      "level": 5,
+      "expToNext": 28,
+      "expCumulative": 54,
+      "apMax": 40
+    },
+    {
+      "level": 6,
+      "expToNext": 36,
+      "expCumulative": 82,
+      "apMax": 44
+    },
+    {
+      "level": 7,
+      "expToNext": 45,
+      "expCumulative": 118,
+      "apMax": 48
+    },
+    {
+      "level": 8,
+      "expToNext": 55,
+      "expCumulative": 163,
+      "apMax": 52
+    },
+    {
+      "level": 9,
+      "expToNext": 66,
+      "expCumulative": 218,
+      "apMax": 56
+    },
+    {
+      "level": 10,
+      "expToNext": 79,
+      "expCumulative": 284,
+      "apMax": 60
+    },
+    {
+      "level": 11,
+      "expToNext": 93,
+      "expCumulative": 363,
+      "apMax": 64
+    },
+    {
+      "level": 12,
+      "expToNext": 108,
+      "expCumulative": 456,
+      "apMax": 68
+    },
+    {
+      "level": 13,
+      "expToNext": 124,
+      "expCumulative": 564,
+      "apMax": 72
+    },
+    {
+      "level": 14,
+      "expToNext": 141,
+      "expCumulative": 688,
+      "apMax": 76
+    },
+    {
+      "level": 15,
+      "expToNext": 159,
+      "expCumulative": 829,
+      "apMax": 80
+    },
+    {
+      "level": 16,
+      "expToNext": 178,
+      "expCumulative": 988,
+      "apMax": 84
+    },
+    {
+      "level": 17,
+      "expToNext": 198,
+      "expCumulative": 1166,
+      "apMax": 88
+    },
+    {
+      "level": 18,
+      "expToNext": 219,
+      "expCumulative": 1364,
+      "apMax": 92
+    },
+    {
+      "level": 19,
+      "expToNext": 241,
+      "expCumulative": 1583,
+      "apMax": 96
+    },
+    {
+      "level": 20,
+      "expToNext": 265,
+      "expCumulative": 1824,
+      "apMax": 100
+    },
+    {
+      "level": 21,
+      "expToNext": 288,
+      "expCumulative": 2089,
+      "apMax": 102
+    },
+    {
+      "level": 22,
+      "expToNext": 312,
+      "expCumulative": 2377,
+      "apMax": 104
+    },
+    {
+      "level": 23,
+      "expToNext": 337,
+      "expCumulative": 2689,
+      "apMax": 106
+    },
+    {
+      "level": 24,
+      "expToNext": 363,
+      "expCumulative": 3026,
+      "apMax": 108
+    },
+    {
+      "level": 25,
+      "expToNext": 390,
+      "expCumulative": 3389,
+      "apMax": 110
+    },
+    {
+      "level": 26,
+      "expToNext": 418,
+      "expCumulative": 3779,
+      "apMax": 112
+    },
+    {
+      "level": 27,
+      "expToNext": 447,
+      "expCumulative": 4197,
+      "apMax": 114
+    },
+    {
+      "level": 28,
+      "expToNext": 477,
+      "expCumulative": 4644,
+      "apMax": 116
+    },
+    {
+      "level": 29,
+      "expToNext": 508,
+      "expCumulative": 5121,
+      "apMax": 118
+    },
+    {
+      "level": 30,
+      "expToNext": 581,
+      "expCumulative": 5629,
+      "apMax": 120
+    },
+    {
+      "level": 31,
+      "expToNext": 658,
+      "expCumulative": 6210,
+      "apMax": 122
+    },
+    {
+      "level": 32,
+      "expToNext": 734,
+      "expCumulative": 6868,
+      "apMax": 124
+    },
+    {
+      "level": 33,
+      "expToNext": 814,
+      "expCumulative": 7602,
+      "apMax": 126
+    },
+    {
+      "level": 34,
+      "expToNext": 897,
+      "expCumulative": 8416,
+      "apMax": 128
+    },
+    {
+      "level": 35,
+      "expToNext": 982,
+      "expCumulative": 9313,
+      "apMax": 130
+    },
+    {
+      "level": 36,
+      "expToNext": 1069,
+      "expCumulative": 10295,
+      "apMax": 132
+    },
+    {
+      "level": 37,
+      "expToNext": 1159,
+      "expCumulative": 11364,
+      "apMax": 134
+    },
+    {
+      "level": 38,
+      "expToNext": 1251,
+      "expCumulative": 12523,
+      "apMax": 136
+    },
+    {
+      "level": 39,
+      "expToNext": 1346,
+      "expCumulative": 13774,
+      "apMax": 138
+    },
+    {
+      "level": 40,
+      "expToNext": 1443,
+      "expCumulative": 15120,
+      "apMax": 140
+    },
+    {
+      "level": 41,
+      "expToNext": 1543,
+      "expCumulative": 16563,
+      "apMax": 142
+    },
+    {
+      "level": 42,
+      "expToNext": 1645,
+      "expCumulative": 18106,
+      "apMax": 144
+    },
+    {
+      "level": 43,
+      "expToNext": 1750,
+      "expCumulative": 19751,
+      "apMax": 146
+    },
+    {
+      "level": 44,
+      "expToNext": 1857,
+      "expCumulative": 21501,
+      "apMax": 148
+    },
+    {
+      "level": 45,
+      "expToNext": 1966,
+      "expCumulative": 23358,
+      "apMax": 150
+    },
+    {
+      "level": 46,
+      "expToNext": 2078,
+      "expCumulative": 25324,
+      "apMax": 152
+    },
+    {
+      "level": 47,
+      "expToNext": 2192,
+      "expCumulative": 27402,
+      "apMax": 154
+    },
+    {
+      "level": 48,
+      "expToNext": 2309,
+      "expCumulative": 29594,
+      "apMax": 156
+    },
+    {
+      "level": 49,
+      "expToNext": 2428,
+      "expCumulative": 31903,
+      "apMax": 158
+    },
+    {
+      "level": 50,
+      "expToNext": 2550,
+      "expCumulative": 34331,
+      "apMax": 160
+    },
+    {
+      "level": 51,
+      "expToNext": 2674,
+      "expCumulative": 36881,
+      "apMax": 162
+    },
+    {
+      "level": 52,
+      "expToNext": 2800,
+      "expCumulative": 39555,
+      "apMax": 164
+    },
+    {
+      "level": 53,
+      "expToNext": 2929,
+      "expCumulative": 42355,
+      "apMax": 166
+    },
+    {
+      "level": 54,
+      "expToNext": 3060,
+      "expCumulative": 45284,
+      "apMax": 168
+    },
+    {
+      "level": 55,
+      "expToNext": 3194,
+      "expCumulative": 48344,
+      "apMax": 170
+    },
+    {
+      "level": 56,
+      "expToNext": 3330,
+      "expCumulative": 51538,
+      "apMax": 172
+    },
+    {
+      "level": 57,
+      "expToNext": 3469,
+      "expCumulative": 54868,
+      "apMax": 174
+    },
+    {
+      "level": 58,
+      "expToNext": 3610,
+      "expCumulative": 58337,
+      "apMax": 176
+    },
+    {
+      "level": 59,
+      "expToNext": 3754,
+      "expCumulative": 61947,
+      "apMax": 178
+    },
+    {
+      "level": 60,
+      "expToNext": 3900,
+      "expCumulative": 65701,
+      "apMax": 180
+    },
+    {
+      "level": 61,
+      "expToNext": 4048,
+      "expCumulative": 69601,
+      "apMax": 182
+    },
+    {
+      "level": 62,
+      "expToNext": 4199,
+      "expCumulative": 73649,
+      "apMax": 184
+    },
+    {
+      "level": 63,
+      "expToNext": 4352,
+      "expCumulative": 77848,
+      "apMax": 186
+    },
+    {
+      "level": 64,
+      "expToNext": 4508,
+      "expCumulative": 82200,
+      "apMax": 188
+    },
+    {
+      "level": 65,
+      "expToNext": 4666,
+      "expCumulative": 86708,
+      "apMax": 190
+    },
+    {
+      "level": 66,
+      "expToNext": 4831,
+      "expCumulative": 91374,
+      "apMax": 192
+    },
+    {
+      "level": 67,
+      "expToNext": 5007,
+      "expCumulative": 96205,
+      "apMax": 194
+    },
+    {
+      "level": 68,
+      "expToNext": 5186,
+      "expCumulative": 101212,
+      "apMax": 196
+    },
+    {
+      "level": 69,
+      "expToNext": 5369,
+      "expCumulative": 106398,
+      "apMax": 198
+    },
+    {
+      "level": 70,
+      "expToNext": 5556,
+      "expCumulative": 111767,
+      "apMax": 200
+    },
+    {
+      "level": 71,
+      "expToNext": 5747,
+      "expCumulative": 117323,
+      "apMax": 202
+    },
+    {
+      "level": 72,
+      "expToNext": 5942,
+      "expCumulative": 123070,
+      "apMax": 204
+    },
+    {
+      "level": 73,
+      "expToNext": 6141,
+      "expCumulative": 129012,
+      "apMax": 206
+    },
+    {
+      "level": 74,
+      "expToNext": 6344,
+      "expCumulative": 135153,
+      "apMax": 208
+    },
+    {
+      "level": 75,
+      "expToNext": 6552,
+      "expCumulative": 141497,
+      "apMax": 210
+    },
+    {
+      "level": 76,
+      "expToNext": 6768,
+      "expCumulative": 148049,
+      "apMax": 212
+    },
+    {
+      "level": 77,
+      "expToNext": 6989,
+      "expCumulative": 154817,
+      "apMax": 214
+    },
+    {
+      "level": 78,
+      "expToNext": 7216,
+      "expCumulative": 161806,
+      "apMax": 216
+    },
+    {
+      "level": 79,
+      "expToNext": 7449,
+      "expCumulative": 169022,
+      "apMax": 218
+    },
+    {
+      "level": 80,
+      "expToNext": 7682,
+      "expCumulative": 176471,
+      "apMax": 220
+    },
+    {
+      "level": 81,
+      "expToNext": 7915,
+      "expCumulative": 184153,
+      "apMax": 222
+    },
+    {
+      "level": 82,
+      "expToNext": 8148,
+      "expCumulative": 192068,
+      "apMax": 224
+    },
+    {
+      "level": 83,
+      "expToNext": 8381,
+      "expCumulative": 200216,
+      "apMax": 226
+    },
+    {
+      "level": 84,
+      "expToNext": 8883,
+      "expCumulative": 208597,
+      "apMax": 228
+    },
+    {
+      "level": 85,
+      "expToNext": 9460,
+      "expCumulative": 217480,
+      "apMax": 230
+    },
+    {
+      "level": 86,
+      "expToNext": 10614,
+      "expCumulative": 226940,
+      "apMax": 232
+    },
+    {
+      "level": 87,
+      "expToNext": 12922,
+      "expCumulative": 237554,
+      "apMax": 234
+    },
+    {
+      "level": 88,
+      "expToNext": 17538,
+      "expCumulative": 250476,
+      "apMax": 236
+    },
+    {
+      "level": 89,
+      "expToNext": 26770,
+      "expCumulative": 268014,
+      "apMax": 238
+    },
+    {
+      "level": 90,
+      "expToNext": null,
+      "expCumulative": 294784,
+      "apMax": 240
+    }
+  ]
+}

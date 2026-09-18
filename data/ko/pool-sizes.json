@@ -1,0 +1,37 @@
+{
+  "$schema": "../_schema/pool-sizes.schema.json",
+  "meta": {
+    "id": "pool-sizes",
+    "description": "확률 그룹별 풀 크기 스냅샷. 학생 추가·아카이브 편입 때마다 변하므로 시점을 명시한다.",
+    "server": "ko",
+    "notes": [
+      "개별 학생 확률 = 그룹 확률 ÷ 풀 크기.",
+      "풀 크기는 시점 의존 값이므로 snapshots 배열에 행을 추가하고 기존 행을 덮어쓰지 않는다.",
+      "통상 ★3 풀은 아카이브 학생이 제외된 수치다."
+    ]
+  },
+  "snapshots": [
+    {
+      "asOf": "2026-09-16",
+      "sourceBanner": "무츠키(드레스) 픽업 모집",
+      "sourceUrl": "https://m.nexon.com/probability/7800?client_id=MjcwOA&language=ko",
+      "bannerPeriod": null,
+      "bannerPeriodUnrecorded": true,
+      "concurrentLimitedBannerUnverified": true,
+      "pools": {
+        "normal_3s": { "size": 108, "groupRate": 2.3,  "perUnitRate": 0.021296 },
+        "normal_2s": { "size": 23,  "groupRate": 18.5, "perUnitRate": 0.804348 },
+        "normal_1s": { "size": 11,  "groupRate": 78.5, "perUnitRate": 7.136364 }
+      },
+      "tenthPullPools": {
+        "normal_2s": { "size": 23, "groupRate": 97.0, "perUnitRate": 4.217391 }
+      },
+      "note": "이 배너에 특별 픽업이 동시 진행되었는지 미확인. 108이 순수 통상만의 수치일 가능성이 있다."
+    }
+  ],
+  "pending": [
+    { "poolRef": "fes_3s",     "reason": "페스 기간에만 공시 확인 가능" },
+    { "poolRef": "archive_3s", "reason": "아카이브 모집 공시 미수집 (상설이므로 즉시 확인 가능)" },
+    { "poolRef": "launch_3s",  "reason": "선별 모집 공시 미수집. 출시 ★3 17명 / ★2 16명 / ★1 11명으로 알려짐" }
+  ]
+}
