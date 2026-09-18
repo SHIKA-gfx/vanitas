@@ -1,0 +1,315 @@
+{
+  "$schema": "../_schema/banner-types.schema.json",
+  "meta": {
+    "id": "banner-types",
+    "description": "배너 타입 마스터 + 타입별 확률 그룹 + 포인트 풀 규칙. 확률은 % 단위.",
+    "server": "ko",
+    "verifiedAt": "2026-09-16",
+    "sources": ["19", "20"],
+    "notes": [
+      "개별 학생 확률 = 그룹 확률 ÷ 그룹 풀 크기. 풀 크기는 pool-sizes.json의 스냅샷 참조.",
+      "rateGroups의 각 variant는 합이 100이 되어야 한다. validate.py가 검사한다.",
+      "poolRef는 풀 크기를 조회할 키. 'dynamic'은 시점마다 변하는 풀."
+    ]
+  },
+  "pointPools": [
+    {
+      "id": "recruit",
+      "name": "모집 포인트",
+      "pityThreshold": 200,
+      "exchangeTarget": "동시기 픽업 중인 ★3 학생 중 택 1 (배너 무관)",
+      "sharedAcrossBanners": true,
+      "carryOver": false,
+      "onExpiry": "기동석 조각 1:1 변환",
+      "note": "배너별로 나뉘지 않고 기간 단위로 합산된다. 190뽑 + 10뽑을 다른 배너에 나눠 써도 천장 하나가 완성된다."
+    },
+    {
+      "id": "archive",
+      "name": "아카이브 포인트",
+      "pityThreshold": 200,
+      "exchangeTarget": "아카이브 학생만",
+      "sharedAcrossBanners": false,
+      "carryOver": true,
+      "onExpiry": null,
+      "note": "무기한 보존(사실상 2099년까지). 플래너의 '저축 플랜' 시나리오가 성립하는 유일한 풀."
+    },
+    {
+      "id": "recollect",
+      "name": "리콜렉트 포인트",
+      "pityThreshold": 200,
+      "exchangeTarget": "리콜렉트 학생만",
+      "sharedAcrossBanners": false,
+      "carryOver": false,
+      "onExpiry": "미확인"
+    },
+    {
+      "id": "encore",
+      "name": "앙코르 포인트",
+      "pityThreshold": 200,
+      "exchangeTarget": "앙코르 학생만",
+      "sharedAcrossBanners": false,
+      "carryOver": false,
+      "onExpiry": "미확인",
+      "availableInKo": false
+    }
+  ],
+  "bannerTypes": [
+    {
+      "id": "pickup_normal",
+      "nameKo": "픽업 모집",
+      "nameJa": "ピックアップ募集",
+      "availableInKo": true,
+      "introducedAt": "2021-11-09",
+      "operation": "rotation",
+      "observedDurationDays": [7, 14],
+      "payment": ["pyroxene", "normal_ticket"],
+      "pointPool": "recruit",
+      "chargeType": "normal",
+      "has2StarPickup": true,
+      "pickThroughObtainable": true,
+      "rateGroups": {
+        "default": [
+          { "id": "pickup_3s",  "label": "픽업 ★3",   "rarity": 3, "rate": 0.7,  "poolRef": "pickup",      "verified": true },
+          { "id": "other_3s",   "label": "기타 ★3",   "rarity": 3, "rate": 2.3,  "poolRef": "normal_3s",   "verified": true },
+          { "id": "all_2s",     "label": "모든 ★2",   "rarity": 2, "rate": 18.5, "poolRef": "normal_2s",   "verified": true },
+          { "id": "all_1s",     "label": "모든 ★1",   "rarity": 1, "rate": 78.5, "poolRef": "normal_1s",   "verified": true }
+        ],
+        "withPickup2Star": [
+          { "id": "pickup_3s",  "label": "픽업 ★3",     "rarity": 3, "rate": 0.7,  "poolRef": "pickup",    "verified": true },
+          { "id": "other_3s",   "label": "기타 ★3",     "rarity": 3, "rate": 2.3,  "poolRef": "normal_3s", "verified": true },
+          { "id": "pickup_2s",  "label": "픽업 ★2",     "rarity": 2, "rate": 3.0,  "poolRef": "pickup",    "verified": false },
+          { "id": "other_2s",   "label": "픽업 외 ★2",  "rarity": 2, "rate": 15.5, "poolRef": "normal_2s", "verified": false },
+          { "id": "all_1s",     "label": "모든 ★1",     "rarity": 1, "rate": 78.5, "poolRef": "normal_1s", "verified": true }
+        ],
+        "tenthPull": [
+          { "id": "pickup_3s",  "label": "픽업 ★3", "rarity": 3, "rate": 0.7,  "poolRef": "pickup",    "verified": true },
+          { "id": "other_3s",   "label": "기타 ★3", "rarity": 3, "rate": 2.3,  "poolRef": "normal_3s", "verified": true },
+          { "id": "all_2s",     "label": "모든 ★2", "rarity": 2, "rate": 97.0, "poolRef": "normal_2s", "verified": true }
+        ]
+      },
+      "notes": [
+        "10회차 보정은 ★1이 제외되고 ★2가 오르는 것이며 ★3 확률은 1~9회차와 동일하다.",
+        "따라서 ★3 목표는 1-(1-p)^n 닫힌 식이 성립한다. ★2 픽업 목표만 10연 블록 분기가 필요하다."
+      ]
+    },
+    {
+      "id": "standard",
+      "nameKo": "상시 모집",
+      "nameJa": "常設募集",
+      "availableInKo": true,
+      "introducedAt": "2021-11-09",
+      "operation": "permanent",
+      "observedDurationDays": null,
+      "payment": ["pyroxene", "normal_ticket"],
+      "pointPool": "recruit",
+      "chargeType": null,
+      "has2StarPickup": false,
+      "pickThroughObtainable": true,
+      "rateGroups": {
+        "default": [
+          { "id": "all_3s", "label": "모든 통상 + 동기간 특별 ★3", "rarity": 3, "rate": 3.0,  "poolRef": "dynamic",   "verified": false },
+          { "id": "all_2s", "label": "모든 ★2",                    "rarity": 2, "rate": 18.5, "poolRef": "normal_2s", "verified": false },
+          { "id": "all_1s", "label": "모든 ★1",                    "rarity": 1, "rate": 78.5, "poolRef": "normal_1s", "verified": false }
+        ]
+      },
+      "notes": [
+        "픽업 그룹이 없다. 200포인트를 모아도 동시기 픽업 대상 학생으로만 교환 가능하다.",
+        "일본 서버는 2026-07-29 개편으로 폐지. 한국 서버 개편 시 availableInKo를 false로 전환할 것."
+      ]
+    },
+    {
+      "id": "pickup_limited",
+      "nameKo": "특별 픽업 모집",
+      "nameJa": "限定ピックアップ募集",
+      "availableInKo": true,
+      "introducedAt": "2022-02-22",
+      "operation": "limited",
+      "observedDurationDays": [7, 14],
+      "payment": ["pyroxene", "normal_ticket"],
+      "pointPool": "recruit",
+      "chargeType": "limited",
+      "has2StarPickup": false,
+      "pickThroughObtainable": false,
+      "rateGroups": {
+        "default": [
+          { "id": "pickup_3s", "label": "픽업 특별 ★3",                "rarity": 3, "rate": 0.7,  "poolRef": "pickup",    "verified": false },
+          { "id": "other_3s",  "label": "픽업 외 특별 + 모든 통상 ★3", "rarity": 3, "rate": 2.3,  "poolRef": "dynamic",   "verified": false },
+          { "id": "all_2s",    "label": "모든 ★2",                     "rarity": 2, "rate": 18.5, "poolRef": "normal_2s", "verified": false },
+          { "id": "all_1s",    "label": "모든 ★1",                     "rarity": 1, "rate": 78.5, "poolRef": "normal_1s", "verified": false }
+        ]
+      },
+      "obtainability": {
+        "outsideBannerPeriod": false,
+        "viaPickThrough": false,
+        "hiddenFromRoster": true,
+        "paidExceptionNote": "기간 한정 유료 ★3 특별 확정 모집에서 랜덤 획득만 가능"
+      },
+      "notes": [
+        "픽뚫로 획득할 수 없다. 플래너 우선순위 판정에서 '놓치면 복각까지 대기'로 처리해야 한다.",
+        "'특별'은 한국·글로벌 명칭, '한정(限定)'은 일본 명칭. 다국어 사전에서 분리 필요."
+      ]
+    },
+    {
+      "id": "fes",
+      "nameKo": "페스 모집",
+      "nameJa": "フェス募集",
+      "availableInKo": true,
+      "introducedAt": "2022-09-06",
+      "operation": "semiannual",
+      "observedDurationDays": [4, 7],
+      "payment": ["pyroxene", "normal_ticket"],
+      "pointPool": "recruit",
+      "chargeType": "limited",
+      "has2StarPickup": false,
+      "pickThroughObtainable": true,
+      "rateGroups": {
+        "default": [
+          { "id": "pickup_3s",     "label": "픽업 페스 ★3",    "rarity": 3, "rate": 0.7,  "poolRef": "pickup",    "verified": false },
+          { "id": "other_fes_3s",  "label": "픽업 외 페스 ★3", "rarity": 3, "rate": 0.9,  "poolRef": "fes_3s",    "verified": false },
+          { "id": "normal_3s",     "label": "모든 통상 ★3",    "rarity": 3, "rate": 4.4,  "poolRef": "normal_3s", "verified": false },
+          { "id": "all_2s",        "label": "모든 ★2",         "rarity": 2, "rate": 18.5, "poolRef": "normal_2s", "verified": false },
+          { "id": "all_1s",        "label": "모든 ★1",         "rarity": 1, "rate": 75.5, "poolRef": "normal_1s", "verified": false }
+        ]
+      },
+      "notes": [
+        "★3 합산 6%는 ★1이 78.5% → 75.5%로 줄어 만들어진다.",
+        "통상 배너에 없는 '픽업 외 페스' 그룹이 별도로 존재하므로 통상 구조를 재사용할 수 없다.",
+        "페스 기간에는 상시 모집이 닫힌다.",
+        "픽업 외 페스 학생은 천장 교환 대상이 아니다."
+      ]
+    },
+    {
+      "id": "archive",
+      "nameKo": "아카이브 모집",
+      "nameJa": "アーカイブ募集",
+      "availableInKo": true,
+      "introducedAt": "2025-09-23",
+      "operation": "permanent",
+      "observedDurationDays": null,
+      "payment": ["pyroxene", "archive_ticket"],
+      "pointPool": "archive",
+      "chargeType": null,
+      "has2StarPickup": false,
+      "pickThroughObtainable": true,
+      "rateGroups": {
+        "default": [
+          { "id": "pickup_3s", "label": "픽업 아카이브 ★3",    "rarity": 3, "rate": 0.7,  "poolRef": "pickup",     "verified": false },
+          { "id": "other_3s",  "label": "픽업 외 아카이브 ★3", "rarity": 3, "rate": 2.3,  "poolRef": "archive_3s", "verified": false },
+          { "id": "all_2s",    "label": "모든 ★2",             "rarity": 2, "rate": 18.5, "poolRef": "normal_2s",  "verified": false },
+          { "id": "all_1s",    "label": "모든 ★1",             "rarity": 1, "rate": 78.5, "poolRef": "normal_1s",  "verified": false }
+        ]
+      },
+      "roster": {
+        "composition": ["초기 출시 ★3", "상점/임무 하드 파밍 가능 ★3", "통상 ★1·★2"],
+        "userSelectsPickup": true,
+        "sizeAsOf": { "date": "2025-09-23", "count": 38 },
+        "mutuallyExclusiveWithNormalPool": true
+      },
+      "notes": [
+        "일반 티켓 사용 불가.",
+        "아카이브 ★3는 타 모집에 등장하지 않고 통상 ★3는 아카이브에 등장하지 않는다.",
+        "통상 ★3 풀 크기는 아카이브 학생이 제외된 수치다."
+      ]
+    },
+    {
+      "id": "recollect",
+      "nameKo": "리콜렉트 모집",
+      "nameJa": "リコレクト募集",
+      "availableInKo": true,
+      "introducedAt": "2026-05-05",
+      "operation": "limited",
+      "observedDurationDays": [7],
+      "payment": ["pyroxene", "normal_ticket"],
+      "pointPool": "recollect",
+      "chargeType": "limited",
+      "has2StarPickup": false,
+      "pickThroughObtainable": true,
+      "rateGroups": {
+        "default": [
+          { "id": "pickup_3s", "label": "픽업 리콜렉트 ★3",              "rarity": 3, "rate": 0.7,  "poolRef": "pickup",    "verified": false },
+          { "id": "other_3s",  "label": "픽업 외 리콜렉트 + 모든 통상 ★3", "rarity": 3, "rate": 2.3, "poolRef": "dynamic",   "verified": false },
+          { "id": "all_2s",    "label": "모든 ★2",                        "rarity": 2, "rate": 18.5, "poolRef": "normal_2s", "verified": false },
+          { "id": "all_1s",    "label": "모든 ★1",                        "rarity": 1, "rate": 78.5, "poolRef": "normal_1s", "verified": false }
+        ]
+      },
+      "notes": [
+        "초회 엘레프 100개는 대상마다 1회가 아니라 리콜렉트 기간 중 1회만 지급된다.",
+        "2026-05-05 한국 서버 진행 대상: 호시노(수영복), 와카모, 미카"
+      ]
+    },
+    {
+      "id": "encore",
+      "nameKo": "앙코르 모집",
+      "nameJa": "アンコール募集",
+      "availableInKo": false,
+      "introducedAt": null,
+      "operation": "limited",
+      "observedDurationDays": null,
+      "payment": ["pyroxene", "normal_ticket"],
+      "pointPool": "encore",
+      "chargeType": "limited",
+      "has2StarPickup": false,
+      "pickThroughObtainable": false,
+      "rateGroups": {
+        "default": [
+          { "id": "pickup_3s", "label": "픽업 앙코르 ★3",              "rarity": 3, "rate": 0.7,  "poolRef": "pickup",    "verified": false },
+          { "id": "other_3s",  "label": "픽업 외 앙코르 + 모든 통상 ★3", "rarity": 3, "rate": 2.3, "poolRef": "dynamic",   "verified": false },
+          { "id": "all_2s",    "label": "모든 ★2",                      "rarity": 2, "rate": 18.5, "poolRef": "normal_2s", "verified": false },
+          { "id": "all_1s",    "label": "모든 ★1",                      "rarity": 1, "rate": 78.5, "poolRef": "normal_1s", "verified": false }
+        ]
+      },
+      "notes": ["일본 서버 2026-02-11 발표. 한국 미도입. 초기 픽업 대상 10명."]
+    },
+    {
+      "id": "limited_dash",
+      "nameKo": "리미티드 대쉬 모집",
+      "nameJa": "リミテッドダッシュ募集",
+      "availableInKo": false,
+      "introducedAt": null,
+      "operation": "newAccount28Days",
+      "observedDurationDays": [28],
+      "payment": null,
+      "pointPool": null,
+      "chargeType": null,
+      "has2StarPickup": false,
+      "pickThroughObtainable": true,
+      "rateGroups": {
+        "default": [
+          { "id": "pickup_3s", "label": "픽업 리미티드 대쉬 ★3", "rarity": 3, "rate": 0.7,  "poolRef": "pickup",    "verified": false },
+          { "id": "other_3s",  "label": "모든 통상 ★3",          "rarity": 3, "rate": 2.3,  "poolRef": "normal_3s", "verified": false },
+          { "id": "all_2s",    "label": "모든 ★2",               "rarity": 2, "rate": 18.5, "poolRef": "normal_2s", "verified": false },
+          { "id": "all_1s",    "label": "모든 ★1",               "rarity": 1, "rate": 78.5, "poolRef": "normal_1s", "verified": false }
+        ]
+      },
+      "notes": ["일본 서버 2026-06 추가. 한국 미도입."]
+    },
+    {
+      "id": "selection",
+      "nameKo": "선별 모집",
+      "nameJa": "選別募集",
+      "availableInKo": true,
+      "introducedAt": "2021-11-09",
+      "operation": "newAccountOnce",
+      "observedDurationDays": null,
+      "payment": ["free"],
+      "pointPool": null,
+      "chargeType": null,
+      "has2StarPickup": false,
+      "pickThroughObtainable": true,
+      "rateGroups": {
+        "default": [
+          { "id": "launch_3s", "label": "출시 통상 ★3", "rarity": 3, "rate": 3.0,  "poolRef": "launch_3s", "verified": false },
+          { "id": "launch_2s", "label": "출시 통상 ★2", "rarity": 2, "rate": 18.5, "poolRef": "launch_2s", "verified": false },
+          { "id": "launch_1s", "label": "출시 통상 ★1", "rarity": 1, "rate": 78.5, "poolRef": "launch_1s", "verified": false }
+        ],
+        "tenthPull": [
+          { "id": "launch_3s", "label": "출시 통상 ★3", "rarity": 3, "rate": 100.0, "poolRef": "launch_3s", "verified": false }
+        ]
+      },
+      "notes": [
+        "한국 서버는 구버전(10회 시행 / 1세트 보존). 일본은 2026-06-24에 30회 / 3세트로 확대.",
+        "글로벌 확대 적용 2026-10경 예상."
+      ]
+    }
+  ]
+}
