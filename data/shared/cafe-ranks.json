@@ -1,0 +1,45 @@
+{
+  "$schema": "../_schema/cafe-ranks.schema.json",
+  "meta": {
+    "id": "cafe-ranks",
+    "description": "카페 랭크별 AP 생산 데이터. 랭크별 고정값은 3개(maxComfort / apPerComfort / maxStorage)뿐이며 생산량은 파생값이다.",
+    "server": "shared",
+    "verifiedAt": "2026-09-16",
+    "sources": ["22", "23"],
+    "notes": [
+      "AP 생산은 1호점에서만 이루어진다. 2호점은 AP를 생산하지 않으므로 계산 입력에 포함하지 않는다.",
+      "출처 [22](디시, 2022)의 7랭크 최대 보관 600은 오류. 자체 모순이 있어 [23]의 530을 채택했다.",
+      "baseProductionPerHour / maxProductionPerHour는 formulas로 재계산 가능하므로 저장하지 않는다."
+    ]
+  },
+  "formulas": {
+    "baseProductionPerHour": "maxStorage / 96",
+    "maxProductionPerHour": "baseProductionPerHour + (currentComfort * apPerComfort)",
+    "accumulatedAp": "min(floor(productionPerHour * hours), maxStorage)",
+    "fullChargeHours": "maxStorage / maxProductionPerHour"
+  },
+  "patterns": {
+    "maxComfort": "랭크당 +500 (1,000부터)",
+    "apPerComfort": "1~5랭크 +0.0003씩, 6랭크 이후 0.0042 고정",
+    "maxStorage": "1→2 +60, 2→3 +70, 3→4 +80, 4→5 +90, 5랭크 이후 +70 고정",
+    "baseProduction": "기본 생산만으로 96시간(4일) 만충",
+    "maxProduction": "최대 쾌적도 기준 약 24시간 만충 (23.45~24.02h). 10랭크만 24시간을 초과해 1일 1수확 시 손실 0"
+  },
+  "secondCafe": {
+    "producesAp": false,
+    "verifiedAt": "2026-09-16",
+    "note": "카페 2호점은 AP를 생산하지 않는다. 혼동하기 쉬우므로 계산기 UI에 안내 문구 필요."
+  },
+  "ranks": [
+    { "rank": 1,  "maxComfort": 1000, "apPerComfort": 0.0029, "maxStorage": 90 },
+    { "rank": 2,  "maxComfort": 1500, "apPerComfort": 0.0032, "maxStorage": 150 },
+    { "rank": 3,  "maxComfort": 2000, "apPerComfort": 0.0035, "maxStorage": 220 },
+    { "rank": 4,  "maxComfort": 2500, "apPerComfort": 0.0038, "maxStorage": 300 },
+    { "rank": 5,  "maxComfort": 3000, "apPerComfort": 0.0041, "maxStorage": 390 },
+    { "rank": 6,  "maxComfort": 3500, "apPerComfort": 0.0042, "maxStorage": 460 },
+    { "rank": 7,  "maxComfort": 4000, "apPerComfort": 0.0042, "maxStorage": 530 },
+    { "rank": 8,  "maxComfort": 4500, "apPerComfort": 0.0042, "maxStorage": 600 },
+    { "rank": 9,  "maxComfort": 5000, "apPerComfort": 0.0042, "maxStorage": 670 },
+    { "rank": 10, "maxComfort": 5500, "apPerComfort": 0.0042, "maxStorage": 740 }
+  ]
+}
