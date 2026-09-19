@@ -15,9 +15,8 @@
       "asOf": "2026-09-16",
       "sourceBanner": "무츠키(드레스) 픽업 모집",
       "sourceUrl": "https://m.nexon.com/probability/7800?client_id=MjcwOA&language=ko",
-      "bannerPeriod": null,
-      "bannerPeriodUnrecorded": true,
-      "concurrentLimitedBannerUnverified": true,
+      "bannerPeriod": { "from": "2026-09-15", "to": "2026-09-29" },
+      "note": "★3 108은 상시 풀 109에서 픽업 1명을 제외한 값임이 상시 모집 공시로 확인됨. 동시 진행된 드레스 픽업 5종도 모두 상시 ★3 목록에 포함.",
       "pools": {
         "normal_3s": { "size": 108, "groupRate": 2.3,  "perUnitRate": 0.021296 },
         "normal_2s": { "size": 23,  "groupRate": 18.5, "perUnitRate": 0.804348 },
@@ -27,11 +26,40 @@
         "normal_2s": { "size": 23, "groupRate": 97.0, "perUnitRate": 4.217391 }
       },
       "note": "이 배너에 특별 픽업이 동시 진행되었는지 미확인. 108이 순수 통상만의 수치일 가능성이 있다."
+    },
+    {
+      "asOf": "2026-09-19",
+      "sourceBanner": "상시 모집",
+      "sourceUrl": "https://m.nexon.com/probability/7799?client_id=MjcwOA&language=ko",
+      "bannerPeriod": { "from": "2026-09-15", "to": "2026-09-29" },
+      "pools": {
+        "standard_3s": { "size": 109, "groupRate": 3.0, "perUnitRate": 0.027523 },
+        "normal_2s": { "size": 23, "groupRate": 18.5, "perUnitRate": 0.804348 },
+        "normal_1s": { "size": 11, "groupRate": 78.5, "perUnitRate": 7.136364 }
+      },
+      "tenthPullPools": {
+        "normal_2s": { "size": 23, "groupRate": 97.0, "perUnitRate": 4.217391 }
+      },
+      "note": "10회차 ★3는 3%로 기본과 동일. 보정은 ★1 78.5%를 ★2로 이전하는 것뿐. 종료 시각 09-29 10:59."
+    },
+    {
+      "asOf": "2026-09-19",
+      "sourceBanner": "아카이브 모집",
+      "sourceUrl": "https://m.nexon.com/probability/7170?client_id=MjcwOA&language=ko",
+      "bannerPeriod": null,
+      "pools": {
+        "archive_3s": { "size": 37, "groupRate": 2.3, "perUnitRate": 0.062162 },
+        "normal_2s": { "size": 23, "groupRate": 18.5, "perUnitRate": 0.804348 },
+        "normal_1s": { "size": 11, "groupRate": 78.5, "perUnitRate": 7.136364 }
+      },
+      "tenthPullPools": {
+        "normal_2s": { "size": 23, "groupRate": 97.0, "perUnitRate": 4.217391 }
+      },
+      "note": "상설이라 배너 기간 없음. ★3 대상 총 38명(선택 1 + 선택 외 37). 대상 학생 추가 시 풀 변동."
     }
   ],
   "pending": [
     { "poolRef": "fes_3s",     "reason": "페스 기간에만 공시 확인 가능" },
-    { "poolRef": "archive_3s", "reason": "아카이브 모집 공시 미수집 (상설이므로 즉시 확인 가능)" },
     { "poolRef": "launch_3s",  "reason": "선별 모집 공시 미수집. 출시 ★3 17명 / ★2 16명 / ★1 11명으로 알려짐" }
   ]
 }
