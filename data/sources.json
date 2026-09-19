@@ -27,7 +27,9 @@
     "20": { "publisher": "나무위키",       "title": "블루 아카이브/모집", "date": "2026-09-11", "url": "https://namu.wiki/w/블루 아카이브/모집", "tier": "community" },
     "21": { "publisher": "나무위키",       "title": "블루 아카이브/경험치 테이블", "date": "2026-09-11", "url": "https://namu.wiki/w/블루 아카이브/경험치 테이블", "tier": "community" },
     "22": { "publisher": "디시인사이드",   "title": "찾길래 올리는 카페 랭크별 AP 정보", "date": "2022", "url": "https://gall.dcinside.com/mgallery/board/view/?id=projectmx&no=2316236", "tier": "community", "note": "7랭크 최대 보관 600은 오류" },
-    "23": { "publisher": "아카라이브",     "title": "(갤펌) 카페 랭크 효율", "date": "2024", "url": "https://arca.live/b/bluearchive/103840555", "tier": "community" }
+    "23": { "publisher": "아카라이브",     "title": "(갤펌) 카페 랭크 효율", "date": "2024", "url": "https://arca.live/b/bluearchive/103840555", "tier": "community" },
+    "24": { "publisher": "넥슨",          "title": "상시 모집 확률 정보 (2026-09-15 ~ 09-29)", "url": "https://m.nexon.com/probability/7799?client_id=MjcwOA&language=ko", "date": "2026-09-15", "retrievedAt": "2026-09-19", "tier": "official", "note": "포럼 목차글(thread=2480089)에서 접근. 목차는 갱신마다 덮어쓰기됨. 로컬 사본: verification/2026-09-19_상시모집_7799.jpeg"},
+    "25": { "publisher": "넥슨", "title": "아카이브 모집 확률 정보", "url": "https://m.nexon.com/probability/7170?client_id=MjcwOA&language=ko", "date": "2026-09-19", "retrievedAt": "2026-09-19", "tier": "official", "note": "상설 배너. 로컬 사본: verification/2026-09-19_아카이브모집_7170.jpeg"}
   },
   "missingUrls": ["22", "23"],
   "unusedIds": ["15"]
