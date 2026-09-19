@@ -4,8 +4,8 @@
     "id": "banner-types",
     "description": "배너 타입 마스터 + 타입별 확률 그룹 + 포인트 풀 규칙. 확률은 % 단위.",
     "server": "ko",
-    "verifiedAt": "2026-09-16",
-    "sources": ["19", "20"],
+    "verifiedAt": "2026-09-19",
+    "sources": ["19", "20", "24", "25"],
     "notes": [
       "개별 학생 확률 = 그룹 확률 ÷ 그룹 풀 크기. 풀 크기는 pool-sizes.json의 스냅샷 참조.",
       "rateGroups의 각 variant는 합이 100이 되어야 한다. validate.py가 검사한다.",
@@ -107,9 +107,13 @@
       "pickThroughObtainable": true,
       "rateGroups": {
         "default": [
-          { "id": "all_3s", "label": "모든 통상 + 동기간 특별 ★3", "rarity": 3, "rate": 3.0,  "poolRef": "dynamic",   "verified": false },
-          { "id": "all_2s", "label": "모든 ★2",                    "rarity": 2, "rate": 18.5, "poolRef": "normal_2s", "verified": false },
-          { "id": "all_1s", "label": "모든 ★1",                    "rarity": 1, "rate": 78.5, "poolRef": "normal_1s", "verified": false }
+          { "id": "all_3s", "label": "모든 통상 + 동기간 특별 ★3", "rarity": 3, "rate": 3.0,  "poolRef": "standard_3s", "verified": true },
+          { "id": "all_2s", "label": "모든 ★2",                    "rarity": 2, "rate": 18.5, "poolRef": "normal_2s",   "verified": true },
+          { "id": "all_1s", "label": "모든 ★1",                    "rarity": 1, "rate": 78.5, "poolRef": "normal_1s",   "verified": true }
+        ],
+        "tenthPull": [
+          { "id": "all_3s", "label": "모든 통상 + 동기간 특별 ★3", "rarity": 3, "rate": 3.0,  "poolRef": "standard_3s", "verified": true },
+          { "id": "all_2s", "label": "모든 ★2",                    "rarity": 2, "rate": 97.0, "poolRef": "normal_2s",   "verified": true }
         ]
       },
       "notes": [
@@ -193,16 +197,21 @@
       "pickThroughObtainable": true,
       "rateGroups": {
         "default": [
-          { "id": "pickup_3s", "label": "픽업 아카이브 ★3",    "rarity": 3, "rate": 0.7,  "poolRef": "pickup",     "verified": false },
-          { "id": "other_3s",  "label": "픽업 외 아카이브 ★3", "rarity": 3, "rate": 2.3,  "poolRef": "archive_3s", "verified": false },
-          { "id": "all_2s",    "label": "모든 ★2",             "rarity": 2, "rate": 18.5, "poolRef": "normal_2s",  "verified": false },
-          { "id": "all_1s",    "label": "모든 ★1",             "rarity": 1, "rate": 78.5, "poolRef": "normal_1s",  "verified": false }
+          { "id": "pickup_3s", "label": "픽업 아카이브 ★3",    "rarity": 3, "rate": 0.7,  "poolRef": "pickup",     "verified": true },
+          { "id": "other_3s",  "label": "픽업 외 아카이브 ★3", "rarity": 3, "rate": 2.3,  "poolRef": "archive_3s", "verified": true },
+          { "id": "all_2s",    "label": "모든 ★2",             "rarity": 2, "rate": 18.5, "poolRef": "normal_2s",  "verified": true },
+          { "id": "all_1s",    "label": "모든 ★1",             "rarity": 1, "rate": 78.5, "poolRef": "normal_1s",  "verified": true }
+        ],
+        "tenthPull": [
+          { "id": "pickup_3s", "label": "픽업 아카이브 ★3",    "rarity": 3, "rate": 0.7,  "poolRef": "pickup",     "verified": true },
+          { "id": "other_3s",  "label": "픽업 외 아카이브 ★3", "rarity": 3, "rate": 2.3,  "poolRef": "archive_3s", "verified": true },
+          { "id": "all_2s",    "label": "모든 ★2",             "rarity": 2, "rate": 97.0, "poolRef": "normal_2s",  "verified": true }
         ]
       },
       "roster": {
         "composition": ["초기 출시 ★3", "상점/임무 하드 파밍 가능 ★3", "통상 ★1·★2"],
         "userSelectsPickup": true,
-        "sizeAsOf": { "date": "2025-09-23", "count": 38 },
+        "sizeAsOf": { "date": "2026-09-19", "count": 38 },
         "mutuallyExclusiveWithNormalPool": true
       },
       "notes": [
