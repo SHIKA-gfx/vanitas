@@ -31,3 +31,7 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Paraglide
+src/lib/paraglide
+project.inlang/cache/

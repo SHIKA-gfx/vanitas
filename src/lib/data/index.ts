@@ -16,26 +16,40 @@ import type {
 	RateVariant
 } from './types';
 
-const config = gameConfigJson as unknown as GameConfig;
-const banners = bannerTypesJson as unknown as BannerTypesFile;
-const pools = poolSizesJson as unknown as PoolSizesFile;
+/** 게임 데이터의 서버 구분. 로케일(UI 언어)과는 별개 축이다. */
+export type ServerId = 'ko' | 'ja';
 
-export function getGameConfig(): GameConfig {
-	return config;
+const datasets = {
+	ko: {
+		config: gameConfigJson as unknown as GameConfig,
+		banners: bannerTypesJson as unknown as BannerTypesFile,
+		pools: poolSizesJson as unknown as PoolSizesFile
+	}
+	// ja는 3단계에서 data/ja/ 를 추가한 뒤 여기에 한 줄 더한다.
+};
+
+function dataset(server: ServerId) {
+	const set = datasets[server as 'ko'];
+	if (!set) throw new Error(`아직 지원하지 않는 서버: ${server}`);
+	return set;
 }
 
-export function listBannerTypes(koOnly = true): BannerType[] {
-	return banners.bannerTypes.filter((b) => !koOnly || b.availableInKo);
+export function getGameConfig(server: ServerId = 'ko'): GameConfig {
+	return dataset(server).config;
 }
 
-export function getBannerType(id: string): BannerType {
-	const found = banners.bannerTypes.find((b) => b.id === id);
+export function listBannerTypes(koOnly = true, server: ServerId = 'ko'): BannerType[] {
+	return dataset(server).banners.bannerTypes.filter((b) => !koOnly || b.availableInKo);
+}
+
+export function getBannerType(id: string, server: ServerId = 'ko'): BannerType {
+	const found = dataset(server).banners.bannerTypes.find((b) => b.id === id);
 	if (!found) throw new Error(`알 수 없는 배너 타입: ${id}`);
 	return found;
 }
 
-export function getPointPool(id: string): PointPool {
-	const found = banners.pointPools.find((p) => p.id === id);
+export function getPointPool(id: string, server: ServerId = 'ko'): PointPool {
+	const found = dataset(server).banners.pointPools.find((p) => p.id === id);
 	if (!found) throw new Error(`알 수 없는 포인트 풀: ${id}`);
 	return found;
 }
@@ -43,22 +57,29 @@ export function getPointPool(id: string): PointPool {
 /** 배너의 확률 그룹. 해당 variant가 없으면 undefined. */
 export function getRateGroups(
 	bannerId: string,
-	variant: RateVariant = 'default'
+	variant: RateVariant = 'default',
+	server: ServerId = 'ko'
 ): RateGroup[] | undefined {
-	return getBannerType(bannerId).rateGroups[variant];
+	return getBannerType(bannerId, server).rateGroups[variant];
+}
+
+/** getPoolEntry / getPerUnitRate 의 공통 옵션 */
+export interface PoolLookup {
+	/** 이 날짜 이하의 스냅샷 중 가장 최신을 쓴다. 생략하면 전체에서 최신. */
+	asOf?: string;
+	/** true면 10회차 보정표의 풀을 찾는다. */
+	tenthPull?: boolean;
+	server?: ServerId;
 }
 
 /**
  * 지정 시점에 유효한 풀 크기.
  * asOf 이하의 스냅샷 중 가장 최신을 쓴다. 없으면 undefined.
  */
-export function getPoolEntry(
-	poolRef: string,
-	options: { asOf?: string; tenthPull?: boolean } = {}
-): PoolEntry | undefined {
-	const { asOf, tenthPull = false } = options;
-	const candidates = pools.snapshots
-		.filter((s) => !asOf || s.asOf <= asOf)
+export function getPoolEntry(poolRef: string, options: PoolLookup = {}): PoolEntry | undefined {
+	const { asOf, tenthPull = false, server = 'ko' } = options;
+	const candidates = dataset(server)
+		.pools.snapshots.filter((s) => !asOf || s.asOf <= asOf)
 		.sort((a, b) => b.asOf.localeCompare(a.asOf));
 
 	for (const snap of candidates) {
@@ -73,10 +94,7 @@ export function getPoolEntry(
  * 저장된 perUnitRate가 아니라 그룹 확률 ÷ 풀 크기로 계산한다 (파생값 비저장 원칙).
  * 풀 크기를 알 수 없으면 null.
  */
-export function getPerUnitRate(
-	group: RateGroup,
-	options: { asOf?: string; tenthPull?: boolean } = {}
-): number | null {
+export function getPerUnitRate(group: RateGroup, options: PoolLookup = {}): number | null {
 	if (group.poolRef === 'pickup') return group.rate; // 픽업은 1명이 그룹 전체를 차지
 	if (group.poolRef === 'dynamic') return null;
 	const entry = getPoolEntry(group.poolRef, options);
