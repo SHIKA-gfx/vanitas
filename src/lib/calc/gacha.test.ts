@@ -4,6 +4,7 @@ import {
 	evaluatePity,
 	expectedPulls,
 	perUnitRate,
+	pointVerdict,
 	probAtLeastOne,
 	probAtLeastOneTwoStar,
 	probabilityCurve,
@@ -214,5 +215,116 @@ describe('probabilityCurve', () => {
 		const curve = probabilityCurve(PICKUP_RATE, 200, 7);
 		expect(curve[0]).toEqual({ pulls: 0, probability: 0 });
 		expect(curve.at(-1)?.pulls).toBe(200);
+	});
+});
+
+describe('pointVerdict — 결과 카드 분기', () => {
+	const base = { costPerPull: COST, targetRate: PICKUP_RATE, ticketPulls: 0 };
+
+	it('천장에 딱 닿으면 확정, 남는 청휘석 0', () => {
+		expect(
+			pointVerdict({ ...base, gems: 24000, availablePulls: 200, pullsToPity: 200 })
+		).toEqual({
+			kind: 'guaranteed',
+			pullsToPity: 200,
+			probabilityBeforePity: expect.closeTo(0.75461, 5),
+			leftoverGemsAtPity: 0
+		});
+	});
+
+	it('여유가 있으면 천장까지 쓰고 남는 양을 돌려준다', () => {
+		const v = pointVerdict({ ...base, gems: 30000, availablePulls: 250, pullsToPity: 200 });
+		expect(v).toMatchObject({ kind: 'guaranteed', leftoverGemsAtPity: 6000 });
+	});
+
+	it('보유 포인트만큼 천장이 가까워진다', () => {
+		const v = pointVerdict({ ...base, gems: 24000, availablePulls: 200, pullsToPity: 150 });
+		expect(v.kind).toBe('guaranteed');
+		if (v.kind !== 'guaranteed') return;
+		expect(v.leftoverGemsAtPity).toBe(6000);
+		expect(v.probabilityBeforePity).toBeCloseTo(0.65135, 5);
+	});
+
+	it('모집권을 먼저 쓴다', () => {
+		// 22000 = 183연 + 모집권 20연 = 203연. 청휘석으로는 180연만 필요
+		const v = pointVerdict({
+			...base,
+			gems: 22000,
+			ticketPulls: 20,
+			availablePulls: 203,
+			pullsToPity: 200
+		});
+		expect(v).toMatchObject({ kind: 'guaranteed', leftoverGemsAtPity: 400 });
+	});
+
+	it('부족분은 자투리 청휘석을 뺀 "더 모아야 할 양"이다', () => {
+		// 20000 = 166연 + 자투리 80, 모집권 20연 → 186연. 14연 부족
+		// 14 × 120 = 1680이 아니라 21600 - 20000 = 1600
+		const v = pointVerdict({
+			...base,
+			gems: 20000,
+			ticketPulls: 20,
+			availablePulls: 186,
+			pullsToPity: 200
+		});
+		expect(v).toMatchObject({ kind: 'short', shortfallPulls: 14, shortfallGems: 1600 });
+		if (v.kind === 'short') expect(v.probability ?? 0).toBeCloseTo(0.72926, 5);
+	});
+
+	it('이미 교환 가능하면 exchange_now', () => {
+		expect(pointVerdict({ ...base, gems: 0, availablePulls: 0, pullsToPity: 0 })).toEqual({
+			kind: 'exchange_now'
+		});
+	});
+
+	it('자투리 청휘석만 있어도 보유분 0으로 본다', () => {
+		const v = pointVerdict({ ...base, gems: 100, availablePulls: 0, pullsToPity: 200 });
+		expect(v).toMatchObject({ kind: 'short', probability: null, shortfallGems: 23900 });
+	});
+
+	it('보유분이 0이면 확률은 null(숨김), 천장 비용 전체가 부족분', () => {
+		expect(pointVerdict({ ...base, gems: 0, availablePulls: 0, pullsToPity: 200 })).toEqual({
+			kind: 'short',
+			pullsToPity: 200,
+			probability: null,
+			shortfallPulls: 200,
+			shortfallGems: 24000
+		});
+	});
+
+	it('판정은 연차 기준 천장 도달 여부와 항상 일치한다', () => {
+		for (let gems = 0; gems <= 30000; gems += 37) {
+			for (const tickets of [0, 7, 20]) {
+				const b = pullBudget({ gems, singleTickets: tickets, costPerPull: COST });
+				const v = pointVerdict({
+					...base,
+					gems,
+					ticketPulls: b.fromTickets,
+					availablePulls: b.total,
+					pullsToPity: 200
+				});
+				expect(v.kind === 'guaranteed').toBe(b.total >= 200);
+			}
+		}
+	});
+});
+
+describe('evaluatePickup — verdict 연결', () => {
+	it('포인트 방식이면 verdict를 채운다', () => {
+		const r = evaluatePickup({
+			budget: { gems: 12000, costPerPull: COST },
+			targetRate: PICKUP_RATE,
+			pity: { system: 'point_exchange', currentPoints: 50, pityThreshold: PITY }
+		});
+		expect(r.verdict).toMatchObject({ kind: 'short', shortfallPulls: 50, shortfallGems: 6000 });
+	});
+
+	it('차지 방식은 아직 판정하지 않는다', () => {
+		const r = evaluatePickup({
+			budget: { gems: 24000, costPerPull: COST },
+			targetRate: PICKUP_RATE,
+			pity: { system: 'charge', currentCharge: 0, halfThreshold: 100, fullThreshold: 200 }
+		});
+		expect(r.verdict).toEqual({ kind: 'unsupported' });
 	});
 });

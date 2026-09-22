@@ -194,7 +194,10 @@ export interface PointPityResult {
 	pullsToPity: number;
 	/** 보유분으로 모자라는 연차 */
 	shortfallPulls: number;
-	/** 모자라는 연차를 채우는 데 필요한 청휘석 */
+	/**
+	 * 모자라는 연차 × 1회 비용. 자투리 청휘석은 반영하지 않는다.
+	 * 화면에 보여줄 값은 Verdict의 shortfallGems를 쓴다.
+	 */
 	shortfallGems: number;
 	/** 보유분을 전부 소비했을 때의 포인트 (교환 시 차감은 반영하지 않음) */
 	pointsAfterAllPulls: number;
@@ -277,6 +280,88 @@ function gapToThreshold(current: number, threshold: number, perPull: number): nu
 }
 
 // ---------------------------------------------------------------------------
+// 판정
+// ---------------------------------------------------------------------------
+
+/**
+ * 결과 카드의 분기. 화면은 kind로 메시지 키를 고르고, 숫자만 채운다.
+ *
+ * 포인트 방식에서 헤드라인은 "획득 확률"이 아니라 천장 도달 여부다.
+ * 천장에 닿으면 교환으로 확정 획득이므로, `1-(1-p)^n`은
+ * "천장 전에 뽑기로 나올 확률"이라는 보조 정보로 내려간다.
+ *
+ * 평균 소비 청휘석은 화면에 쓰지 않는다 (2026-09-22 결정).
+ * 한 번 뽑는 사용자가 실제로 겪는 값이 아니기 때문. 단 expectedPulls는
+ * 플래너의 기대값 모드에서 쓰이므로 계산 함수는 유지한다.
+ */
+export type Verdict =
+	/** 이미 교환 가능한 포인트가 있다 */
+	| { kind: 'exchange_now' }
+	/** 보유분으로 천장까지 닿는다 */
+	| {
+			kind: 'guaranteed';
+			pullsToPity: number;
+			/** 천장에 닿기 전(천장에 닿는 마지막 뽑기 포함) 뽑기로 나올 확률 */
+			probabilityBeforePity: number;
+			/** 천장까지 뽑아도 남는 청휘석. 모집권을 먼저 쓴다고 가정 */
+			leftoverGemsAtPity: number;
+	  }
+	/** 천장까지 모자란다 */
+	| {
+			kind: 'short';
+			pullsToPity: number;
+			/**
+			 * 보유분을 전부 썼을 때 획득 확률.
+			 * 보유분이 0이면 null — 화면은 확률 칸을 숨기고 부족분만 보여준다 (2026-09-22 결정)
+			 */
+			probability: number | null;
+			shortfallPulls: number;
+			shortfallGems: number;
+	  }
+	/** 차지 방식 — 반천장의 픽업 확률 반영 전까지 판정하지 않는다 */
+	| { kind: 'unsupported' };
+
+export interface PointVerdictInput {
+	gems: number;
+	/** 모집권으로 할 수 있는 연차 (1회권 + 10회권 × 10) */
+	ticketPulls: number;
+	costPerPull: number;
+	/** 보유 재화로 가능한 총 연차 */
+	availablePulls: number;
+	pullsToPity: number;
+	targetRate: number;
+}
+
+export function pointVerdict(input: PointVerdictInput): Verdict {
+	const { gems, ticketPulls, costPerPull, availablePulls, pullsToPity, targetRate } = input;
+
+	if (pullsToPity <= 0) return { kind: 'exchange_now' };
+
+	// 모집권을 먼저 쓰고, 나머지를 청휘석으로 채운다.
+	// 남는 청휘석과 부족한 청휘석을 같은 식의 양쪽으로 계산하므로 둘이 어긋나지 않는다.
+	// (10연 할인이 생기면 gemsNeeded 계산을 pullBudget과 같은 방식으로 바꿔야 한다)
+	const gemsNeeded = Math.max(0, pullsToPity - ticketPulls) * costPerPull;
+
+	if (gems >= gemsNeeded) {
+		return {
+			kind: 'guaranteed',
+			pullsToPity,
+			probabilityBeforePity: probAtLeastOne(targetRate, pullsToPity),
+			leftoverGemsAtPity: gems - gemsNeeded
+		};
+	}
+
+	return {
+		kind: 'short',
+		pullsToPity,
+		probability: availablePulls > 0 ? probAtLeastOne(targetRate, availablePulls) : null,
+		shortfallPulls: pullsToPity - availablePulls,
+		// 연차로 바꾸지 못한 자투리 청휘석까지 반영한 "더 모아야 할 양"
+		shortfallGems: gemsNeeded - gems
+	};
+}
+
+// ---------------------------------------------------------------------------
 // 화면이 쓰는 묶음 함수
 // ---------------------------------------------------------------------------
 
@@ -300,6 +385,8 @@ export interface PickupEvaluation {
 	/** 천장을 무시한 기대 연차 — 비교용 */
 	expectedPullsUncapped: number;
 	pity: PityResult;
+	/** 결과 카드 분기 */
+	verdict: Verdict;
 	curve: CurvePoint[];
 }
 
@@ -316,8 +403,21 @@ export function evaluatePickup(input: PickupEvaluationInput): PickupEvaluation {
 	const pityCap =
 		pity.system === 'point_exchange' ? pity.pullsToPity : pity.full.pullsTo;
 
+	const verdict: Verdict =
+		pity.system === 'point_exchange'
+			? pointVerdict({
+					gems: input.budget.gems,
+					ticketPulls: budget.fromTickets,
+					costPerPull,
+					availablePulls: budget.total,
+					pullsToPity: pity.pullsToPity,
+					targetRate: input.targetRate
+				})
+			: { kind: 'unsupported' };
+
 	return {
 		budget,
+		verdict,
 		probability: probAtLeastOne(input.targetRate, budget.total),
 		expectedPulls: expectedPulls(input.targetRate, pityCap),
 		expectedPullsUncapped: expectedPulls(input.targetRate),
