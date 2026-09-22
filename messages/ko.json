@@ -2,6 +2,13 @@
 	"$schema": "https://inlang.com/schema/inlang-message-format",
 	"app_title": "VANITAS",
 	"app_tagline": "블루 아카이브 재화·픽업 플래너",
+	"unit_pulls": "{count}연",
+	"pity_page_title": "천장·확률 계산기",
+	"pity_input_banner": "모집",
+	"pity_input_gems": "보유 청휘석",
+	"pity_input_single_tickets": "1회 모집 티켓",
+	"pity_input_ten_tickets": "10회 모집 티켓",
+	"pity_banner_preparing": "{name} (준비 중)",
 	"pity_verdict_exchange_now": "지금 바로 교환할 수 있어요",
 	"pity_verdict_guaranteed": "확정으로 데려올 수 있어요",
 	"pity_verdict_short": "천장까지 청휘석 {gems}개 부족해요",
@@ -13,7 +20,12 @@
 	"pity_metric_pulls_to_pity": "천장까지 더 필요",
 	"pity_note_no_pick_through": "특별 픽업 학생은 픽뚫로 얻을 수 없어요. 놓치면 복각까지 기다려야 해요.",
 	"pity_badge_estimated": "추정 확률",
+	"pity_detail_total_pulls": "가능한 연차",
+	"pity_detail_rate": "1회 획득 확률",
+	"pity_curve_title": "연차별 획득 확률",
+	"pity_curve_budget": "보유 {count}연",
+	"pity_curve_pity": "천장 {count}연",
 	"pity_fail_no_pity": "이 모집에는 천장이 없어요",
 	"pity_fail_no_target_group": "이 모집에서 고를 수 있는 목표가 없어요",
-	"pity_fail_unknown_pool_size": "풀 크기 정보가 아직 없어 확률을 계산할 수 없어요"
+	"pity_fail_unknown_pool_size": "이 모집은 확률 정보를 모으는 중이에요. 준비되는 대로 계산을 열어둘게요."
 }

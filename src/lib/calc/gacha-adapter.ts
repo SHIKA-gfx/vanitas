@@ -136,3 +136,17 @@ export function evaluateBanner(query: GachaQuery): GachaResult {
 		evaluation
 	};
 }
+
+/**
+ * 배너를 지금 계산할 수 있는지 미리 확인한다. 계산할 수 없으면 그 이유를 돌려준다.
+ * 배너 선택지에 "준비 중" 표시를 붙이는 데 쓴다.
+ * 판정 기준을 evaluateBanner와 하나로 유지하려고 같은 함수를 빈 입력으로 호출한다.
+ */
+export function bannerAvailability(
+	bannerId: string,
+	options: { asOf?: string; server?: ServerId } = {}
+): GachaFailure | null {
+	const r = evaluateBanner({ bannerId, gems: 0, currentPoints: 0, ...options });
+	return r.ok ? null : r.reason;
+}
+

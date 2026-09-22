@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { getBannerType } from '$lib/data';
-import { defaultTargetGroup, evaluateBanner, listTargetGroups } from './gacha-adapter';
+import {
+	bannerAvailability,
+	defaultTargetGroup,
+	evaluateBanner,
+	listTargetGroups
+} from './gacha-adapter';
 
 /**
  * 실제 data/ko JSON을 읽는 통합 테스트.
@@ -67,3 +72,18 @@ describe('evaluateBanner', () => {
 		expect(r).toMatchObject({ ok: false, reason: 'no_target_group' });
 	});
 });
+
+describe('bannerAvailability', () => {
+	it('계산할 수 있는 배너는 null', () => {
+		expect(bannerAvailability('pickup_normal', { asOf: AS_OF })).toBeNull();
+		expect(bannerAvailability('standard', { asOf: AS_OF })).toBeNull();
+	});
+
+	it('evaluateBanner와 같은 이유를 돌려준다', () => {
+		for (const id of ['pickup_normal', 'standard', 'archive']) {
+			const r = evaluateBanner({ bannerId: id, gems: 0, currentPoints: 0, asOf: AS_OF });
+			expect(bannerAvailability(id, { asOf: AS_OF })).toBe(r.ok ? null : r.reason);
+		}
+	});
+});
+
