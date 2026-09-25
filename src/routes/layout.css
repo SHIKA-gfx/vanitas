@@ -1,1 +1,24 @@
 @import 'tailwindcss';
+
+/*
+ * VANITAS 디자인 토큰. 정본은 이 파일이다 (vanitas-design.md 머리말).
+ *
+ * 값은 vanitas-design.md 2-3의 초안이다. 디자인 통일 작업 때 여기 값만 고치면
+ * 사이트 전체가 바뀐다. 컴포넌트에는 HEX를 직접 쓰지 않고 토큰 이름만 쓴다.
+ *   bg-brand, text-ink, border-navy/15 ...
+ *
+ * 규칙 (디자인 문서 2-3)
+ * - cyan·sky는 흰 바탕 위 글자·아이콘 금지 (1.7:1)
+ * - 본문 크기 글자·작은 버튼은 brand가 아니라 brand-strong
+ */
+@theme {
+	--color-brand: #1288f8;
+	--color-brand-strong: #0a6fd6;
+	--color-ink: #2b2b2b;
+	--color-navy: #2a425b;
+	--color-cyan: #00d6fa;
+	--color-sky: #7cd0ff;
+	--color-surface: #ffffff;
+	--color-wash: #f2f9ff;
+}
+
