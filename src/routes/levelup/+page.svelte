@@ -278,7 +278,9 @@
 					bind:value={apPurchases}
 					max={ap.purchase.maxPurchasesPerDay}
 					help={purchaseHelp}
-					hint={purchaseCost ? m.levelup_purchases_hint({ gems: formatInt(purchaseCost) }) : undefined}
+					hint={purchaseCost
+						? m.levelup_purchases_hint({ gems: formatInt(purchaseCost) })
+						: undefined}
 				/>
 			</div>
 		</Panel>

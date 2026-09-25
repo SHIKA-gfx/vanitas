@@ -400,8 +400,7 @@ export function evaluatePickup(input: PickupEvaluationInput): PickupEvaluation {
 			? evaluatePity({ ...input.pity, availablePulls: budget.total, costPerPull })
 			: evaluatePity({ ...input.pity, availablePulls: budget.total, costPerPull });
 
-	const pityCap =
-		pity.system === 'point_exchange' ? pity.pullsToPity : pity.full.pullsTo;
+	const pityCap = pity.system === 'point_exchange' ? pity.pullsToPity : pity.full.pullsTo;
 
 	const verdict: Verdict =
 		pity.system === 'point_exchange'
@@ -422,11 +421,7 @@ export function evaluatePickup(input: PickupEvaluationInput): PickupEvaluation {
 		expectedPulls: expectedPulls(input.targetRate, pityCap),
 		expectedPullsUncapped: expectedPulls(input.targetRate),
 		pity,
-		curve: probabilityCurve(
-			input.targetRate,
-			Math.max(budget.total, pityCap),
-			input.curveStep ?? 1
-		)
+		curve: probabilityCurve(input.targetRate, Math.max(budget.total, pityCap), input.curveStep ?? 1)
 	};
 }
 
