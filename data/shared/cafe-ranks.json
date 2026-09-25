@@ -9,7 +9,8 @@
     "notes": [
       "AP 생산은 1호점에서만 이루어진다. 2호점은 AP를 생산하지 않으므로 계산 입력에 포함하지 않는다.",
       "출처 [22](디시, 2022)의 7랭크 최대 보관 600은 오류. 자체 모순이 있어 [23]의 530을 채택했다.",
-      "baseProductionPerHour / maxProductionPerHour는 formulas로 재계산 가능하므로 저장하지 않는다."
+      "baseProductionPerHour / maxProductionPerHour는 formulas로 재계산 가능하므로 저장하지 않는다.",
+      "AP 소수점은 매시간 버리지 않고 내부에 누적한 뒤 수확할 때 버린다 (formulas.accumulatedAp). 2026-09-25 게임 내 관찰: 수확 후 1시간 30, 2시간 61 (매시간 버림이면 60)."
     ]
   },
   "formulas": {
