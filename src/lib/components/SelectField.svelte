@@ -40,7 +40,11 @@
 		{/each}
 	</select>
 	{#if help}
-		<p id="{id}-help" hidden={!helpOpen} class="mt-2 rounded bg-wash p-3 text-xs leading-relaxed text-navy">
+		<p
+			id="{id}-help"
+			hidden={!helpOpen}
+			class="mt-2 rounded bg-wash p-3 text-xs leading-relaxed text-navy"
+		>
 			{help}
 		</p>
 	{/if}

@@ -43,7 +43,10 @@
 		{:else if v.kind === 'guaranteed'}
 			<p class="mb-3 text-xl text-ink">{m.pity_verdict_guaranteed()}</p>
 			<div class="grid grid-cols-2 gap-2">
-				<Metric label={m.pity_metric_before_pity()} value={formatPercent(v.probabilityBeforePity)} />
+				<Metric
+					label={m.pity_metric_before_pity()}
+					value={formatPercent(v.probabilityBeforePity)}
+				/>
 				{#if v.leftoverGemsAtPity > 0}
 					<Metric label={m.pity_metric_leftover()} value={formatInt(v.leftoverGemsAtPity)} />
 				{:else}

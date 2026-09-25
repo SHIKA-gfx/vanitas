@@ -79,9 +79,10 @@ describe('expectedPulls', () => {
 describe('probAtLeastOneTwoStar — 10연 블록 분기', () => {
 	it('10회차 확률이 별도로 적용된다', () => {
 		// 1~9회차 1%, 10회차 5% → 1 - 0.99^9 × 0.95
-		expect(
-			probAtLeastOneTwoStar({ rateNormal: 0.01, rateTenth: 0.05, pulls: 10 })
-		).toBeCloseTo(0.1321586, 7);
+		expect(probAtLeastOneTwoStar({ rateNormal: 0.01, rateTenth: 0.05, pulls: 10 })).toBeCloseTo(
+			0.1321586,
+			7
+		);
 	});
 
 	it('블록 중간에서 시작하면 10회차를 더 빨리 만난다', () => {
@@ -222,9 +223,7 @@ describe('pointVerdict — 결과 카드 분기', () => {
 	const base = { costPerPull: COST, targetRate: PICKUP_RATE, ticketPulls: 0 };
 
 	it('천장에 딱 닿으면 확정, 남는 청휘석 0', () => {
-		expect(
-			pointVerdict({ ...base, gems: 24000, availablePulls: 200, pullsToPity: 200 })
-		).toEqual({
+		expect(pointVerdict({ ...base, gems: 24000, availablePulls: 200, pullsToPity: 200 })).toEqual({
 			kind: 'guaranteed',
 			pullsToPity: 200,
 			probabilityBeforePity: expect.closeTo(0.75461, 5),

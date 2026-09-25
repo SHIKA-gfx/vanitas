@@ -66,11 +66,7 @@
 	<div class="md:col-start-1 md:row-span-2 md:row-start-2">
 		<Panel>
 			<div class="flex flex-col gap-3">
-				<SelectField
-					label={m.pity_input_banner()}
-					bind:value={bannerId}
-					options={bannerOptions}
-				/>
+				<SelectField label={m.pity_input_banner()} bind:value={bannerId} options={bannerOptions} />
 				<NumberField label={m.pity_input_gems()} bind:value={gems} />
 				<div class="grid grid-cols-2 gap-3">
 					<NumberField label={m.pity_input_single_tickets()} bind:value={singleTickets} />

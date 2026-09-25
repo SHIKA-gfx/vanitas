@@ -33,13 +33,17 @@
 	const fromLevel = $derived(Math.floor(points[0].level));
 	const toLevel = $derived(Math.floor(points[points.length - 1].level));
 	const yMin = $derived(fromLevel);
-	const yMax = $derived(Math.max(Math.ceil(points[points.length - 1].level), target ?? 0, yMin + 1));
+	const yMax = $derived(
+		Math.max(Math.ceil(points[points.length - 1].level), target ?? 0, yMin + 1)
+	);
 
 	const x = (day: number) => PAD.left + (day / Math.max(lastDay, 1)) * (W - PAD.left - PAD.right);
 	const y = (level: number) =>
 		PAD.top + (1 - (level - yMin) / (yMax - yMin)) * (H - PAD.top - PAD.bottom);
 
-	const path = $derived(sampled.map((p) => `${x(p.day).toFixed(1)},${y(p.level).toFixed(1)}`).join(' '));
+	const path = $derived(
+		sampled.map((p) => `${x(p.day).toFixed(1)},${y(p.level).toFixed(1)}`).join(' ')
+	);
 </script>
 
 <svg
@@ -53,14 +57,32 @@
 	})}
 >
 	<!-- 축 -->
-	<line x1={PAD.left} y1={H - PAD.bottom} x2={W - PAD.right} y2={H - PAD.bottom} class="stroke-navy/60" />
+	<line
+		x1={PAD.left}
+		y1={H - PAD.bottom}
+		x2={W - PAD.right}
+		y2={H - PAD.bottom}
+		class="stroke-navy/60"
+	/>
 	<line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={H - PAD.bottom} class="stroke-navy/60" />
 
 	<!-- 세로축 눈금: 시작·끝 레벨 -->
-	<text x={PAD.left - 6} y={y(yMin)} text-anchor="end" dominant-baseline="middle" class="fill-navy text-[10px]">
+	<text
+		x={PAD.left - 6}
+		y={y(yMin)}
+		text-anchor="end"
+		dominant-baseline="middle"
+		class="fill-navy text-[10px]"
+	>
 		Lv.{yMin}
 	</text>
-	<text x={PAD.left - 6} y={y(yMax)} text-anchor="end" dominant-baseline="middle" class="fill-navy text-[10px]">
+	<text
+		x={PAD.left - 6}
+		y={y(yMax)}
+		text-anchor="end"
+		dominant-baseline="middle"
+		class="fill-navy text-[10px]"
+	>
 		Lv.{yMax}
 	</text>
 

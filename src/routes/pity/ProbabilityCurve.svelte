@@ -32,7 +32,8 @@
 	const beyond = $derived(inRange.filter((c) => c.pulls >= availablePulls));
 	const atPity = $derived(inRange.at(-1)?.probability ?? 0);
 
-	const toPoints = (cs: CurvePoint[]) => cs.map((c) => `${x(c.pulls)},${y(c.probability)}`).join(' ');
+	const toPoints = (cs: CurvePoint[]) =>
+		cs.map((c) => `${x(c.pulls)},${y(c.probability)}`).join(' ');
 </script>
 
 <svg viewBox="0 0 {W} {H}" class="w-full" role="img" aria-label={m.pity_curve_title()}>
@@ -47,12 +48,32 @@
 	{/if}
 
 	<line x1={pad.l} y1={y(0)} x2={W - pad.r} y2={y(0)} class="stroke-navy/40" />
-	<line x1={pad.l} y1={y(0.5)} x2={W - pad.r} y2={y(0.5)} class="stroke-navy/20" stroke-dasharray="3 3" />
-	<line x1={pad.l} y1={y(1)} x2={W - pad.r} y2={y(1)} class="stroke-navy/20" stroke-dasharray="3 3" />
+	<line
+		x1={pad.l}
+		y1={y(0.5)}
+		x2={W - pad.r}
+		y2={y(0.5)}
+		class="stroke-navy/20"
+		stroke-dasharray="3 3"
+	/>
+	<line
+		x1={pad.l}
+		y1={y(1)}
+		x2={W - pad.r}
+		y2={y(1)}
+		class="stroke-navy/20"
+		stroke-dasharray="3 3"
+	/>
 
 	<polyline points={toPoints(owned)} fill="none" class="stroke-brand" stroke-width="2" />
 	{#if short}
-		<polyline points={toPoints(beyond)} fill="none" class="stroke-brand" stroke-width="2" stroke-dasharray="4 3" />
+		<polyline
+			points={toPoints(beyond)}
+			fill="none"
+			class="stroke-brand"
+			stroke-width="2"
+			stroke-dasharray="4 3"
+		/>
 	{/if}
 	<line
 		x1={x(pullsToPity)}

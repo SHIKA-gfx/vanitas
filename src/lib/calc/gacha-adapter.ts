@@ -149,4 +149,3 @@ export function bannerAvailability(
 	const r = evaluateBanner({ bannerId, gems: 0, currentPoints: 0, ...options });
 	return r.ok ? null : r.reason;
 }
-
