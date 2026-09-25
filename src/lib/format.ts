@@ -30,3 +30,14 @@ export function formatRate(p: number): string {
 		maximumSignificantDigits: 3
 	}).format(p);
 }
+
+/**
+ * 게임 날짜 'YYYY-MM-DD'를 로케일 긴 형식으로 (2027년 4월 27일).
+ * 날짜 문자열은 시간대가 없으므로 UTC로 읽고 UTC로 찍는다 — 기기 시간대가 끼어들지 않게.
+ */
+export function formatDate(date: string): string {
+	const [y, m, d] = date.split('-').map(Number);
+	return new Intl.DateTimeFormat(getLocale(), { dateStyle: 'long', timeZone: 'UTC' }).format(
+		new Date(Date.UTC(y, m - 1, d))
+	);
+}
