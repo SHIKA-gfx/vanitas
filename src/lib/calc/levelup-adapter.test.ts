@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
 	apPurchaseCostPerDay,
 	calculateLevelUp,
+	summarizeRecords,
 	tacticalPerDay,
+	toLevelCurve,
 	type LevelUpInput
 } from './levelup-adapter';
 
@@ -15,7 +17,7 @@ const base: LevelUpInput = {
 	cafeRank: 8,
 	cafeComfort: 4500,
 	disabledIncome: [],
-	apPackageDays: 0,
+	apPackage: 0,
 	tacticalRefreshes: null,
 	apPurchases: 0,
 	today: '2026-09-25',
@@ -52,10 +54,27 @@ describe('목표 레벨 모드 — 회귀 기준값', () => {
 		expect(off.kind === 'reached' && off.days).toBeGreaterThan(214);
 	});
 
-	it('2주 패키지는 입력한 일수만큼만', () => {
-		const r = run({ apPackageDays: 14 });
+	it('2주 패키지 1회는 14일분만', () => {
 		// 150 × 14 = 2,100 AP ≈ 2일 앞당김
-		expect(r).toMatchObject({ kind: 'reached', days: 212 });
+		expect(run({ apPackage: 1 })).toMatchObject({
+			kind: 'reached',
+			days: 212,
+			cost: { apPackagePurchases: 1 }
+		});
+	});
+
+	it('2주 패키지를 계속 사면 매일 150, 구매 횟수는 올림', () => {
+		// 하루 약 1,193.6 AP → 187일, 187 / 14 = 13.4 → 14회
+		expect(run({ apPackage: 'continuous' })).toMatchObject({
+			kind: 'reached',
+			days: 187,
+			cost: { apPackagePurchases: 14 }
+		});
+	});
+
+	it('정한 횟수보다 먼저 도달하면 실제로 산 횟수만 센다', () => {
+		const r = run({ goal: { mode: 'level', target: 61 }, apPackage: 10 });
+		expect(r).toMatchObject({ kind: 'reached', days: 4, cost: { apPackagePurchases: 1 } });
 	});
 
 	it('보유 AP만으로 도달하면 0일, 비용 0', () => {
@@ -63,7 +82,7 @@ describe('목표 레벨 모드 — 회귀 기준값', () => {
 			kind: 'reached',
 			days: 0,
 			date: '2026-09-25',
-			cost: { pyroxene: 0, days: 0 }
+			cost: { pyroxene: 0, apPackagePurchases: 0, days: 0 }
 		});
 	});
 
@@ -111,7 +130,8 @@ describe('입력 검사 — 오류 칸을 돌려준다', () => {
 		[{ logins: 4 }, 'logins'],
 		[{ cafeRank: 11 }, 'cafeRank'],
 		[{ cafeComfort: 4501 }, 'cafeComfort'],
-		[{ apPackageDays: 15 }, 'apPackageDays'],
+		[{ apPackage: -1 }, 'apPackage'],
+		[{ apPackage: 1.5 }, 'apPackage'],
 		[{ tacticalRefreshes: 4 }, 'tacticalRefreshes'],
 		[{ apPurchases: 21 }, 'apPurchases'],
 		[{ goal: { mode: 'level', target: 91 } }, 'goal'],
@@ -129,5 +149,31 @@ describe('입력칸 옆 표시값', () => {
 	});
 	it('전술대회 하루 AP·코인', () => {
 		expect(tacticalPerDay(3)).toEqual({ ap: 360, coins: 210 });
+	});
+});
+
+describe('결과 보조', () => {
+	it('하루 평균 수급과 보너스 AP 합계', () => {
+		const r = run();
+		if (r.kind !== 'reached') throw new Error(r.kind);
+		const s = summarizeRecords(r.records);
+		expect(s.avgDailyAp).toBeGreaterThan(1040);
+		expect(s.avgDailyAp).toBeLessThan(1050);
+		expect(s.bonusAp).toBe(6330); // apMax(61~90) 합
+	});
+
+	it('0일 도달이면 평균 없음', () => {
+		const r = run({ goal: { mode: 'level', target: 61 }, currentAp: 3900 });
+		if (r.kind !== 'reached') throw new Error(r.kind);
+		expect(summarizeRecords(r.records).avgDailyAp).toBeNull();
+	});
+
+	it('곡선은 레벨 + 진행률, 최고 레벨은 정수', () => {
+		const r = run();
+		if (r.kind !== 'reached') throw new Error(r.kind);
+		const curve = toLevelCurve(r.records);
+		expect(curve[0]).toEqual({ day: 0, level: 60 });
+		expect(curve.at(-1)).toEqual({ day: 214, level: 90 });
+		expect(curve.every((p, i) => i === 0 || p.level >= curve[i - 1].level)).toBe(true);
 	});
 });

@@ -45,10 +45,13 @@ export interface LevelUpInput {
 	logins: number;
 	cafeRank: number;
 	cafeComfort: number;
-	/** 받지 않는 고정 수급의 id. 유료 패키지는 apPackageDays로 따로 다룬다 */
+	/** 받지 않는 고정 수급의 id. 기간 한정 유료 패키지는 apPackage로 따로 다룬다 */
 	disabledIncome: string[];
-	/** 2주 AP 패키지를 내일부터 받을 수 있는 일수 */
-	apPackageDays: number;
+	/**
+	 * 2주 AP 패키지를 내일부터 몇 번 연달아 살지. 0이면 사지 않음.
+	 * 'continuous'면 목표(또는 날짜)까지 끊기지 않고 계속 산다.
+	 */
+	apPackage: number | 'continuous';
 	/** 전술대회 상점 갱신 횟수. null이면 AP를 사지 않는다 */
 	tacticalRefreshes: number | null;
 	/** 하루 청휘석 AP 구매 횟수 */
@@ -67,7 +70,7 @@ export type LevelUpField =
 	| 'logins'
 	| 'cafeRank'
 	| 'cafeComfort'
-	| 'apPackageDays'
+	| 'apPackage'
 	| 'tacticalRefreshes'
 	| 'apPurchases'
 	| 'goal';
@@ -77,6 +80,8 @@ export interface LevelUpCost {
 	pyroxene: number;
 	/** 전술대회 상점에 쓰는 코인 합계 */
 	tacticalCoins: number;
+	/** 기간 한정 AP 패키지 구매 횟수 (중간에 목표에 닿으면 그만큼 줄어든다) */
+	apPackagePurchases: number;
 	/** 구매가 일어난 일수 */
 	days: number;
 }
@@ -120,15 +125,15 @@ function isIntIn(value: number, min: number, max: number): boolean {
 function checkInput(input: LevelUpInput, server: ServerId): LevelUpField | null {
 	const ap = getApConfig(server);
 	const ranks = listCafeRanks(server);
-	const packageItem = ap.fixedIncome.find((i) => i.durationDays !== undefined);
-
 	if (!isIntIn(input.currentAp, 0, Number.MAX_SAFE_INTEGER)) return 'currentAp';
 	if (!(LOGIN_OPTIONS as readonly number[]).includes(input.logins)) return 'logins';
 	if (!ranks.some((r) => r.rank === input.cafeRank)) return 'cafeRank';
 	if (!isIntIn(input.cafeComfort, 0, getCafeRank(input.cafeRank, server).maxComfort)) {
 		return 'cafeComfort';
 	}
-	if (!isIntIn(input.apPackageDays, 0, packageItem?.durationDays ?? 0)) return 'apPackageDays';
+	if (input.apPackage !== 'continuous' && !isIntIn(input.apPackage, 0, Number.MAX_SAFE_INTEGER)) {
+		return 'apPackage';
+	}
 	if (
 		input.tacticalRefreshes !== null &&
 		!isIntIn(input.tacticalRefreshes, 0, ap.tacticalShop.refresh.maxPerDay)
@@ -137,6 +142,18 @@ function checkInput(input: LevelUpInput, server: ServerId): LevelUpField | null 
 	}
 	if (!isIntIn(input.apPurchases, 0, ap.purchase.maxPurchasesPerDay)) return 'apPurchases';
 	return null;
+}
+
+/** 기간 한정 패키지 (2주 AP 패키지). 데이터에 하나만 있다고 본다 */
+function packageItemOf(server: ServerId) {
+	return getApConfig(server).fixedIncome.find((i) => i.durationDays !== undefined);
+}
+
+/** 패키지를 받는 마지막 날 (1일째부터 셈) */
+function packageLastDay(input: LevelUpInput, server: ServerId): number {
+	const item = packageItemOf(server);
+	if (!item?.durationDays) return 0;
+	return input.apPackage === 'continuous' ? Infinity : input.apPackage * item.durationDays;
 }
 
 function buildTable(server: ServerId): LevelStep[] {
@@ -161,7 +178,8 @@ function buildDailyAp(input: LevelUpInput, server: ServerId): DailyApFn {
 	const fixed = ap.fixedIncome.filter(
 		(i) => i.durationDays === undefined && !input.disabledIncome.includes(i.id)
 	);
-	const limited = ap.fixedIncome.filter((i) => i.durationDays !== undefined);
+	const pack = packageItemOf(server);
+	const packLastDay = packageLastDay(input, server);
 
 	return (day, level) => {
 		let total =
@@ -170,9 +188,7 @@ function buildDailyAp(input: LevelUpInput, server: ServerId): DailyApFn {
 			tactical +
 			purchased;
 		for (const item of fixed) total += spreadEvenly(item.ap, PERIOD_DAYS[item.period], day);
-		for (const item of limited) {
-			if (day <= input.apPackageDays) total += spreadEvenly(item.ap, PERIOD_DAYS[item.period], day);
-		}
+		if (pack && day <= packLastDay) total += spreadEvenly(pack.ap, PERIOD_DAYS[pack.period], day);
 		return total;
 	};
 }
@@ -183,7 +199,14 @@ function costFor(input: LevelUpInput, days: number, server: ServerId): LevelUpCo
 		input.tacticalRefreshes === null
 			? 0
 			: (tacticalPerDay(input.tacticalRefreshes, server)?.coins ?? 0);
-	return { pyroxene: perDayPyroxene * days, tacticalCoins: perDayCoins * days, days };
+	const duration = packageItemOf(server)?.durationDays ?? 0;
+	const packDays = Math.min(days, packageLastDay(input, server));
+	return {
+		pyroxene: perDayPyroxene * days,
+		tacticalCoins: perDayCoins * days,
+		apPackagePurchases: duration > 0 ? Math.ceil(packDays / duration) : 0,
+		days
+	};
 }
 
 const START_FIELD = {
@@ -251,4 +274,34 @@ export function calculateLevelUp(input: LevelUpInput): LevelUpOutcome {
 			};
 		}
 	}
+}
+
+// ---------------------------------------------------------------- 결과 보조
+
+/** 결과 카드 숫자: 하루 평균 수급(1일째부터)과 레벨업 보너스 AP 합계 */
+export function summarizeRecords(records: DayRecord[]): {
+	avgDailyAp: number | null;
+	bonusAp: number;
+} {
+	const days = records.filter((r) => r.day > 0);
+	const income = days.reduce((sum, r) => sum + r.apIncome, 0);
+	return {
+		avgDailyAp: days.length === 0 ? null : income / days.length,
+		bonusAp: records.reduce((sum, r) => sum + r.apBonus, 0)
+	};
+}
+
+export interface CurvePoint {
+	day: number;
+	/** 레벨 + 레벨 안 진행률 (Lv.60 절반 = 60.5). 최고 레벨은 정수 */
+	level: number;
+}
+
+/** 레벨 추이 그래프용 점 */
+export function toLevelCurve(records: DayRecord[], server: ServerId = 'ko'): CurvePoint[] {
+	const levels = getLevelTable(server).levels;
+	return records.map((r) => {
+		const need = levels[r.level - 1].expToNext;
+		return { day: r.day, level: need === null ? r.level : r.level + r.exp / need };
+	});
 }
