@@ -236,7 +236,7 @@ export function naturalDailyAp(apPerDay: number, logins: number, apMax: number):
  * (최대 쾌적도면 모든 랭크가 24시간 안팎에 만충이라 수확 횟수 차이가 거의 없다.)
  *
  * 소수점은 내부 누적 후 수확할 때 버린다 (cafe-ranks.json formulas.accumulatedAp).
- * 매시간 버림일 가능성은 게임 내 확인 전 — 이슈 참조. 바뀌면 이 함수만 고친다.
+ * 2026-09-25 게임 내 확인: 수확 후 1시간 30 → 2시간 61 (매시간 버림이었다면 60).
  * 1e-9는 부동소수 오차로 정수가 한 칸 내려가는 것을 막는다.
  */
 export function cafeDailyAp(apPerHour: number, maxStorage: number): number {
