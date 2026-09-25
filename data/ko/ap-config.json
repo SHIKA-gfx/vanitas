@@ -35,6 +35,18 @@
       { "fromCount": 16, "toCount": 20, "price": 300 }
     ]
   },
+  "tacticalShop": {
+    "currency": "tactical-coin",
+    "resetPeriod": "daily",
+    "apItems": [
+      { "ap": 30, "price": 15 },
+      { "ap": 60, "price": 30 }
+    ],
+    "refresh": { "price": 10, "maxPerDay": 3 },
+    "verified": true,
+    "verifiedAt": "2026-09-25",
+    "note": "갱신할 때마다 AP 상품 2종(30·60)을 다시 살 수 있다. 하루 최대 갱신 3회 → 90 AP × 4 = 360 AP, 코인 210."
+  },
   "expConversion": {
     "apToExp": 1,
     "note": "AP 1 소모당 계정 경험치 1. 레벨업 계산기의 스테이지 효율 변수가 1로 고정된다."
@@ -44,7 +56,6 @@
     { "id": "weekly-mission",    "name": "주간 미션",        "ap": 200, "period": "weekly" },
     { "id": "daily-free-pack",   "name": "일일 무료 패키지", "ap": 10,  "period": "daily" },
     { "id": "arona-attendance",  "name": "아로나 출석부",    "ap": 150, "period": "every10days" },
-    { "id": "tactical-shop",     "name": "전술대회 상점",    "ap": 90,  "period": "purchase", "maxCount": 4 },
     { "id": "ap-package-2week",  "name": "2주 AP 패키지",    "ap": 150, "period": "daily", "durationDays": 14, "paid": true }
   ]
 }
