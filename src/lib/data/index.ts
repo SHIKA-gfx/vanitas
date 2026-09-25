@@ -5,10 +5,17 @@
 import gameConfigJson from '../../../data/ko/game-config.json';
 import bannerTypesJson from '../../../data/ko/banner-types.json';
 import poolSizesJson from '../../../data/ko/pool-sizes.json';
+import apConfigJson from '../../../data/ko/ap-config.json';
+import levelTableJson from '../../../data/shared/level-table.json';
+import cafeRanksJson from '../../../data/shared/cafe-ranks.json';
 import type {
+	ApConfig,
 	BannerType,
 	BannerTypesFile,
+	CafeRank,
+	CafeRanksFile,
 	GameConfig,
+	LevelTableFile,
 	PointPool,
 	PoolEntry,
 	PoolSizesFile,
@@ -19,11 +26,19 @@ import type {
 /** 게임 데이터의 서버 구분. 로케일(UI 언어)과는 별개 축이다. */
 export type ServerId = 'ko' | 'ja';
 
+// 서버 공통 파일. 타입 단언 없이 대입해 JSON 구조가 타입과 어긋나면 빌드에서 걸린다.
+const levelTable: LevelTableFile = levelTableJson;
+const cafeRanks: CafeRanksFile = cafeRanksJson;
+
+// 공통 파일도 서버별 세트에 넣어 둔다. 호출하는 쪽은 어느 파일이 공통인지 몰라도 된다.
 const datasets = {
 	ko: {
 		config: gameConfigJson as unknown as GameConfig,
 		banners: bannerTypesJson as unknown as BannerTypesFile,
-		pools: poolSizesJson as unknown as PoolSizesFile
+		pools: poolSizesJson as unknown as PoolSizesFile,
+		ap: apConfigJson as ApConfig,
+		levels: levelTable,
+		cafe: cafeRanks
 	}
 	// ja는 3단계에서 data/ja/ 를 추가한 뒤 여기에 한 줄 더한다.
 };
@@ -99,4 +114,41 @@ export function getPerUnitRate(group: RateGroup, options: PoolLookup = {}): numb
 	if (group.poolRef === 'dynamic') return null;
 	const entry = getPoolEntry(group.poolRef, options);
 	return entry ? group.rate / entry.size : null;
+}
+// ---------------------------------------------------------------- 레벨·AP·카페
+
+export function getLevelTable(server: ServerId = 'ko'): LevelTableFile {
+	return dataset(server).levels;
+}
+
+/**
+ * 레벨 level에 도달할 때 받는 보너스 AP.
+ * 저장된 필드가 아니라 그 레벨의 apMax로 계산한다 (파생값 비저장 원칙). 1레벨은 0.
+ */
+export function getLevelUpBonusAp(level: number, server: ServerId = 'ko'): number {
+	const row = getLevelTable(server).levels.find((r) => r.level === level);
+	if (!row) throw new Error(`알 수 없는 레벨: ${level}`);
+	return level === 1 ? 0 : row.apMax;
+}
+
+export function getApConfig(server: ServerId = 'ko'): ApConfig {
+	return dataset(server).ap;
+}
+
+export function listCafeRanks(server: ServerId = 'ko'): CafeRank[] {
+	return dataset(server).cafe.ranks;
+}
+
+export function getCafeRank(rank: number, server: ServerId = 'ko'): CafeRank {
+	const found = listCafeRanks(server).find((r) => r.rank === rank);
+	if (!found) throw new Error(`알 수 없는 카페 랭크: ${rank}`);
+	return found;
+}
+
+/** 기본 생산만으로 만충까지 걸리는 시간 (cafe-ranks.json formulas.baseProductionPerHour) */
+const CAFE_BASE_FILL_HOURS = 96;
+
+/** 카페 시간당 AP 생산량. 쾌적도는 호출하는 쪽에서 범위를 확인한다. */
+export function getCafeApPerHour(rank: CafeRank, comfort: number): number {
+	return rank.maxStorage / CAFE_BASE_FILL_HOURS + comfort * rank.apPerComfort;
 }

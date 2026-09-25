@@ -135,3 +135,114 @@ export interface GameConfig {
 	};
 	[key: string]: unknown;
 }
+// ---------------------------------------------------------------- 레벨 (shared)
+
+/** apMax 증가 규칙의 한 구간 */
+export interface ApMaxIncrement {
+	fromLevel: number;
+	toLevel: number;
+	perLevel: number;
+}
+
+export interface LevelRow {
+	level: number;
+	/** 다음 레벨까지 필요한 경험치 (= 소요 AP). 최고 레벨은 null. */
+	expToNext: number | null;
+	/** 이 레벨에 도달하기까지의 누적 경험치 (1레벨은 0) */
+	expCumulative: number;
+	/** 이 레벨의 AP 최대치. 이 레벨에 도달할 때 받는 보너스 AP와 같다. */
+	apMax: number;
+}
+
+export interface LevelTableFile {
+	meta: Meta & { levelCap: number; verifiedBy?: string };
+	apMaxRule: { base: number; increments: ApMaxIncrement[] };
+	/** 검산 참조용. levels[]에서 재계산 가능하므로 계산에 쓰지 않는다. */
+	derived: {
+		totalExpToCap: number;
+		totalApToCap: number;
+		levelUpBonusApTotal: number;
+		netApToCap: number;
+		_comment?: string;
+	};
+	levels: LevelRow[];
+}
+
+// ---------------------------------------------------------------- 카페 (shared)
+
+export interface CafeRank {
+	rank: number;
+	maxComfort: number;
+	/** 쾌적도 1당 시간당 추가 생산 AP */
+	apPerComfort: number;
+	maxStorage: number;
+}
+
+export interface CafeRanksFile {
+	meta: Meta;
+	/** 사람이 읽는 공식 설명. 코드는 이 문자열을 해석하지 않는다. */
+	formulas: Record<string, string>;
+	patterns: Record<string, string>;
+	secondCafe: { producesAp: boolean; verifiedAt: string; note?: string };
+	ranks: CafeRank[];
+}
+
+// ---------------------------------------------------------------- AP
+
+export type ApIncomePeriod = 'daily' | 'weekly' | 'every10days';
+
+export interface ApFixedIncome {
+	id: string;
+	name: string;
+	ap: number;
+	period: ApIncomePeriod;
+	/** 기간 한정 수급 (예: 2주 패키지) */
+	durationDays?: number;
+	paid?: boolean;
+}
+
+export interface ApPriceTier {
+	fromCount: number;
+	toCount: number;
+	price: number;
+}
+
+/** 전술대회 상점의 AP 상품. 진열을 갱신할 때마다 같은 상품을 다시 살 수 있다. */
+export interface TacticalShop {
+	currency: string;
+	resetPeriod: 'daily';
+	apItems: { ap: number; price: number }[];
+	refresh: { price: number; maxPerDay: number };
+	verified: boolean;
+	verifiedAt: string;
+	note?: string;
+}
+
+export interface ApConfig {
+	meta: Meta;
+	recovery: {
+		minutesPerAp: number;
+		apPerHour: number;
+		apPerDay: number;
+		/** 보유 상한. 자연 회복은 이보다 먼저 레벨별 apMax에서 멈춘다. */
+		maxHoldingAp: number;
+		onLevelUp: {
+			exceedsMax: boolean;
+			overflowGoesToMail: boolean;
+			verified: boolean;
+			verifiedAt: string;
+			note?: string;
+		};
+	};
+	purchase: {
+		currency: string;
+		apPerPurchase: number;
+		maxPurchasesPerDay: number;
+		resetTime: string;
+		resetTimezone: string;
+		priceTiers: ApPriceTier[];
+	};
+	tacticalShop: TacticalShop;
+	expConversion: { apToExp: number; note?: string };
+	fixedIncome: ApFixedIncome[];
+}
