@@ -1,0 +1,75 @@
+{
+  "$schema": "../_schema/schedule.schema.json",
+  "meta": {
+    "id": "schedule",
+    "description": "한국 서버 콘텐츠 일정. 청휘석 수급 계산기의 레이드·이벤트 수급 시점과, 이후 플래너의 픽업 일정이 쓴다.",
+    "server": "ko",
+    "verifiedAt": "2026-09-26",
+    "sources": ["26", "27", "28", "29"],
+    "notes": [
+      "start / end는 게임 날짜(YYYY-MM-DD). end는 종료일로, 시즌 길이 = end - start (일).",
+      "status: announced = 공지·진행된 일정, estimated = 일본 서버 기준 추정(몰루로그 미래시·이벤트 목록).",
+      "목록이 끝난 뒤의 레이드는 cadence로 이어 붙이고 추정으로 표시한다. 이벤트는 목록 밖을 추정하지 않는다.",
+      "2026년 5~7월에 총력전·대결전이 함께 한 번씩 빠진 구간(56일)이 있다. 평균 주기가 아니라 일정표를 쓰는 이유.",
+      "대결전 #29 종료일은 원자료에 '25.04.28'로 적혀 있었으나 26.04.28의 오기로 보고 고쳤다.",
+      "강철대륙 공략전(2026-05-26 시작)은 종료일이 확인되지 않아 events에서 뺐다."
+    ]
+  },
+  "cadence": {
+    "totalAssault": { "intervalDays": 28, "durationDays": 7 },
+    "grandAssault": { "intervalDays": 28, "durationDays": 7 }
+  },
+  "raids": [
+    { "kind": "totalAssault", "season": 78, "name": "페로로지라",       "start": "2026-01-20", "end": "2026-01-27", "status": "announced" },
+    { "kind": "totalAssault", "season": 79, "name": "게부라",           "start": "2026-02-17", "end": "2026-02-24", "status": "announced" },
+    { "kind": "totalAssault", "season": 80, "name": "예소드",           "start": "2026-03-17", "end": "2026-03-24", "status": "announced" },
+    { "kind": "totalAssault", "season": 81, "name": "묘귀 쿠로카게",    "start": "2026-04-07", "end": "2026-04-14", "status": "announced" },
+    { "kind": "totalAssault", "season": 82, "name": "호버크래프트",     "start": "2026-05-05", "end": "2026-05-12", "status": "announced" },
+    { "kind": "totalAssault", "season": 83, "name": "비나",             "start": "2026-06-30", "end": "2026-07-07", "status": "announced" },
+    { "kind": "totalAssault", "season": 84, "name": "고즈",             "start": "2026-07-28", "end": "2026-08-04", "status": "announced" },
+    { "kind": "totalAssault", "season": 85, "name": "KAITEN FX Mk.0",   "start": "2026-08-25", "end": "2026-09-01", "status": "announced" },
+    { "kind": "totalAssault", "season": 86, "name": "드럼통 게",        "start": "2026-09-22", "end": "2026-09-29", "status": "announced" },
+    { "kind": "totalAssault", "season": 87, "name": "그레고리오",       "start": "2026-10-20", "end": "2026-10-27", "status": "estimated" },
+    { "kind": "totalAssault", "season": 88, "name": "예로니무스",       "start": "2026-11-24", "end": "2026-12-01", "status": "estimated" },
+    { "kind": "totalAssault", "season": 92, "name": "페로로지라",       "start": "2026-12-22", "end": "2026-12-29", "status": "estimated" },
+
+    { "kind": "grandAssault", "season": 25, "name": "비나",             "start": "2026-01-06", "end": "2026-01-13", "status": "announced" },
+    { "kind": "grandAssault", "season": 26, "name": "헤세드",           "start": "2026-02-03", "end": "2026-02-10", "status": "announced" },
+    { "kind": "grandAssault", "season": 27, "name": "시로 & 쿠로",      "start": "2026-03-03", "end": "2026-03-10", "status": "announced" },
+    { "kind": "grandAssault", "season": 28, "name": "예로니무스",       "start": "2026-03-31", "end": "2026-04-07", "status": "announced" },
+    { "kind": "grandAssault", "season": 29, "name": "KAITEN FX Mk.0",   "start": "2026-04-21", "end": "2026-04-28", "status": "announced" },
+    { "kind": "grandAssault", "season": 30, "name": "시로 & 쿠로",      "start": "2026-05-19", "end": "2026-05-26", "status": "announced" },
+    { "kind": "grandAssault", "season": 31, "name": "예로니무스",       "start": "2026-07-14", "end": "2026-07-21", "status": "announced" },
+    { "kind": "grandAssault", "season": 32, "name": "페로로지라",       "start": "2026-08-11", "end": "2026-08-18", "status": "announced" },
+    { "kind": "grandAssault", "season": 33, "name": "묘귀 쿠로카게",    "start": "2026-09-08", "end": "2026-09-15", "status": "announced" },
+    { "kind": "grandAssault", "season": 34, "name": "호버크래프트",     "start": "2026-10-06", "end": "2026-10-13", "status": "announced" },
+    { "kind": "grandAssault", "season": 35, "name": "호드",             "start": "2026-11-03", "end": "2026-11-10", "status": "estimated" },
+    { "kind": "grandAssault", "season": 36, "name": "비나",             "start": "2026-12-08", "end": "2026-12-15", "status": "estimated" },
+    { "kind": "grandAssault", "season": 37, "name": "시로 & 쿠로",      "start": "2027-01-05", "end": "2027-01-12", "status": "estimated" }
+  ],
+  "events": [
+    { "name": "Say-Bing!",                                   "kind": "rerun", "start": "2025-12-30", "end": "2026-01-06", "status": "announced" },
+    { "name": "우리는 오컬트 연구회!",                       "kind": "new",   "start": "2026-01-13", "end": "2026-01-27", "status": "announced" },
+    { "name": "Sheside outside",                             "kind": "rerun", "start": "2026-01-27", "end": "2026-02-10", "status": "announced" },
+    { "name": "누구를 위한 예술인가",                        "kind": "new",   "start": "2026-02-10", "end": "2026-03-03", "status": "announced" },
+    { "name": "마법소녀 헤비캘리버",                         "kind": "new",   "start": "2026-03-10", "end": "2026-03-24", "status": "announced" },
+    { "name": "월화몽소",                                    "kind": "rerun", "start": "2026-03-24", "end": "2026-03-31", "status": "announced" },
+    { "name": "겨울 하늘의 르네상스",                        "kind": "new",   "start": "2026-04-07", "end": "2026-04-21", "status": "announced" },
+    { "name": "Serenade Promenade",                          "kind": "rerun", "start": "2026-04-21", "end": "2026-04-28", "status": "announced" },
+    { "name": "불인의 길",                                   "kind": "new",   "start": "2026-04-28", "end": "2026-05-12", "status": "announced" },
+    { "name": "오욕내강",                                    "kind": "rerun", "start": "2026-05-12", "end": "2026-05-26", "status": "announced" },
+    { "name": "게임개발부 청소 대작전!",                     "kind": "new",   "start": "2026-06-30", "end": "2026-07-14", "status": "announced" },
+    { "name": "비밀의 미드나잇 파티",                        "kind": "rerun", "start": "2026-07-14", "end": "2026-07-21", "status": "announced" },
+    { "name": "키보토스・미확인 미스테리",                   "kind": "new",   "start": "2026-07-21", "end": "2026-08-04", "status": "announced" },
+    { "name": "Code: BOX 밀레니엄에 다가오는 그림자",       "kind": "rerun", "start": "2026-08-04", "end": "2026-08-18", "status": "announced" },
+    { "name": "Pray-Ball!",                                  "kind": "rerun", "start": "2026-09-01", "end": "2026-09-15", "status": "announced" },
+    { "name": "백에서 피어난 한 송이",                       "kind": "rerun", "start": "2026-09-29", "end": "2026-10-13", "status": "estimated" },
+    { "name": "람과천청",                                    "kind": "new",   "start": "2026-10-13", "end": "2026-10-27", "status": "estimated" },
+    { "name": "하이랜더 철도 폭주 사건",                     "kind": "rerun", "start": "2026-10-27", "end": "2026-11-10", "status": "estimated" },
+    { "name": "출항! 만마선",                                "kind": "new",   "start": "2026-11-17", "end": "2026-12-01", "status": "estimated" },
+    { "name": "팬데믹 해저드",                               "kind": "rerun", "start": "2026-12-01", "end": "2026-12-15", "status": "estimated" },
+    { "name": "DIVE into OCEAN!",                            "kind": "new",   "start": "2026-12-15", "end": "2026-12-29", "status": "estimated" },
+    { "name": "여름 하늘의 프로미스",                        "kind": "rerun", "start": "2026-12-29", "end": "2027-01-12", "status": "estimated" },
+    { "name": "It's our Engine!",                            "kind": "new",   "start": "2027-01-12", "end": "2027-01-26", "status": "estimated" }
+  ]
+}
