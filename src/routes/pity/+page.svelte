@@ -12,6 +12,7 @@
 	import Panel from '$lib/components/Panel.svelte';
 	import NumberField from '$lib/components/NumberField.svelte';
 	import SelectField from '$lib/components/SelectField.svelte';
+	import { getUserState } from '$lib/state/user-state.svelte';
 	import PityResult from './PityResult.svelte';
 	import ProbabilityCurve from './ProbabilityCurve.svelte';
 
@@ -26,18 +27,22 @@
 	}));
 
 	let bannerId = $state(banners.find((b) => b.id === 'pickup_normal')?.id ?? banners[0].id);
-	let gems = $state(0);
-	let singleTickets = $state(0);
-	let tenPullTickets = $state(0);
-	// 포인트는 풀별로 따로 기억한다. 배너를 바꾸면 해당 풀의 값이 불러와진다.
-	let pointsByPool = $state<Record<string, number>>({});
+	// 보유 재화는 다른 계산기와 함께 쓴다 (UserState)
+	const res = getUserState().resources;
+	// 포인트는 풀별로 따로 기억한다(UserState). 배너를 바꾸면 해당 풀의 값이 불러와진다.
 
 	const banner = $derived(banners.find((b) => b.id === bannerId) ?? banners[0]);
 	const pool = $derived(banner.pointPool ? getPointPool(banner.pointPool) : null);
-	const currentPoints = $derived(pool ? (pointsByPool[pool.id] ?? 0) : 0);
+	const currentPoints = $derived(pool ? (res.pointsByPool[pool.id] ?? 0) : 0);
 
 	const result = $derived(
-		evaluateBanner({ bannerId, gems, singleTickets, tenPullTickets, currentPoints })
+		evaluateBanner({
+			bannerId,
+			gems: res.gems,
+			singleTickets: res.singleTickets,
+			tenPullTickets: res.tenPullTickets,
+			currentPoints
+		})
 	);
 
 	const curve = $derived.by(() => {
@@ -67,18 +72,23 @@
 		<Panel>
 			<div class="flex flex-col gap-3">
 				<SelectField label={m.pity_input_banner()} bind:value={bannerId} options={bannerOptions} />
-				<NumberField label={m.pity_input_gems()} bind:value={gems} />
+				<NumberField label={m.pity_input_gems()} bind:value={res.gems} shared />
 				<div class="grid grid-cols-2 gap-3">
-					<NumberField label={m.pity_input_single_tickets()} bind:value={singleTickets} />
-					<NumberField label={m.pity_input_ten_tickets()} bind:value={tenPullTickets} />
+					<NumberField
+						label={m.pity_input_single_tickets()}
+						bind:value={res.singleTickets}
+						shared
+					/>
+					<NumberField label={m.pity_input_ten_tickets()} bind:value={res.tenPullTickets} shared />
 				</div>
 				{#if pool}
 					<NumberField
 						label={pool.name}
+						shared
 						bind:value={
 							() => currentPoints,
 							(v) => {
-								if (pool) pointsByPool[pool.id] = v;
+								if (pool) res.pointsByPool[pool.id] = v;
 							}
 						}
 					/>

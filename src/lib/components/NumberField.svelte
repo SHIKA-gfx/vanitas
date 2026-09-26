@@ -2,8 +2,10 @@
 	정수 입력칸. 청휘석·모집권·포인트처럼 0 이상의 정수만 받는다.
 	잘못된 값(빈칸, 음수, 소수)은 즉시 보정하고, 칸을 벗어날 때 표시도 맞춘다.
 	help를 주면 라벨 옆에 "?" 버튼이 붙는다 (SelectField와 같은 방식).
+	shared를 주면 다른 계산기와 함께 쓰는 값이라는 표시가 붙는다 (UserState 값).
 -->
 <script lang="ts">
+	import { m } from '$lib/paraglide/messages.js';
 	import HelpButton from './HelpButton.svelte';
 
 	interface Props {
@@ -15,6 +17,8 @@
 		hint?: string;
 		/** 왜 이 값을 묻는지, 값이 어떻게 쓰이는지 설명하는 문단 */
 		help?: string;
+		/** true면 다른 계산기와 함께 쓰는 값 (한 곳에서 바꾸면 다른 계산기에도 반영) */
+		shared?: boolean;
 	}
 
 	let {
@@ -23,14 +27,16 @@
 		min = 0,
 		max = Number.MAX_SAFE_INTEGER,
 		hint,
-		help
+		help,
+		shared = false
 	}: Props = $props();
 	const id = $props.id();
 	let helpOpen = $state(false);
 
 	const describedBy = $derived(
-		[hint ? `${id}-hint` : '', help && helpOpen ? `${id}-help` : ''].filter(Boolean).join(' ') ||
-			undefined
+		[shared ? `${id}-shared` : '', hint ? `${id}-hint` : '', help && helpOpen ? `${id}-help` : '']
+			.filter(Boolean)
+			.join(' ') || undefined
 	);
 
 	function clamp(raw: string): number {
@@ -53,6 +59,17 @@
 		<label for={id} class="block text-sm text-navy">{label}</label>
 		{#if help}
 			<HelpButton {label} controls="{id}-help" bind:open={helpOpen} />
+		{/if}
+		{#if shared}
+			<!-- 모양은 디자인 통일 때 다듬는다. 화면 낭독기에는 뜻을 풀어서 읽힌다 -->
+			<span
+				id="{id}-shared"
+				class="ml-auto rounded border border-navy/60 px-1.5 text-[10px] text-navy"
+				title={m.common_shared_description()}
+			>
+				<span aria-hidden="true">{m.common_shared_badge()}</span>
+				<span class="sr-only">{m.common_shared_description()}</span>
+			</span>
 		{/if}
 	</div>
 	<!-- 테두리 navy/60: 흰 바탕 대비 약 3.4:1 (입력칸 기준 3:1) -->
