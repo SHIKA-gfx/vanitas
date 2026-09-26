@@ -2,42 +2,23 @@
   "$schema": "../_schema/income-sources.schema.json",
   "meta": {
     "id": "income-sources",
-    "description": "청휘석 수급원. 플레이 강도 프리셋의 기본값이 되며, 사용자가 개별 값을 덮어쓸 수 있어야 한다.",
+    "description": "청휘석 수급원. 플레이 강도 프리셋은 포함할 수급원 묶음이며, 사용자가 체크로 수정할 수 있어야 한다.",
     "server": "ko",
     "currency": "pyroxene",
-    "verifiedAt": "2026-09-17",
-    "sources": ["게임화면"],
+    "verifiedAt": "2026-09-26",
+    "sources": ["게임화면", "26", "27"],
     "notes": [
       "이 데이터는 게임 내 확인을 마쳤으나, 실제 수급량은 플레이 패턴에 따라 달라진다.",
-      "일일 실측 로그가 쌓이면 presets의 계수를 교정할 것.",
-      "정기점검 보상과 이벤트는 부정기이므로 프리셋에서 월 평균으로 환산해 사용한다."
+      "perSeason / perSeasonDay / perEvent 수급원은 schedule 필드가 가리키는 일정표(ko/schedule.json)를 따른다.",
+      "계산 시점: 레이드 최종·누적 포인트 보상은 시즌 종료일, 일일 입장 보상은 시즌 기간 매일, 이벤트는 기간에 하루씩 고르게 나눈다.",
+      "정기점검 보상(irregular)과 업적·도전과제 같은 일회성 보상은 계산에서 제외한다 (2026-09-26 결정).",
+      "월정액·반정액은 sources가 아니라 subscriptions에 상품 단위로 둔다. 구매 여부는 사용자가 입력한다."
     ]
   },
   "sources": [
-    {
-      "id": "daily-mission",
-      "name": "일일 임무",
-      "category": "daily",
-      "amount": 20,
-      "period": "daily",
-      "verified": true
-    },
-    {
-      "id": "weekly-mission",
-      "name": "주간 임무",
-      "category": "weekly",
-      "amount": 120,
-      "period": "weekly",
-      "verified": true
-    },
-    {
-      "id": "arona-attendance",
-      "name": "아로나 출석부",
-      "category": "daily",
-      "amount": 150,
-      "period": "every10days",
-      "verified": true
-    },
+    { "id": "daily-mission",    "name": "일일 임무",     "category": "daily",  "amount": 20,  "period": "daily",       "verified": true },
+    { "id": "weekly-mission",   "name": "주간 임무",     "category": "weekly", "amount": 120, "period": "weekly",      "verified": true },
+    { "id": "arona-attendance", "name": "아로나 출석부", "category": "daily",  "amount": 150, "period": "every10days", "verified": true },
     {
       "id": "tactical-tournament",
       "name": "전술대회",
@@ -45,45 +26,17 @@
       "amount": 20,
       "amountRange": { "min": 10, "max": 45 },
       "period": "daily",
-      "varianceNote": "순위에 따라 변동. 기본값은 평균 추정치 20.",
-      "verified": true
-    },
-    {
-      "id": "monthly-pass-instant",
-      "name": "월정액 (즉시 지급)",
-      "category": "subscription",
-      "amount": 392,
-      "period": "once",
-      "paid": true,
-      "verified": true
-    },
-    {
-      "id": "half-pass-instant",
-      "name": "반정액 (즉시 지급)",
-      "category": "subscription",
-      "amount": 176,
-      "period": "once",
-      "paid": true,
-      "verified": true
-    },
-    {
-      "id": "pass-daily",
-      "name": "월/반정액 일일 수령",
-      "category": "subscription",
-      "amount": 60,
-      "breakdown": { "monthly": 40, "half": 20 },
-      "period": "daily",
-      "durationDays": 30,
-      "paid": true,
+      "varianceNote": "순위에 따라 변동. 기본값은 평균 추정치 20. 사용자가 자기 일일 보상을 입력할 수 있게 한다 (실측 로그 18, 2026-09).",
       "verified": true
     },
     {
       "id": "raid-score",
-      "name": "총력전 점수 보상",
+      "name": "총력전 누적 포인트 보상",
       "category": "content",
       "amount": 650,
       "amountNote": "최대치",
       "period": "perSeason",
+      "schedule": "totalAssault",
       "verified": true
     },
     {
@@ -91,29 +44,56 @@
       "name": "총력전 최종 보상",
       "category": "content",
       "period": "perSeason",
-      "tiers": [600, 800, 1000, 1200],
+      "schedule": "totalAssault",
+      "tiers": [
+        { "id": "bronze",   "label": "브론즈",   "amount": 600 },
+        { "id": "silver",   "label": "실버",     "amount": 800 },
+        { "id": "gold",     "label": "골드",     "amount": 1000 },
+        { "id": "platinum", "label": "플래티넘", "amount": 1200 }
+      ],
       "tierNote": "등급별 상이. 사용자가 자신의 등급을 선택하게 한다.",
       "verified": true
     },
     {
+      "id": "raid-daily-entry",
+      "name": "총력전 일일 입장 보상",
+      "category": "content",
+      "amount": 10,
+      "period": "perSeasonDay",
+      "schedule": "totalAssault",
+      "verified": true,
+      "note": "시즌 기간 동안 매일. 실측 로그 2026-09-23~25 확인."
+    },
+    {
       "id": "eliminate-raid-score",
-      "name": "대결전 점수 보상",
+      "name": "대결전 누적 포인트 보상",
       "category": "content",
       "amount": 650,
       "amountNote": "최대치",
       "period": "perSeason",
+      "schedule": "grandAssault",
       "verified": true
     },
     {
       "id": "eliminate-raid-reward",
       "name": "대결전 보상",
       "category": "content",
-      "amount": 1200,
-      "amountKind": "equivalent",
-      "actualReward": "10회 모집 티켓 1장",
+      "unit": "tenPullTicket",
+      "amount": 1,
       "period": "perSeason",
+      "schedule": "grandAssault",
       "verified": true,
-      "note": "청휘석이 아니라 티켓으로 지급된다. 환산가 1,200. 잔고와 티켓을 분리 관리한다면 별도 처리 필요."
+      "note": "청휘석이 아니라 10회 모집 티켓 1장. 픽업 모집에도 쓸 수 있다. 청휘석 잔고와 분리해 표시하고, 합계는 모집 연차로 환산한다."
+    },
+    {
+      "id": "eliminate-raid-daily-entry",
+      "name": "대결전 일일 입장 보상",
+      "category": "content",
+      "amount": 10,
+      "period": "perSeasonDay",
+      "schedule": "grandAssault",
+      "verified": true,
+      "note": "시즌 기간 동안 매일."
     },
     {
       "id": "maintenance-compensation",
@@ -123,23 +103,51 @@
       "period": "irregular",
       "samples": [{ "date": "2026-09-08", "amount": 480 }],
       "verified": true,
-      "note": "부정기. 프리셋에서는 월 평균으로 환산하거나 0으로 둔다."
+      "note": "주기가 없어 계산에서 제외한다 (2026-09-26). 샘플은 이력으로만 둔다."
     },
     {
       "id": "event",
       "name": "이벤트",
       "category": "event",
-      "amount": null,
+      "amount": 1600,
       "amountRange": { "min": 1200, "max": 2000 },
       "period": "perEvent",
+      "schedule": "event",
       "verified": false,
-      "note": "이벤트당 추정 범위. 최근 3개 이벤트 실측 평균으로 교체할 것. (실측 로그 대상)"
+      "note": "이벤트당 추정 범위. 기본값은 범위 중앙값(잠정). 최근 3개 이벤트 실측 평균으로 교체할 것. 개최와 복각의 차이는 미확인."
     }
   ],
+  "subscriptions": [
+    { "id": "monthly-pass", "name": "월정액", "instant": 392, "daily": 40, "durationDays": 30, "paid": true, "verified": true },
+    { "id": "half-pass",    "name": "반정액", "instant": 176, "daily": 20, "durationDays": 30, "paid": true, "verified": true }
+  ],
+  "eventParticipation": [
+    { "id": "full", "label": "완주",   "factor": 1 },
+    { "id": "half", "label": "절반",   "factor": 0.5 },
+    { "id": "none", "label": "미참여", "factor": 0 }
+  ],
   "presets": {
-    "_comment": "플레이 강도 프리셋. 각 수급원에 적용할 계수. 실측 로그로 교정 대상.",
-    "full": { "label": "전체 임무", "multipliers": {} },
-    "major": { "label": "주요 임무만", "multipliers": {} },
-    "loginOnly": { "label": "로그인만", "multipliers": {} }
+    "_comment": "플레이 강도 프리셋 = 포함할 수급원 묶음 (2026-09-26, 계수 방식에서 변경). 무료 수급원만 넣는다. event가 포함되면 eventParticipation으로 참여도를 곱한다.",
+    "full": {
+      "label": "전체 임무",
+      "include": [
+        "daily-mission", "weekly-mission", "arona-attendance", "tactical-tournament",
+        "raid-score", "raid-rank", "raid-daily-entry",
+        "eliminate-raid-score", "eliminate-raid-reward", "eliminate-raid-daily-entry",
+        "event"
+      ]
+    },
+    "major": {
+      "label": "주요 임무만",
+      "include": [
+        "daily-mission", "weekly-mission", "arona-attendance", "tactical-tournament",
+        "raid-score", "raid-rank", "raid-daily-entry",
+        "eliminate-raid-score", "eliminate-raid-reward", "eliminate-raid-daily-entry"
+      ]
+    },
+    "loginOnly": {
+      "label": "로그인만",
+      "include": ["arona-attendance"]
+    }
   }
 }

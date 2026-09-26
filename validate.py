@@ -7,7 +7,7 @@ CI(GitHub Actions)에서 실행해, 미검증 값이나 계산이 깨진 데이�
 사용: python3 validate.py [--strict]
   --strict : verified:false 항목이 있으면 실패 처리 (배포 직전용)
 """
-import json, sys, pathlib
+import json, sys, pathlib, datetime
 
 ROOT = pathlib.Path(__file__).parent / "data"
 errors, warnings = [], []
@@ -192,7 +192,7 @@ def check_sources():
     src = load("sources.json")["sources"]    
     for rel in ["shared/level-table.json", "shared/cafe-ranks.json",
                 "ko/game-config.json", "ko/banner-types.json", "ko/ap-config.json",
-                "ko/income-sources.json"]:
+                "ko/income-sources.json", "ko/schedule.json"]:
         d = load(rel)
         for sid in d["meta"].get("sources", []):
             if sid.isdigit() and sid not in src:
@@ -203,13 +203,18 @@ def check_sources():
     print(f"  sources: {len(src)}건")
     
 # ---------------------------------------------------------------- 수급원
-PERIODS = {"daily", "weekly", "every10days", "perSeason", "perEvent", "once", "irregular"}
+PERIODS = {"daily", "weekly", "every10days", "perSeason", "perSeasonDay", "perEvent", "irregular"}
+# 일정표를 따르는 주기 → schedule 필드 필수
+SCHEDULED_PERIODS = {"perSeason", "perSeasonDay", "perEvent"}
+SCHEDULE_STREAMS = {"totalAssault", "grandAssault", "event"}
+UNITS = {"pyroxene", "tenPullTicket"}
 
 
 def check_income_sources(strict):
     d = load("ko/income-sources.json")
     rows = d["sources"]
     ids = set()
+    paid_ids = set()
     unverified = 0
 
     for s in rows:
@@ -217,30 +222,46 @@ def check_income_sources(strict):
         if not sid or sid in ids:
             err(f"income-sources: id 누락 또는 중복 ({sid})")
         ids.add(sid)
+        if s.get("paid"):
+            paid_ids.add(sid)
 
-        if s.get("period") not in PERIODS:
-            err(f"income-sources: {sid} period '{s.get('period')}' 허용 목록 밖")
+        period = s.get("period")
+        if period not in PERIODS:
+            err(f"income-sources: {sid} period '{period}' 허용 목록 밖")
+        if period in SCHEDULED_PERIODS:
+            if s.get("schedule") not in SCHEDULE_STREAMS:
+                err(f"income-sources: {sid} period '{period}'인데 schedule "
+                    f"'{s.get('schedule')}'이 없거나 허용 목록 밖")
+        elif "schedule" in s:
+            warn(f"income-sources: {sid} period '{period}'에는 schedule이 쓰이지 않음")
+
+        if s.get("unit", "pyroxene") not in UNITS:
+            err(f"income-sources: {sid} unit '{s.get('unit')}' 허용 목록 밖")
 
         # amount는 계산기 기본값, tiers/amountRange/samples는 불확실성 표현
         amt = s.get("amount")
         alts = [k for k in ("tiers", "amountRange", "samples") if k in s]
         if amt is None and not alts:
             err(f"income-sources: {sid} 금액 정보 없음 (amount / tiers / amountRange / samples)")
-        if amt is None and "amount" in s and not alts:
-            err(f"income-sources: {sid} amount가 null인데 대체 표현이 없음")
 
         if "tiers" in s:
             tiers = s["tiers"]
-            items = list(tiers.values()) if isinstance(tiers, dict) else tiers
-            if not isinstance(items, list) or not items:
-                err(f"income-sources: {sid} tiers가 비어 있거나 형식 불명")
+            if not isinstance(tiers, list) or not tiers:
+                err(f"income-sources: {sid} tiers가 비어 있거나 목록이 아님")
             else:
-                for t in items:
-                    if isinstance(t, dict):
-                        if "amount" not in t:
-                            err(f"income-sources: {sid} tiers 항목에 amount 없음")
-                    elif not isinstance(t, (int, float)):
-                        err(f"income-sources: {sid} tiers 값이 숫자도 객체도 아님")
+                tier_ids = set()
+                for t in tiers:
+                    if not isinstance(t, dict) or "amount" not in t:
+                        err(f"income-sources: {sid} tiers 항목은 amount를 가진 객체여야 함")
+                        continue
+                    if not t.get("id") or not t.get("label"):
+                        err(f"income-sources: {sid} tiers 항목에 id 또는 label 없음 — 등급 선택 UI 불가")
+                    elif t["id"] in tier_ids:
+                        err(f"income-sources: {sid} tiers id 중복 ({t['id']})")
+                    tier_ids.add(t.get("id"))
+                amounts = [t["amount"] for t in tiers if isinstance(t, dict) and "amount" in t]
+                if amounts != sorted(amounts):
+                    warn(f"income-sources: {sid} tiers가 금액 오름차순이 아님")
                 if not s.get("tierNote"):
                     warn(f"income-sources: {sid} tiers가 있는데 tierNote 없음 — 등급 선택 안내 불가")
 
@@ -260,37 +281,137 @@ def check_income_sources(strict):
                 if "date" not in sm or "amount" not in sm:
                     err(f"income-sources: {sid} samples 항목에 date 또는 amount 없음")
 
-        if s.get("amountKind") == "equivalent" and not s.get("note"):
-            warn(f"income-sources: {sid} 환산가(equivalent)인데 환산 근거 note 없음")
-
         if not s.get("verified", False):
             unverified += 1
 
-        presets = {k: v for k, v in d.get("presets", {}).items() if not k.startswith("_")}
-        
+    # 정액 상품 (월정액·반정액)
+    subs = d.get("subscriptions", [])
+    for sub in subs:
+        sid = sub.get("id", "?")
+        if sid in ids:
+            err(f"income-sources: 정액 상품 id '{sid}'가 수급원 id와 겹침")
+        for k in ("instant", "daily", "durationDays"):
+            v = sub.get(k)
+            if not isinstance(v, int) or v < 0 or (k == "durationDays" and v == 0):
+                err(f"income-sources: 정액 상품 {sid} {k} 값 {v}가 올바르지 않음")
+        paid_ids.add(sid)
+        if not sub.get("verified", False):
+            unverified += 1
+
+    # 이벤트 참여도
+    part_ids = set()
+    for p in d.get("eventParticipation", []):
+        if p.get("id") in part_ids:
+            err(f"income-sources: eventParticipation id 중복 ({p.get('id')})")
+        part_ids.add(p.get("id"))
+        f = p.get("factor")
+        if not isinstance(f, (int, float)) or not (0 <= f <= 1):
+            err(f"income-sources: eventParticipation '{p.get('id')}' factor {f}가 0~1 밖")
+
+    # 프리셋 = 포함할 수급원 묶음 (2026-09-26, 계수 방식에서 변경)
+    presets = {k: v for k, v in d.get("presets", {}).items() if not k.startswith("_")}
     for name, p in presets.items():
         if not isinstance(p, dict):
             err(f"income-sources: 프리셋 '{name}' 형식 오류 (객체가 아님)")
             continue
         if not p.get("label"):
             err(f"income-sources: 프리셋 '{name}'에 label 없음")
-        mult = p.get("multipliers")
-        if mult is None:
-            err(f"income-sources: 프리셋 '{name}'에 multipliers 없음")
+        include = p.get("include")
+        if not isinstance(include, list) or not include:
+            err(f"income-sources: 프리셋 '{name}'의 include가 비어 있거나 목록이 아님")
             continue
-        if not mult:
-            warn(f"income-sources: 프리셋 '{name}' multipliers 비어 있음 — 실측 로그로 교정 필요")
-        for rid, factor in mult.items():
-            if rid not in ids:
+        if len(set(include)) != len(include):
+            err(f"income-sources: 프리셋 '{name}'의 include에 중복")
+        for rid in include:
+            if rid in paid_ids:
+                err(f"income-sources: 프리셋 '{name}'에 유료 수급원 '{rid}' — 정액은 따로 입력받는다")
+            elif rid not in ids:
                 err(f"income-sources: 프리셋 '{name}'이 없는 수급원 '{rid}' 참조")
-            if not isinstance(factor, (int, float)) or not (0 <= factor <= 1):
-                err(f"income-sources: 프리셋 '{name}'의 '{rid}' 계수 {factor}가 0~1 밖")
 
-    print(f"  income-sources: {len(rows)}종 / 미검증 {unverified}개 / "
+    print(f"  income-sources: {len(rows)}종 + 정액 {len(subs)}종 / 미검증 {unverified}개 / "
           f"프리셋 {len(presets)}종")
-          
+
     if strict and unverified:
         err(f"income-sources: --strict 모드에서 미검증 수급원 {unverified}개 발견")
+
+
+# ---------------------------------------------------------------- 일정표
+SCHEDULE_STATUS = {"announced", "estimated"}
+EVENT_KINDS = {"new", "rerun"}
+
+
+def _dates(tag, row):
+    """start/end를 date로. 형식 오류나 순서 오류면 None."""
+    try:
+        start = datetime.date.fromisoformat(row["start"])
+        end = datetime.date.fromisoformat(row["end"])
+    except (KeyError, TypeError, ValueError):
+        err(f"schedule: {tag} 날짜 형식 오류 (start/end는 YYYY-MM-DD)")
+        return None
+    if end <= start:
+        err(f"schedule: {tag} 종료일 {end}이 시작일 {start}보다 앞이거나 같음")
+        return None
+    return start, end
+
+
+def check_schedule():
+    d = load("ko/schedule.json")
+    cadence = d["cadence"]
+    by_kind = {}
+
+    for r in d["raids"]:
+        kind = r.get("kind")
+        tag = f"{kind} #{r.get('season')}"
+        if kind not in cadence:
+            err(f"schedule: {tag} kind가 cadence에 없음")
+            continue
+        if r.get("status") not in SCHEDULE_STATUS:
+            err(f"schedule: {tag} status '{r.get('status')}' 허용 목록 밖")
+        dates = _dates(tag, r)
+        if not dates:
+            continue
+        if (dates[1] - dates[0]).days != cadence[kind]["durationDays"]:
+            warn(f"schedule: {tag} 기간 {(dates[1] - dates[0]).days}일 "
+                 f"(cadence {cadence[kind]['durationDays']}일과 다름)")
+        by_kind.setdefault(kind, []).append((r, dates))
+
+    # 같은 종류끼리: 순서, 겹침, 공지·추정 순서, 주기
+    irregular = []
+    for kind, rows in by_kind.items():
+        for (pr, (ps, pe)), (cr, (cs, ce)) in zip(rows, rows[1:]):
+            tag = f"{kind} #{pr.get('season')}→#{cr.get('season')}"
+            if cr.get("season", 0) <= pr.get("season", 0):
+                err(f"schedule: {tag} 시즌 번호가 증가하지 않음")
+            if cs < pe:
+                err(f"schedule: {tag} 기간이 겹침 ({pe} 종료 전 {cs} 시작)")
+            if pr.get("status") == "estimated" and cr.get("status") == "announced":
+                err(f"schedule: {tag} 추정 일정 뒤에 공지 일정이 있음 — 앞 일정의 status 확인")
+            gap = (cs - ps).days
+            if gap != cadence[kind]["intervalDays"]:
+                irregular.append(f"{kind} #{pr.get('season')}→#{cr.get('season')} {gap}일")
+
+    ev_prev = None
+    for e in d["events"]:
+        tag = f"event '{e.get('name')}'"
+        if not e.get("name"):
+            err("schedule: 이름 없는 이벤트")
+        if e.get("kind") not in EVENT_KINDS:
+            err(f"schedule: {tag} kind '{e.get('kind')}' 허용 목록 밖")
+        if e.get("status") not in SCHEDULE_STATUS:
+            err(f"schedule: {tag} status '{e.get('status')}' 허용 목록 밖")
+        dates = _dates(tag, e)
+        if dates and ev_prev and dates[0] < ev_prev:
+            err(f"schedule: {tag} 시작일이 앞 이벤트보다 빠름 (시작일 순서로 적을 것)")
+        if dates:
+            ev_prev = dates[0]
+
+    counts = ", ".join(f"{k} {len(v)}회" for k, v in by_kind.items())
+    estimated = sum(1 for r in d["raids"] if r.get("status") == "estimated") + \
+        sum(1 for e in d["events"] if e.get("status") == "estimated")
+    print(f"  schedule: 레이드 {counts} / 이벤트 {len(d['events'])}회 / 추정 {estimated}건")
+    if irregular:
+        # 공백·단축 구간은 실제 일정이라 오류가 아니다. 눈으로 확인하도록 목록만 보여준다
+        print(f"    주기가 28일이 아닌 구간: {'; '.join(irregular)}")
 
 
 # ---------------------------------------------------------------- 일일 로그
@@ -353,6 +474,7 @@ def main():
     check_pool_sizes()
     check_ap()
     check_income_sources(strict)
+    check_schedule()
     check_sources()
     check_income_log()
     print("-" * 52)
