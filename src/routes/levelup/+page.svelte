@@ -21,6 +21,7 @@
 	import SegmentedField from '$lib/components/SegmentedField.svelte';
 	import CheckboxField from '$lib/components/CheckboxField.svelte';
 	import DateField from '$lib/components/DateField.svelte';
+	import { getUserState } from '$lib/state/user-state.svelte';
 	import LevelUpResult from './LevelUpResult.svelte';
 	import LevelCurve from './LevelCurve.svelte';
 
@@ -123,7 +124,8 @@
 	let disabledIncome = $state<string[]>([]);
 	let apPackage = $state('0');
 	let tactical = $state('none');
-	let apPurchases = $state(0);
+	// 하루 AP 구매 횟수는 청휘석 수급 계산기와 함께 쓴다 (UserState)
+	const habits = getUserState().habits;
 
 	const rank = $derived(getCafeRank(Number(cafeRank)));
 	const comfort = $derived(comfortByRank[cafeRank] ?? rank.maxComfort);
@@ -140,7 +142,7 @@
 			disabledIncome,
 			apPackage: apPackage === 'continuous' ? 'continuous' : Number(apPackage),
 			tacticalRefreshes: tactical === 'none' ? null : Number(tactical),
-			apPurchases,
+			apPurchases: habits.apPurchasesPerDay,
 			today,
 			goal:
 				mode === 'level'
@@ -162,7 +164,7 @@
 		disabledIncome = on ? disabledIncome.filter((x) => x !== id) : [...disabledIncome, id];
 	}
 
-	const purchaseCost = $derived(apPurchaseCostPerDay(apPurchases));
+	const purchaseCost = $derived(apPurchaseCostPerDay(habits.apPurchasesPerDay));
 	const tacticalCost = $derived(tactical === 'none' ? null : tacticalPerDay(Number(tactical)));
 </script>
 
@@ -275,7 +277,8 @@
 
 				<NumberField
 					label={m.levelup_input_purchases()}
-					bind:value={apPurchases}
+					bind:value={habits.apPurchasesPerDay}
+					shared
 					max={ap.purchase.maxPurchasesPerDay}
 					help={purchaseHelp}
 					hint={purchaseCost
