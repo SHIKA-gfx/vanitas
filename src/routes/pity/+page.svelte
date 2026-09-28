@@ -72,19 +72,14 @@
 		<Panel>
 			<div class="flex flex-col gap-3">
 				<SelectField label={m.pity_input_banner()} bind:value={bannerId} options={bannerOptions} />
-				<NumberField label={m.pity_input_gems()} bind:value={res.gems} shared />
+				<NumberField label={m.pity_input_gems()} bind:value={res.gems} />
 				<div class="grid grid-cols-2 gap-3">
-					<NumberField
-						label={m.pity_input_single_tickets()}
-						bind:value={res.singleTickets}
-						shared
-					/>
-					<NumberField label={m.pity_input_ten_tickets()} bind:value={res.tenPullTickets} shared />
+					<NumberField label={m.pity_input_single_tickets()} bind:value={res.singleTickets} />
+					<NumberField label={m.pity_input_ten_tickets()} bind:value={res.tenPullTickets} />
 				</div>
 				{#if pool}
 					<NumberField
 						label={pool.name}
-						shared
 						bind:value={
 							() => currentPoints,
 							(v) => {
