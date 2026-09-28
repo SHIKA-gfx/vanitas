@@ -244,6 +244,15 @@ export interface ApConfig {
 	};
 	tacticalShop: TacticalShop;
 	expConversion: { apToExp: number; note?: string };
+	/** 최고 레벨에서 AP를 쓰면 받는 보상 (경험치 대신) */
+	levelCapReward: {
+		item: string;
+		perAp: number;
+		verified: boolean;
+		verifiedAt: string;
+		source?: string;
+		note?: string;
+	};
 	fixedIncome: ApFixedIncome[];
 }
 

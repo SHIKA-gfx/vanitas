@@ -134,14 +134,10 @@
 	<div class="flex flex-col gap-4 md:col-start-1 md:row-span-3 md:row-start-2">
 		<Panel title={m.income_section_state()}>
 			<div class="flex flex-col gap-3">
-				<NumberField label={m.pity_input_gems()} bind:value={res.gems} shared />
+				<NumberField label={m.pity_input_gems()} bind:value={res.gems} />
 				<div class="grid grid-cols-2 gap-3">
-					<NumberField
-						label={m.pity_input_single_tickets()}
-						bind:value={res.singleTickets}
-						shared
-					/>
-					<NumberField label={m.pity_input_ten_tickets()} bind:value={res.tenPullTickets} shared />
+					<NumberField label={m.pity_input_single_tickets()} bind:value={res.singleTickets} />
+					<NumberField label={m.pity_input_ten_tickets()} bind:value={res.tenPullTickets} />
 				</div>
 				<DateField label={m.income_input_end_date()} bind:value={endDate} min={addDays(today, 1)} />
 			</div>
@@ -223,7 +219,6 @@
 				label={m.levelup_input_purchases()}
 				bind:value={habits.apPurchasesPerDay}
 				max={ap.purchase.maxPurchasesPerDay}
-				shared
 				help={purchaseHelp}
 				hint={purchaseCost
 					? m.levelup_purchases_hint({ gems: formatInt(purchaseCost) })

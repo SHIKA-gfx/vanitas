@@ -88,7 +88,7 @@ describe('목표 레벨 모드 — 회귀 기준값', () => {
 
 	it('이미 도달 / 최고 레벨', () => {
 		expect(run({ goal: { mode: 'level', target: 60 } })).toEqual({ kind: 'already' });
-		expect(run({ level: 90 })).toEqual({ kind: 'at_cap' });
+		expect(run({ level: 90 })).toEqual({ kind: 'at_cap', mastery: null });
 	});
 });
 
@@ -175,5 +175,34 @@ describe('결과 보조', () => {
 		expect(curve[0]).toEqual({ day: 0, level: 60 });
 		expect(curve.at(-1)).toEqual({ day: 214, level: 90 });
 		expect(curve.every((p, i) => i === 0 || p.level >= curve[i - 1].level)).toBe(true);
+	});
+});
+
+describe('최고 레벨 — 숙련증서', () => {
+	// 90레벨: 자연 회복 240(2회 접속, 최대치 240) + 카페 8랭크 600, 고정 보상은 모두 끔
+	const cap = {
+		level: 90,
+		currentAp: 100,
+		disabledIncome: ['daily-mission', 'weekly-mission', 'daily-free-pack', 'arona-attendance']
+	};
+
+	it('목표 레벨 모드는 날짜가 없어 숙련증서 없이 안내만', () => {
+		expect(run(cap)).toEqual({ kind: 'at_cap', mastery: null });
+	});
+
+	it('날짜 모드: 보유 AP + 그날까지 받는 AP = 숙련증서 (AP 1당 1개)', () => {
+		const r = run({ ...cap, goal: { mode: 'date', date: '2026-10-05' } });
+		expect(r).toEqual({
+			kind: 'at_cap',
+			mastery: { date: '2026-10-05', days: 10, ap: 100 + 10 * 840, certificates: 8500 }
+		});
+	});
+
+	it('AP 구매도 숙련증서가 된다', () => {
+		const r = run({ ...cap, apPurchases: 3, goal: { mode: 'date', date: '2026-09-25' } });
+		// 오늘이면 보유 AP만
+		expect(r).toMatchObject({ kind: 'at_cap', mastery: { days: 0, certificates: 100 } });
+		const r2 = run({ ...cap, apPurchases: 3, goal: { mode: 'date', date: '2026-09-26' } });
+		expect(r2).toMatchObject({ mastery: { certificates: 100 + 840 + 360 } });
 	});
 });
