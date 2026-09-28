@@ -68,6 +68,17 @@
 		<p class="text-lg text-ink">{invalidMessage(result.field)}</p>
 	{:else if result.kind === 'at_cap'}
 		<p class="text-xl text-ink">{m.levelup_verdict_at_cap()}</p>
+		{#if result.mastery}
+			<p class="mt-1 text-sm text-navy tabular-nums">
+				{m.levelup_cap_mastery({
+					date: formatDate(result.mastery.date),
+					count: formatInt(result.mastery.certificates)
+				})}
+			</p>
+			<p class="mt-3 text-xs leading-relaxed text-navy">{m.levelup_cap_mastery_note()}</p>
+		{:else}
+			<p class="mt-1 text-sm text-navy">{m.levelup_cap_hint_date_mode()}</p>
+		{/if}
 	{:else if result.kind === 'already'}
 		<p class="text-xl text-ink">{m.levelup_verdict_already({ level: String(target) })}</p>
 	{:else if result.kind === 'beyond_horizon'}

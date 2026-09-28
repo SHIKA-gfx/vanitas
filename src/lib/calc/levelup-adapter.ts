@@ -88,7 +88,11 @@ export interface LevelUpCost {
 
 export type LevelUpOutcome =
 	| { kind: 'invalid'; field: LevelUpField }
-	| { kind: 'at_cap' }
+	/**
+	 * 이미 최고 레벨. 날짜 모드면 그날까지 쓰는 AP로 받는 숙련증서를 담는다.
+	 * 목표 레벨 모드는 날짜가 없으므로 mastery가 null — 화면은 날짜 모드로 바꾸라고 안내한다.
+	 */
+	| { kind: 'at_cap'; mastery: MasteryProjection | null }
 	| { kind: 'already' }
 	| { kind: 'reached'; days: number; date: string; cost: LevelUpCost; records: DayRecord[] }
 	| { kind: 'beyond_horizon'; horizonDays: number; records: DayRecord[] }
@@ -103,6 +107,15 @@ export type LevelUpOutcome =
 			cost: LevelUpCost;
 			records: DayRecord[];
 	  };
+
+/** 최고 레벨에서 날짜까지 쓰는 AP와, 그 AP로 받는 숙련증서 */
+export interface MasteryProjection {
+	date: string;
+	days: number;
+	/** 보유 AP + 그날까지 받는 AP */
+	ap: number;
+	certificates: number;
+}
 
 // ---------------------------------------------------------------- 화면 보조
 
@@ -209,6 +222,28 @@ function costFor(input: LevelUpInput, days: number, server: ServerId): LevelUpCo
 	};
 }
 
+/**
+ * 최고 레벨에서 date까지 쓰는 AP. 레벨이 더 오르지 않으므로 되먹임 없이 하루 수급을 더하기만 한다.
+ * 오늘 남은 수급은 세지 않는다 (1일째 = 내일). 보유 AP는 오늘 쓴다.
+ */
+function masteryUntil(
+	input: LevelUpInput,
+	date: string,
+	cap: number,
+	server: ServerId
+): MasteryProjection {
+	const days = daysBetween(input.today, date);
+	const dailyAp = buildDailyAp(input, server);
+	let ap = input.currentAp;
+	for (let day = 1; day <= days; day++) ap += dailyAp(day, cap);
+	return {
+		date,
+		days,
+		ap,
+		certificates: Math.floor(ap * getApConfig(server).levelCapReward.perAp)
+	};
+}
+
 const START_FIELD = {
 	level_out_of_range: 'level',
 	exp_out_of_range: 'exp',
@@ -237,6 +272,8 @@ export function calculateLevelUp(input: LevelUpInput): LevelUpOutcome {
 			case 'invalid':
 				if (r.reason === 'table_malformed') throw new Error('level-table 구조 오류');
 				return { kind: 'invalid', field: START_FIELD[r.reason] };
+			case 'at_cap':
+				return { kind: 'at_cap', mastery: null };
 			case 'reached':
 				return {
 					kind: 'reached',
@@ -260,7 +297,10 @@ export function calculateLevelUp(input: LevelUpInput): LevelUpOutcome {
 			if (r.reason === 'table_malformed') throw new Error('level-table 구조 오류');
 			return { kind: 'invalid', field: START_FIELD[r.reason] };
 		case 'at_cap':
-			return r;
+			return {
+				kind: 'at_cap',
+				mastery: masteryUntil(input, input.goal.date, table.length, server)
+			};
 		case 'projected': {
 			const spentDays = r.records[r.records.length - 1].day;
 			return {

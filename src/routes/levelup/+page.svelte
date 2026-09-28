@@ -278,7 +278,6 @@
 				<NumberField
 					label={m.levelup_input_purchases()}
 					bind:value={habits.apPurchasesPerDay}
-					shared
 					max={ap.purchase.maxPurchasesPerDay}
 					help={purchaseHelp}
 					hint={purchaseCost
