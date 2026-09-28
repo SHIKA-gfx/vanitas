@@ -44,6 +44,6 @@ export const sections: SiteSection[] = [
 		label: m.nav_income,
 		short: m.nav_income_short,
 		description: m.home_income_description,
-		ready: false
+		ready: true
 	}
 ];

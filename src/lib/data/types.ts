@@ -246,3 +246,102 @@ export interface ApConfig {
 	expConversion: { apToExp: number; note?: string };
 	fixedIncome: ApFixedIncome[];
 }
+
+// ---------------------------------------------------------------- 청휘석 수급 (server)
+
+/** 수급 주기. perSeason / perSeasonDay / perEvent는 schedule이 가리키는 일정표를 따른다 */
+export type IncomePeriod =
+	'daily' | 'weekly' | 'every10days' | 'perSeason' | 'perSeasonDay' | 'perEvent' | 'irregular';
+
+/** 수급원이 따르는 일정 */
+export type ScheduleStream = 'totalAssault' | 'grandAssault' | 'event';
+
+export interface IncomeTier {
+	id: string;
+	label: string;
+	amount: number;
+}
+
+export interface IncomeSource {
+	id: string;
+	name: string;
+	category: string;
+	/** 계산기 기본값. unit이 tenPullTicket이면 티켓 장수 */
+	amount: number | null;
+	unit?: 'pyroxene' | 'tenPullTicket';
+	period: IncomePeriod;
+	schedule?: ScheduleStream;
+	amountRange?: { min: number; max: number };
+	tiers?: IncomeTier[];
+	tierNote?: string;
+	samples?: { date: string; amount: number }[];
+	verified: boolean;
+	note?: string;
+	[key: string]: unknown;
+}
+
+/** 월정액·반정액 */
+export interface Subscription {
+	id: string;
+	name: string;
+	/** 구매 즉시 받는 청휘석 */
+	instant: number;
+	/** 기간 동안 매일 받는 청휘석 */
+	daily: number;
+	durationDays: number;
+	paid: boolean;
+	verified: boolean;
+}
+
+export interface EventParticipation {
+	id: string;
+	label: string;
+	/** 이벤트 수급량에 곱하는 값 (0~1) */
+	factor: number;
+}
+
+export interface IncomePreset {
+	label: string;
+	/** 포함할 무료 수급원 id */
+	include: string[];
+}
+
+export interface IncomeSourcesFile {
+	meta: Meta & { currency: string };
+	sources: IncomeSource[];
+	subscriptions: Subscription[];
+	eventParticipation: EventParticipation[];
+	presets: Record<string, IncomePreset | string>;
+}
+
+// ---------------------------------------------------------------- 일정표 (server)
+
+export type ScheduleStatus = 'announced' | 'estimated';
+export type RaidKind = 'totalAssault' | 'grandAssault';
+
+export interface RaidSeason {
+	kind: RaidKind;
+	season: number;
+	name: string;
+	/** 게임 날짜 YYYY-MM-DD. 시즌 길이 = end - start */
+	start: string;
+	end: string;
+	status: ScheduleStatus;
+	/** true면 목록 밖을 cadence로 이어 붙인 시즌 (조회 함수가 만든다. JSON에는 없다) */
+	projected?: boolean;
+}
+
+export interface ScheduledEvent {
+	name: string;
+	kind: 'new' | 'rerun';
+	start: string;
+	end: string;
+	status: ScheduleStatus;
+}
+
+export interface ScheduleFile {
+	meta: Meta;
+	cadence: Record<RaidKind, { intervalDays: number; durationDays: number }>;
+	raids: RaidSeason[];
+	events: ScheduledEvent[];
+}

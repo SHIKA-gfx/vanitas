@@ -6,8 +6,11 @@ import gameConfigJson from '../../../data/ko/game-config.json';
 import bannerTypesJson from '../../../data/ko/banner-types.json';
 import poolSizesJson from '../../../data/ko/pool-sizes.json';
 import apConfigJson from '../../../data/ko/ap-config.json';
+import incomeSourcesJson from '../../../data/ko/income-sources.json';
+import scheduleJson from '../../../data/ko/schedule.json';
 import levelTableJson from '../../../data/shared/level-table.json';
 import cafeRanksJson from '../../../data/shared/cafe-ranks.json';
+import { addDays } from '$lib/game-date';
 import type {
 	ApConfig,
 	BannerType,
@@ -15,12 +18,18 @@ import type {
 	CafeRank,
 	CafeRanksFile,
 	GameConfig,
+	IncomePreset,
+	IncomeSourcesFile,
 	LevelTableFile,
 	PointPool,
 	PoolEntry,
 	PoolSizesFile,
+	RaidKind,
+	RaidSeason,
 	RateGroup,
-	RateVariant
+	RateVariant,
+	ScheduledEvent,
+	ScheduleFile
 } from './types';
 
 /** 게임 데이터의 서버 구분. 로케일(UI 언어)과는 별개 축이다. */
@@ -37,6 +46,8 @@ const datasets = {
 		banners: bannerTypesJson as unknown as BannerTypesFile,
 		pools: poolSizesJson as unknown as PoolSizesFile,
 		ap: apConfigJson as ApConfig,
+		income: incomeSourcesJson as unknown as IncomeSourcesFile,
+		schedule: scheduleJson as unknown as ScheduleFile,
 		levels: levelTable,
 		cafe: cafeRanks
 	}
@@ -151,4 +162,60 @@ const CAFE_BASE_FILL_HOURS = 96;
 /** 카페 시간당 AP 생산량. 쾌적도는 호출하는 쪽에서 범위를 확인한다. */
 export function getCafeApPerHour(rank: CafeRank, comfort: number): number {
 	return rank.maxStorage / CAFE_BASE_FILL_HOURS + comfort * rank.apPerComfort;
+}
+
+// ---------------------------------------------------------------- 청휘석 수급·일정
+
+export function getIncomeSources(server: ServerId = 'ko'): IncomeSourcesFile {
+	return dataset(server).income;
+}
+
+/** 플레이 강도 프리셋 목록 (_comment 같은 메모 키는 뺀다). 파일에 적힌 순서대로 */
+export function listIncomePresets(server: ServerId = 'ko'): (IncomePreset & { id: string })[] {
+	return Object.entries(getIncomeSources(server).presets)
+		.filter((entry): entry is [string, IncomePreset] => typeof entry[1] === 'object')
+		.map(([id, preset]) => ({ id, ...preset }));
+}
+
+export function getSchedule(server: ServerId = 'ko'): ScheduleFile {
+	return dataset(server).schedule;
+}
+
+/**
+ * until(게임 날짜)까지 시작하는 레이드 시즌.
+ * 목록이 끝난 뒤는 cadence(주기·기간)로 이어 붙이고 projected: true, status: 'estimated'로 표시한다.
+ */
+export function listRaidSeasons(
+	kind: RaidKind,
+	until: string,
+	server: ServerId = 'ko'
+): RaidSeason[] {
+	const schedule = getSchedule(server);
+	const listed = schedule.raids.filter((r) => r.kind === kind);
+	const out = listed.filter((r) => r.start <= until);
+	const last = listed[listed.length - 1];
+	if (!last) return out;
+
+	const { intervalDays, durationDays } = schedule.cadence[kind];
+	let season = last.season;
+	let start = addDays(last.start, intervalDays);
+	while (start <= until) {
+		season += 1;
+		out.push({
+			kind,
+			season,
+			name: '',
+			start,
+			end: addDays(start, durationDays),
+			status: 'estimated',
+			projected: true
+		});
+		start = addDays(start, intervalDays);
+	}
+	return out;
+}
+
+/** 이벤트 일정. 목록 밖은 추정하지 않는다 (schedule.json meta.notes) */
+export function listEvents(server: ServerId = 'ko'): ScheduledEvent[] {
+	return getSchedule(server).events;
 }
