@@ -51,6 +51,14 @@
     "apToExp": 1,
     "note": "AP 1 소모당 계정 경험치 1. 레벨업 계산기의 스테이지 효율 변수가 1로 고정된다."
   },
+  "levelCapReward": {
+    "item": "숙련증서",
+    "perAp": 1,
+    "verified": true,
+    "verifiedAt": "2026-09-28",
+    "source": "게임화면",
+    "note": "최고 레벨에서는 경험치 대신 AP 1 소모당 숙련증서 1개를 받는다."
+  },
   "fixedIncome": [
     { "id": "daily-mission",     "name": "일일 미션",        "ap": 150, "period": "daily" },
     { "id": "weekly-mission",    "name": "주간 미션",        "ap": 200, "period": "weekly" },
