@@ -2,8 +2,9 @@
 	사이트 내비게이션. 디자인 문서 5-4.
 	- 데스크톱(lg 이상): 좌측 세로 목록
 	- 모바일·태블릿: 하단 탭바
-	두 화면의 항목 순서는 같다. 아이콘 자리는 비워 두고(6장), 라벨은 항상 보인다.
+	두 화면의 항목 순서는 같다. 아이콘(6장)과 라벨을 항상 함께 둔다.
 	현재 위치는 색만이 아니라 굵기와 표식(막대)으로도 표시한다.
+	아이콘 색 (5-4): 활성 brand-strong / 비활성 brand / 준비 중 navy 60%. 라벨은 비활성 navy
 -->
 <script lang="ts">
 	import type { Pathname } from '$app/types';
@@ -12,6 +13,7 @@
 	import { localizeHref } from '$lib/paraglide/runtime';
 	import { m } from '$lib/paraglide/messages.js';
 	import { sections as items } from '$lib/nav';
+	import NavIcon from '$lib/icons/NavIcon.svelte';
 
 	const href = (path: string) => resolve(localizeHref(path) as Pathname);
 	const isCurrent = (path: string) => page.route.id?.startsWith(path) ?? false;
@@ -48,9 +50,12 @@
 						<a
 							href={href(item.path)}
 							aria-current={isCurrent(item.path) ? 'page' : undefined}
-							class="flex min-h-11 items-center gap-3 border-l-4 border-transparent px-4 text-sm text-navy aria-[current=page]:border-brand-strong aria-[current=page]:font-bold aria-[current=page]:text-brand-strong"
+							class="group flex min-h-11 items-center gap-3 border-l-4 border-transparent px-4 text-sm text-navy aria-[current=page]:border-brand-strong aria-[current=page]:font-bold aria-[current=page]:text-brand-strong"
 						>
-							<span class="size-6 shrink-0" aria-hidden="true"></span>
+							<NavIcon
+								name={item.icon}
+								class="shrink-0 text-brand group-aria-[current=page]:text-brand-strong"
+							/>
 							{item.label()}
 						</a>
 					{:else}
@@ -58,7 +63,7 @@
 							aria-disabled="true"
 							class="flex min-h-11 items-center gap-3 border-l-4 border-transparent px-4 text-sm text-navy/60"
 						>
-							<span class="size-6 shrink-0" aria-hidden="true"></span>
+							<NavIcon name={item.icon} class="shrink-0 text-navy/60" />
 							{item.label()}
 							<span class="ml-auto rounded border border-navy/60 px-1.5 text-[10px] text-navy">
 								{m.nav_preparing()}
@@ -84,9 +89,12 @@
 					<a
 						href={href(item.path)}
 						aria-current={isCurrent(item.path) ? 'page' : undefined}
-						class="flex h-full flex-col items-center justify-center gap-0.5 border-t-2 border-transparent text-[11px] text-navy aria-[current=page]:border-brand-strong aria-[current=page]:font-bold aria-[current=page]:text-brand-strong"
+						class="group flex h-full flex-col items-center justify-center gap-0.5 border-t-2 border-transparent text-[11px] text-navy aria-[current=page]:border-brand-strong aria-[current=page]:font-bold aria-[current=page]:text-brand-strong"
 					>
-						<span class="size-6" aria-hidden="true"></span>
+						<NavIcon
+							name={item.icon}
+							class="shrink-0 text-brand group-aria-[current=page]:text-brand-strong"
+						/>
 						{item.short()}
 					</a>
 				{:else}
@@ -94,7 +102,7 @@
 						aria-disabled="true"
 						class="flex h-full flex-col items-center justify-center gap-0.5 text-[11px] text-navy/60"
 					>
-						<span class="size-6" aria-hidden="true"></span>
+						<NavIcon name={item.icon} class="shrink-0 text-navy/60" />
 						{item.short()}
 						<span class="sr-only">{m.nav_preparing()}</span>
 					</span>

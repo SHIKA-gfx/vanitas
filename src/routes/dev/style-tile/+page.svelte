@@ -13,6 +13,7 @@
 	import Metric from '$lib/components/Metric.svelte';
 	import Callout from '$lib/components/Callout.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import DateField from '$lib/components/DateField.svelte';
 	import NavIcon, { type NavIconName } from '$lib/icons/NavIcon.svelte';
 	import TriangleBackground from './TriangleBackground.svelte';
 
@@ -100,6 +101,8 @@
 	let rank = $state('8');
 	let mode = $state('level');
 	let checked = $state(true);
+	let badExp = $state(3900);
+	let badDate = $state('2026-09-01');
 
 	// ---------------------------------------------------------------- 그래프 (5-12)
 
@@ -235,7 +238,7 @@
 	<section class="flex flex-col gap-3">
 		<h2 class="text-xl font-bold">3. 패널 변형 (5단계에서 부품으로)</h2>
 		<div class="grid gap-6 md:grid-cols-2">
-			<Panel title="기본 (지금)">
+			<Panel title="Panel 부품 — 모서리 + 표식 (5단계 적용)">
 				<p class="text-sm">지금 쓰는 패널. 테두리 navy/15, 바탕 surface.</p>
 			</Panel>
 
@@ -300,29 +303,19 @@
 					<CheckboxField label="일일 임무" bind:checked />
 				</div>
 			</Panel>
-			<Panel title="상태 시안 (부품에 아직 없음)">
+			<Panel title="오류 상태 (error 속성, 5단계)">
 				<div class="flex flex-col gap-3">
-					<div>
-						<p class="mb-1 text-sm text-navy">초점</p>
-						<div
-							class="rounded border border-navy/60 bg-surface px-3 py-2 outline-2 outline-brand-strong"
-						>
-							24,000
-						</div>
-					</div>
-					<div>
-						<p class="mb-1 text-sm text-navy">오류 (의미 색 '불가')</p>
-						<div class="rounded border-2 px-3 py-2" style="border-color: var(--color-blocked)">
-							3,900
-						</div>
-						<p class="mt-1 text-xs font-medium" style="color: var(--color-blocked)">
-							경험치는 이 레벨의 필요 경험치보다 작아야 해요
-						</p>
-					</div>
-					<div>
-						<p class="mb-1 text-sm text-navy">비활성</p>
-						<div class="rounded border border-navy/15 bg-wash px-3 py-2 text-navy/60">0</div>
-					</div>
+					<NumberField
+						label="경험치"
+						bind:value={badExp}
+						hint="이 레벨에서 쌓은 값 (필요 3,900)"
+						error="경험치는 이 레벨의 필요 경험치보다 작아야 해요"
+					/>
+					<DateField label="날짜" bind:value={badDate} error="날짜는 오늘 이후로 골라주세요" />
+					<p class="text-xs text-navy">
+						초점은 위 칸들을 눌러 확인 (brand-strong 외곽선). 비활성 상태는 쓰는 곳이 없어 만들지
+						않았다.
+					</p>
 				</div>
 			</Panel>
 		</div>
@@ -330,7 +323,7 @@
 
 	<!-- 5. 결과 요소 -->
 	<section class="flex flex-col gap-3">
-		<h2 class="text-xl font-bold">5. 결과 요소</h2>
+		<h2 class="text-xl font-bold">5. 결과 요소 (5단계 부품)</h2>
 		<Panel>
 			<div class="mb-3 flex items-start justify-between gap-2">
 				<p class="text-xl">천장까지 청휘석 3,480개 부족해요</p>
@@ -338,9 +331,16 @@
 			</div>
 			<div class="grid grid-cols-3 gap-2">
 				<Metric label="지금 보유분으로 획득" value="75.5%" />
-				<Metric label="천장까지 더 필요" value="29연" />
-				<Metric label="하루 평균 AP" value="1,044" />
+				<Metric label="천장까지 부족" value="3,480" tone="shortfall" />
+				<Metric label="확정까지 남은 연차" value="0연" tone="secured" />
 			</div>
+			<div class="mt-3 flex flex-wrap gap-2">
+				<Badge>추정</Badge>
+				<Badge tone="secured">확보</Badge>
+				<Badge tone="shortfall">부족</Badge>
+				<Badge tone="blocked">불가</Badge>
+			</div>
+			<div class="mt-3"><Callout>AP 구매에 청휘석 1,080개를 써요. 모집 9연분이에요.</Callout></div>
 		</Panel>
 	</section>
 
