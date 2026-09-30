@@ -78,6 +78,26 @@
  * 라벨(14px)·안내(12px)·제목은 각 부품에서 크기를 정한다.
  */
 @layer base {
+	/*
+	 * 화면 배율 (2026-09-30). 넓은 화면에서 글자·여백·아이콘이 작아 보여 한 단계씩 키운다.
+	 * Tailwind의 크기는 대부분 rem이라, 기준 글자 크기 하나로 사이트 전체가 비율을 유지한 채 커진다.
+	 * 모바일·태블릿·작은 노트북(1280px 미만)은 그대로. 미디어 쿼리의 rem은 브라우저 기본값(16px)
+	 * 기준이라 이 값이 중단점을 밀어내지 않는다.
+	 */
+	html {
+		font-size: 100%;
+	}
+	@media (min-width: 80rem) {
+		html {
+			font-size: 112.5%;
+		}
+	}
+	@media (min-width: 96rem) {
+		html {
+			font-size: 125%;
+		}
+	}
+
 	body {
 		font-size: 0.9375rem;
 		font-weight: 500;

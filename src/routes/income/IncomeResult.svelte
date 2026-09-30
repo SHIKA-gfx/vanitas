@@ -97,9 +97,6 @@
 		{/if}
 
 		<div class="mt-3 flex flex-col gap-1 text-xs leading-relaxed text-navy">
-			{#if result.estimated}
-				<p>{m.income_note_estimated()}</p>
-			{/if}
 			{#if result.eventsCoveredUntil}
 				<p>{m.income_note_events_until({ date: formatDate(result.eventsCoveredUntil) })}</p>
 			{/if}

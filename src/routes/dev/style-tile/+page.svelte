@@ -15,7 +15,7 @@
 	import Badge from '$lib/components/Badge.svelte';
 	import DateField from '$lib/components/DateField.svelte';
 	import NavIcon, { type NavIconName } from '$lib/icons/NavIcon.svelte';
-	import TriangleBackground from './TriangleBackground.svelte';
+	import TriangleBackground from '$lib/components/TriangleBackground.svelte';
 
 	// ---------------------------------------------------------------- 색
 

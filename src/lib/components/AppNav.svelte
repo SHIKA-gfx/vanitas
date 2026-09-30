@@ -65,7 +65,7 @@
 						>
 							<NavIcon name={item.icon} class="shrink-0 text-navy/60" />
 							{item.label()}
-							<span class="ml-auto rounded border border-navy/60 px-1.5 text-[10px] text-navy">
+							<span class="ml-auto rounded border border-navy/60 px-1.5 text-[0.625rem] text-navy">
 								{m.nav_preparing()}
 							</span>
 						</span>
@@ -89,7 +89,7 @@
 					<a
 						href={href(item.path)}
 						aria-current={isCurrent(item.path) ? 'page' : undefined}
-						class="group flex h-full flex-col items-center justify-center gap-0.5 border-t-2 border-transparent text-[11px] text-navy aria-[current=page]:border-brand-strong aria-[current=page]:font-bold aria-[current=page]:text-brand-strong"
+						class="group flex h-full flex-col items-center justify-center gap-0.5 border-t-2 border-transparent text-[0.6875rem] text-navy aria-[current=page]:border-brand-strong aria-[current=page]:font-bold aria-[current=page]:text-brand-strong"
 					>
 						<NavIcon
 							name={item.icon}
@@ -100,7 +100,7 @@
 				{:else}
 					<span
 						aria-disabled="true"
-						class="flex h-full flex-col items-center justify-center gap-0.5 text-[11px] text-navy/60"
+						class="flex h-full flex-col items-center justify-center gap-0.5 text-[0.6875rem] text-navy/60"
 					>
 						<NavIcon name={item.icon} class="shrink-0 text-navy/60" />
 						{item.short()}
