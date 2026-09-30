@@ -14,6 +14,7 @@
 	import Callout from '$lib/components/Callout.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import NavIcon, { type NavIconName } from '$lib/icons/NavIcon.svelte';
+	import TriangleBackground from './TriangleBackground.svelte';
 
 	// ---------------------------------------------------------------- 색
 
@@ -28,21 +29,41 @@
 		{ name: 'wash', hex: '#f2f9ff', role: '배경층' }
 	];
 
-	// 의미 색 후보 (확정 전이라 토큰이 아니다). 색만으로 구분하지 않고 항상 글자와 함께 쓴다
+	// 의미 색 — 게임 상성표의 색을 그대로 쓴다 (2026-09-29 결정). 확정되면 토큰으로 옮긴다.
+	// 색만으로 구분하지 않고 항상 글자와 함께 쓴다.
 	const semantic = [
 		{
 			name: '확보',
-			hex: '#0a6fd6',
+			fill: '#0a6fd6',
+			text: '#0a6fd6',
+			onFill: '#ffffff',
 			note: 'brand-strong 재사용',
 			sample: '확정으로 데려올 수 있어요'
 		},
 		{
 			name: '부족',
-			hex: '#b45309',
-			note: '호박색 (amber-700)',
+			fill: '#ba9035',
+			text: '#8c6d28',
+			onFill: '#2b2b2b',
+			note: '상성표 관통·중장갑 호박색. 흰 바탕 글자로는 2.95라, 글자용은 같은 색상을 어둡게(#8c6d28)',
 			sample: '천장까지 3,480개 부족해요'
 		},
-		{ name: '불가', hex: '#b91c1c', note: '빨강 (red-700)', sample: '이 기간에는 데려올 수 없어요' }
+		{
+			name: '부족 (대안)',
+			fill: '#feaa13',
+			text: '#8c6d28',
+			onFill: '#2b2b2b',
+			note: '상성표 Weak 주황. 면으로만 (흰 바탕 1.91)',
+			sample: '천장까지 3,480개 부족해요'
+		},
+		{
+			name: '불가',
+			fill: '#891928',
+			text: '#891928',
+			onFill: '#ffffff',
+			note: '상성표 경장갑·폭발 빨강. 글자로도 충분 (9.40)',
+			sample: '이 기간에는 데려올 수 없어요'
+		}
 	];
 
 	function luminance(hex: string): number {
@@ -126,17 +147,24 @@
 			{/each}
 		</div>
 
-		<h3 class="mt-2 font-bold">의미 색 후보 (확정 전)</h3>
-		<div class="flex flex-wrap gap-3">
-			{#each semantic as s (s.name)}
+		<h3 class="mt-2 font-bold">의미 색 — 게임 상성표 색</h3>
+		<div class="flex flex-col gap-2">
+			{#each semantic as c (c.name)}
 				<div
-					class="flex items-center gap-2 rounded border border-navy/15 bg-surface px-3 py-2 text-sm"
+					class="flex flex-wrap items-center gap-3 rounded border border-navy/15 bg-surface px-3 py-2 text-sm"
 				>
-					<span class="rounded px-2 py-0.5 text-white" style="background: {s.hex}">{s.name}</span>
-					<span style="color: {s.hex}" class="font-bold">{s.sample}</span>
+					<span
+						class="w-24 rounded px-2 py-0.5 text-center font-bold"
+						style="background: {c.fill}; color: {c.onFill}">{c.name}</span
+					>
+					<span class="font-bold" style="color: {c.text}">{c.sample}</span>
 					<span class="text-xs text-navy tabular-nums">
-						{s.hex} · 흰 바탕 {contrast(s.hex, '#ffffff')} · {s.note}
+						면 {c.fill} (위 글자 {contrast(c.fill, c.onFill)}) · 글자 {c.text} (흰 바탕 {contrast(
+							c.text,
+							'#ffffff'
+						)})
 					</span>
+					<span class="w-full text-xs text-navy">{c.note}</span>
 				</div>
 			{/each}
 		</div>
@@ -173,7 +201,7 @@
 				<p class="text-base font-light">{body}</p>
 			</div>
 			<div>
-				<p class="text-xs text-navy">B · Medium 15px</p>
+				<p class="text-xs font-bold text-brand-strong">B · Medium 15px — 선택 (2026-09-29)</p>
 				<p class="text-[15px] font-medium">{body}</p>
 			</div>
 			<div>
@@ -226,7 +254,7 @@
 						>+</span
 					>
 				{/each}
-				<p class="text-sm font-bold">모서리 + 표식</p>
+				<p class="text-sm font-bold text-brand-strong">모서리 + 표식 — 선택 (2026-09-29)</p>
 				<p class="text-sm">네 모서리에 작은 + 표식. 패널 테두리까지만 장식 (3층 구조).</p>
 			</div>
 
@@ -279,9 +307,9 @@
 						</div>
 					</div>
 					<div>
-						<p class="mb-1 text-sm text-navy">오류 (의미 색 '불가' 후보)</p>
-						<div class="rounded border-2 px-3 py-2" style="border-color: #b91c1c">3,900</div>
-						<p class="mt-1 text-xs font-medium" style="color: #b91c1c">
+						<p class="mb-1 text-sm text-navy">오류 (의미 색 '불가')</p>
+						<div class="rounded border-2 px-3 py-2" style="border-color: #891928">3,900</div>
+						<p class="mt-1 text-xs font-medium" style="color: #891928">
 							경험치는 이 레벨의 필요 경험치보다 작아야 해요
 						</p>
 					</div>
@@ -358,23 +386,42 @@
 
 	<!-- 8. 배경층 -->
 	<section class="flex flex-col gap-3">
-		<h2 class="text-xl font-bold">8. 배경층 후보 (장식은 배경층까지)</h2>
-		<div class="grid gap-3 md:grid-cols-3">
-			<div class="flex h-32 items-end rounded border border-navy/15 bg-wash p-2 text-xs text-navy">
-				wash 단색
-			</div>
+		<h2 class="text-xl font-bold">8. 배경층 — 사선 / 삼각형 타일</h2>
+		<p class="text-sm text-navy">위에 패널을 얹어, 데이터층을 방해하지 않는지 함께 본다.</p>
+		<div class="grid gap-4 md:grid-cols-2">
 			<div
-				class="flex h-32 items-end rounded border border-navy/15 bg-wash p-2 text-xs text-navy"
-				style="background-image: radial-gradient(color-mix(in srgb, var(--color-navy) 18%, transparent) 1px, transparent 1px); background-size: 16px 16px"
-			>
-				점 격자
-			</div>
-			<div
-				class="flex h-32 items-end rounded border border-navy/15 bg-wash p-2 text-xs text-navy"
+				class="relative flex h-64 items-center justify-center overflow-hidden rounded border border-navy/15 bg-wash"
 				style="background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--color-sky) 30%, transparent) 0 1px, transparent 1px 12px)"
 			>
-				사선 (sky)
+				<div class="relative w-3/4 rounded-sm border border-navy/15 bg-surface p-4 text-sm">
+					<p class="font-bold">사선</p>
+					<p>천장까지 청휘석 3,480개 부족해요</p>
+				</div>
 			</div>
+			<div
+				class="relative flex h-64 items-center justify-center overflow-hidden rounded border border-navy/15 bg-wash"
+			>
+				<TriangleBackground />
+				<div class="relative w-3/4 rounded-sm border border-navy/15 bg-surface p-4 text-sm">
+					{#each ['-top-1.5 -left-1.5', '-top-1.5 -right-1.5', '-bottom-1.5 -left-1.5', '-bottom-1.5 -right-1.5'] as pos (pos)}
+						<span
+							class="absolute {pos} text-xs leading-none font-bold text-brand"
+							aria-hidden="true">+</span
+						>
+					{/each}
+					<p class="font-bold">삼각형 타일 (sky + 채도를 뺀 sky)</p>
+					<p>천장까지 청휘석 3,480개 부족해요</p>
+				</div>
+			</div>
+		</div>
+		<div class="flex gap-4 text-xs text-navy">
+			<span class="flex items-center gap-1"
+				><span class="inline-block size-4 rounded" style="background: #7cd0ff"></span>sky #7cd0ff</span
+			>
+			<span class="flex items-center gap-1"
+				><span class="inline-block size-4 rounded" style="background: #a3c5d8"></span>채도 40%
+				#a3c5d8</span
+			>
 		</div>
 	</section>
 </main>
