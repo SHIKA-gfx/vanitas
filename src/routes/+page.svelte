@@ -35,7 +35,7 @@
 	>
 		<!-- 데스크톱 -->
 		<div class="hidden md:block">
-			<HomeFrame {sections} {href} />
+			<HomeFrame {sections} />
 		</div>
 
 		<!-- 모바일: 원이 놓이는 띠의 높이를 타일과 맞춘다 (디자인 이슈) -->

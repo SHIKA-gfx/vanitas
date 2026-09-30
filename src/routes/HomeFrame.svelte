@@ -11,6 +11,9 @@
 	- 글자는 HTML(줄바꿈이 되니까)이고 누르는 건 SVG가 받으므로 pointer-events: none
 -->
 <script lang="ts">
+	import type { Pathname } from '$app/types';
+	import { resolve } from '$app/paths';
+	import { localizeHref } from '$lib/paraglide/runtime';
 	import type { SiteSection } from '$lib/nav';
 	import NavIcon from '$lib/icons/NavIcon.svelte';
 	import VanitasSymbol from '$lib/components/VanitasSymbol.svelte';
@@ -19,10 +22,13 @@
 	interface Props {
 		/** 화면 목록 (nav.ts 순서: 왼쪽 위 → 오른쪽 위 → 왼쪽 아래 → 오른쪽 아래) */
 		sections: SiteSection[];
-		href: (path: string) => string;
 	}
 
-	let { sections, href }: Props = $props();
+	let { sections }: Props = $props();
+
+	// 링크 주소는 이 파일 안에서 resolve()로 만든다. 함수를 속성으로 받으면
+	// ESLint(svelte/no-navigation-without-resolve)가 resolve를 거쳤는지 알 수 없다
+	const href = (path: string) => resolve(localizeHref(path) as Pathname);
 
 	/**
 	 * 기하 값은 여기 한 곳에서만 정한다 (디자인 문서 5-9).
