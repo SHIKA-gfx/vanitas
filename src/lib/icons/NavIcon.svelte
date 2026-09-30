@@ -10,6 +10,7 @@
 <script lang="ts">
 	interface Props {
 		name: NavIconName;
+		/** 크기(px 기준). 화면 배율을 따라가도록 rem으로 바꿔 그린다 */
 		size?: number;
 		/** 아이콘만 단독으로 쓸 때 화면 낭독기용 이름 */
 		label?: string;
@@ -21,8 +22,7 @@
 
 <svg
 	viewBox="0 0 24 24"
-	width={size}
-	height={size}
+	style="width: {size / 16}rem; height: {size / 16}rem"
 	fill="none"
 	stroke="currentColor"
 	stroke-width="2"
