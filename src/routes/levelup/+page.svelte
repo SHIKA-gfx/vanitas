@@ -172,127 +172,153 @@
 	<title>{m.levelup_page_title()} | {m.app_title()}</title>
 </svelte:head>
 
-<main class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 md:grid md:grid-cols-2 md:gap-6">
-	<h1 class="text-2xl text-ink md:col-span-2">{m.levelup_page_title()}</h1>
+<!--
+	배치 (2026-09-30, 수급 계산기와 같은 방식)
+	- 모바일: 결과 → 지금 상태 → 하루 AP 수급 → 그래프 (order로 순서)
+	- md(2칸): 왼쪽 입력 두 패널 / 오른쪽 결과 + 그래프
+	- xl(3칸): 지금 상태 | 하루 AP 수급 | 결과 + 그래프. 열 바닥을 맞추고 패널 사이 간격은 어디서나 같게
+-->
+<main
+	class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 md:grid md:grid-cols-2 md:gap-6 xl:max-w-7xl xl:grid-cols-3"
+>
+	<h1 class="text-2xl text-ink md:col-span-2 xl:col-span-3">{m.levelup_page_title()}</h1>
 
-	<div class="md:col-start-2 md:row-start-2">
-		<LevelUpResult {result} target={targetLevel} />
+	<!-- 결과 열 -->
+	<div class="contents xl:col-start-3 xl:row-start-2 xl:flex xl:flex-col xl:gap-6">
+		<div class="order-1 md:order-none md:col-start-2 md:row-start-2">
+			<LevelUpResult {result} target={targetLevel} />
+		</div>
+		{#if curve}
+			<div
+				class="order-3 md:order-none md:col-start-2 md:row-start-3 xl:flex xl:flex-1 xl:flex-col"
+			>
+				<Panel title={m.levelup_curve_title()} class="xl:flex-1">
+					<LevelCurve points={curve.points} target={curve.target} />
+				</Panel>
+			</div>
+		{/if}
 	</div>
 
-	<div class="flex flex-col gap-4 md:col-start-1 md:row-span-2 md:row-start-2">
-		<Panel title={m.levelup_section_state()}>
-			<div class="flex flex-col gap-3">
-				<SegmentedField label={m.levelup_mode_label()} bind:value={mode} options={modeOptions} />
-				<div class="grid grid-cols-2 gap-3">
-					<NumberField label={m.levelup_input_level()} bind:value={level} min={1} max={maxLevel} />
-					<NumberField
-						label={m.levelup_input_exp()}
-						bind:value={exp}
-						max={expToNext === null ? 0 : expToNext - 1}
-						hint={expToNext === null
-							? undefined
-							: m.levelup_input_exp_hint({ need: formatInt(expToNext) })}
-					/>
-				</div>
-				<NumberField
-					label={m.levelup_input_current_ap()}
-					bind:value={currentAp}
-					hint={m.levelup_input_current_ap_hint()}
-				/>
-				{#if mode === 'level'}
-					<NumberField
-						label={m.levelup_input_target_level()}
-						bind:value={targetLevel}
-						min={1}
-						max={maxLevel}
-					/>
-				{:else}
-					<DateField label={m.levelup_input_target_date()} bind:value={targetDate} min={today} />
-				{/if}
-			</div>
-		</Panel>
-
-		<Panel title={m.levelup_section_income()}>
-			<div class="flex flex-col gap-3">
-				<SelectField
-					label={m.levelup_input_logins()}
-					bind:value={logins}
-					options={loginOptions}
-					help={m.levelup_help_logins()}
-				/>
-				<div class="grid grid-cols-2 gap-3">
-					<SelectField
-						label={m.levelup_input_cafe_rank()}
-						bind:value={cafeRank}
-						options={rankOptions}
-						help={m.levelup_help_cafe()}
-					/>
-					<NumberField
-						label={m.levelup_input_cafe_comfort()}
-						bind:value={
-							() => comfort,
-							(v) => {
-								comfortByRank[cafeRank] = v;
-							}
-						}
-						max={rank.maxComfort}
-					/>
-				</div>
-
-				<fieldset>
-					<legend class="text-sm text-navy">{m.levelup_input_fixed_income()}</legend>
-					<div class="grid grid-cols-2 gap-x-3">
-						{#each regularIncome as item (item.id)}
-							<CheckboxField
-								label={item.name}
-								bind:checked={
-									() => !disabledIncome.includes(item.id), (on) => setIncome(item.id, on)
-								}
-							/>
-						{/each}
+	<!-- 입력 열 (xl에서는 두 열로 나뉜다) -->
+	<div
+		class="order-2 flex flex-col gap-4 md:order-none md:col-start-1 md:row-span-2 md:row-start-2 md:gap-6 xl:contents"
+	>
+		<div class="xl:col-start-1 xl:row-start-2 xl:flex xl:flex-col">
+			<Panel title={m.levelup_section_state()} class="xl:flex-1">
+				<div class="flex flex-col gap-3">
+					<SegmentedField label={m.levelup_mode_label()} bind:value={mode} options={modeOptions} />
+					<div class="grid grid-cols-2 gap-3">
+						<NumberField
+							label={m.levelup_input_level()}
+							bind:value={level}
+							min={1}
+							max={maxLevel}
+						/>
+						<NumberField
+							label={m.levelup_input_exp()}
+							bind:value={exp}
+							max={expToNext === null ? 0 : expToNext - 1}
+							hint={expToNext === null
+								? undefined
+								: m.levelup_input_exp_hint({ need: formatInt(expToNext) })}
+						/>
 					</div>
-				</fieldset>
-
-				{#if packageItem}
-					<SelectField
-						label={packageItem.name}
-						bind:value={apPackage}
-						options={packageOptions}
-						help={packageHelp}
+					<NumberField
+						label={m.levelup_input_current_ap()}
+						bind:value={currentAp}
+						hint={m.levelup_input_current_ap_hint()}
 					/>
-				{/if}
-
-				<div>
-					<SelectField
-						label={m.levelup_input_tactical()}
-						bind:value={tactical}
-						options={tacticalOptions}
-					/>
-					{#if tacticalCost}
-						<p class="mt-1 text-xs text-navy tabular-nums">
-							{m.levelup_tactical_hint({ coins: formatInt(tacticalCost.coins) })}
-						</p>
+					{#if mode === 'level'}
+						<NumberField
+							label={m.levelup_input_target_level()}
+							bind:value={targetLevel}
+							min={1}
+							max={maxLevel}
+						/>
+					{:else}
+						<DateField label={m.levelup_input_target_date()} bind:value={targetDate} min={today} />
 					{/if}
 				</div>
-
-				<NumberField
-					label={m.levelup_input_purchases()}
-					bind:value={habits.apPurchasesPerDay}
-					max={ap.purchase.maxPurchasesPerDay}
-					help={purchaseHelp}
-					hint={purchaseCost
-						? m.levelup_purchases_hint({ gems: formatInt(purchaseCost) })
-						: undefined}
-				/>
-			</div>
-		</Panel>
-	</div>
-
-	{#if curve}
-		<div class="md:col-start-2 md:row-start-3">
-			<Panel title={m.levelup_curve_title()}>
-				<LevelCurve points={curve.points} target={curve.target} />
 			</Panel>
 		</div>
-	{/if}
+		<div class="xl:col-start-2 xl:row-start-2 xl:flex xl:flex-col">
+			<Panel title={m.levelup_section_income()} class="xl:flex-1">
+				<div class="flex flex-col gap-3">
+					<SelectField
+						label={m.levelup_input_logins()}
+						bind:value={logins}
+						options={loginOptions}
+						help={m.levelup_help_logins()}
+					/>
+					<div class="grid grid-cols-2 gap-3">
+						<SelectField
+							label={m.levelup_input_cafe_rank()}
+							bind:value={cafeRank}
+							options={rankOptions}
+							help={m.levelup_help_cafe()}
+						/>
+						<NumberField
+							label={m.levelup_input_cafe_comfort()}
+							bind:value={
+								() => comfort,
+								(v) => {
+									comfortByRank[cafeRank] = v;
+								}
+							}
+							max={rank.maxComfort}
+						/>
+					</div>
+
+					<fieldset>
+						<legend class="text-sm text-navy">{m.levelup_input_fixed_income()}</legend>
+						<div class="grid grid-cols-2 gap-x-3">
+							{#each regularIncome as item (item.id)}
+								<CheckboxField
+									label={item.name}
+									bind:checked={
+										() => !disabledIncome.includes(item.id), (on) => setIncome(item.id, on)
+									}
+								/>
+							{/each}
+						</div>
+					</fieldset>
+
+					<!-- 넓은 화면에서는 패키지와 전술대회를 나란히 -->
+					<div class="grid gap-3 xl:grid-cols-2">
+						{#if packageItem}
+							<SelectField
+								label={packageItem.name}
+								bind:value={apPackage}
+								options={packageOptions}
+								help={packageHelp}
+							/>
+						{/if}
+
+						<div>
+							<SelectField
+								label={m.levelup_input_tactical()}
+								bind:value={tactical}
+								options={tacticalOptions}
+							/>
+							{#if tacticalCost}
+								<p class="mt-1 text-xs text-navy tabular-nums">
+									{m.levelup_tactical_hint({ coins: formatInt(tacticalCost.coins) })}
+								</p>
+							{/if}
+						</div>
+					</div>
+
+					<NumberField
+						label={m.levelup_input_purchases()}
+						bind:value={habits.apPurchasesPerDay}
+						max={ap.purchase.maxPurchasesPerDay}
+						help={purchaseHelp}
+						hint={purchaseCost
+							? m.levelup_purchases_hint({ gems: formatInt(purchaseCost) })
+							: undefined}
+					/>
+				</div>
+			</Panel>
+		</div>
+	</div>
 </main>

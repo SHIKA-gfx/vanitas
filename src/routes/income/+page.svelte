@@ -117,6 +117,13 @@
 		})
 	);
 
+	// 결과 아래 패널: 수급원별 막대 / 잔고 추이 중 하나를 골라 본다
+	const viewOptions = [
+		{ value: 'bars', label: m.income_bars_title() },
+		{ value: 'curve', label: m.income_curve_title() }
+	];
+	let view = $state('bars');
+
 	const purchaseCost = $derived(apPurchaseCostPerDay(habits.apPurchasesPerDay));
 </script>
 
@@ -124,119 +131,158 @@
 	<title>{m.income_page_title()} | {m.app_title()}</title>
 </svelte:head>
 
-<main class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 md:grid md:grid-cols-2 md:gap-6">
-	<h1 class="text-2xl text-ink md:col-span-2">{m.income_page_title()}</h1>
+<!--
+	배치 (2026-09-30)
+	- 모바일: 결과 → 지금 가진 재화 → 받는 청휘석 → 쓰는 청휘석 → 막대·곡선 (order로 순서)
+	- md(2칸): 왼쪽 입력 세 패널 / 오른쪽 결과 + 막대·곡선
+	- xl(3칸): 지금 가진 재화 + 쓰는 청휘석 | 받는 청휘석 | 결과 + 막대·곡선
+	  세 열을 같은 행에 두고 각 열의 마지막 패널을 늘여서, 열 바닥이 나란히 맞고 패널 사이 간격은 어디서나 같다.
+	  (열마다 따로 쌓지 않고 행을 공유하면, 옆 열이 긴 만큼 패널 사이가 벌어진다)
+-->
+<main
+	class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 md:grid md:grid-cols-2 md:gap-6 xl:max-w-7xl xl:grid-cols-3"
+>
+	<h1 class="text-2xl text-ink md:col-span-2 xl:col-span-3">{m.income_page_title()}</h1>
 
-	<div class="md:col-start-2 md:row-start-2">
-		<IncomeResult {result} hasHoldings={res.gems + res.singleTickets + res.tenPullTickets > 0} />
+	<!-- 결과 열 -->
+	<div class="contents xl:col-start-3 xl:row-start-2 xl:flex xl:flex-col xl:gap-6">
+		<div class="order-1 md:order-none md:col-start-2 md:row-start-2">
+			<IncomeResult {result} hasHoldings={res.gems + res.singleTickets + res.tenPullTickets > 0} />
+		</div>
+		{#if result.kind === 'ok'}
+			<div
+				class="order-3 md:order-none md:col-start-2 md:row-start-3 xl:flex xl:flex-1 xl:flex-col"
+			>
+				<Panel class="xl:flex-1">
+					<div class="flex flex-col gap-3">
+						{#if result.records.length > 1}
+							<SegmentedField
+								label={m.income_view_label()}
+								bind:value={view}
+								options={viewOptions}
+							/>
+						{/if}
+						{#if view === 'curve' && result.records.length > 1}
+							<BalanceCurve records={result.records} />
+						{:else}
+							<SourceBars sources={result.sources} />
+						{/if}
+					</div>
+				</Panel>
+			</div>
+		{/if}
 	</div>
 
-	<div class="flex flex-col gap-4 md:col-start-1 md:row-span-3 md:row-start-2">
-		<Panel title={m.income_section_state()}>
-			<div class="flex flex-col gap-3">
-				<NumberField label={m.pity_input_gems()} bind:value={res.gems} />
-				<div class="grid grid-cols-2 gap-3">
-					<NumberField label={m.pity_input_single_tickets()} bind:value={res.singleTickets} />
-					<NumberField label={m.pity_input_ten_tickets()} bind:value={res.tenPullTickets} />
-				</div>
-				<DateField label={m.income_input_end_date()} bind:value={endDate} min={addDays(today, 1)} />
+	<!-- 입력 열 (xl에서는 두 열로 나뉜다) -->
+	<div
+		class="order-2 flex flex-col gap-4 md:order-none md:col-start-1 md:row-span-3 md:row-start-2 md:gap-6 xl:contents"
+	>
+		<div class="contents xl:col-start-1 xl:row-start-2 xl:flex xl:flex-col xl:gap-6">
+			<div class="order-1 xl:order-none">
+				<Panel title={m.income_section_state()}>
+					<div class="flex flex-col gap-3">
+						<NumberField label={m.pity_input_gems()} bind:value={res.gems} />
+						<div class="grid grid-cols-2 gap-3">
+							<NumberField label={m.pity_input_single_tickets()} bind:value={res.singleTickets} />
+							<NumberField label={m.pity_input_ten_tickets()} bind:value={res.tenPullTickets} />
+						</div>
+						<DateField
+							label={m.income_input_end_date()}
+							bind:value={endDate}
+							min={addDays(today, 1)}
+						/>
+					</div>
+				</Panel>
 			</div>
-		</Panel>
+			<div class="order-3 xl:order-none xl:flex xl:flex-1 xl:flex-col">
+				<Panel title={m.income_section_spend()} class="xl:flex-1">
+					<NumberField
+						label={m.levelup_input_purchases()}
+						bind:value={habits.apPurchasesPerDay}
+						max={ap.purchase.maxPurchasesPerDay}
+						help={purchaseHelp}
+						hint={purchaseCost
+							? m.levelup_purchases_hint({ gems: formatInt(purchaseCost) })
+							: undefined}
+					/>
+				</Panel>
+			</div>
+		</div>
 
-		<Panel title={m.income_section_income()}>
-			<div class="flex flex-col gap-3">
-				<SegmentedField
-					label={m.income_input_preset()}
-					bind:value={() => preset, selectPreset}
-					options={presetOptions}
-				/>
+		<div class="order-2 xl:order-none xl:col-start-2 xl:row-start-2 xl:flex xl:flex-col">
+			<Panel title={m.income_section_income()} class="xl:flex-1">
+				<div class="flex flex-col gap-3">
+					<SegmentedField
+						label={m.income_input_preset()}
+						bind:value={() => preset, selectPreset}
+						options={presetOptions}
+					/>
 
-				<fieldset>
-					<legend class="text-sm text-navy">{m.income_input_sources()}</legend>
-					<div class="grid grid-cols-2 gap-x-3">
-						{#each toggleable as source (source.id)}
-							<CheckboxField
-								label={source.name}
-								bind:checked={
-									() => included.includes(source.id), (on) => setIncluded(source.id, on)
-								}
+					<fieldset>
+						<legend class="text-sm text-navy">{m.income_input_sources()}</legend>
+						<div class="grid grid-cols-2 gap-x-3">
+							{#each toggleable as source (source.id)}
+								<CheckboxField
+									label={source.name}
+									bind:checked={
+										() => included.includes(source.id), (on) => setIncluded(source.id, on)
+									}
+								/>
+							{/each}
+						</div>
+					</fieldset>
+
+					<!-- 보상에 딸린 칸: 넓은 화면에서는 두 칸씩 -->
+					<div class="grid gap-3 xl:grid-cols-2">
+						{#if tactical && included.includes(tactical.id)}
+							<NumberField
+								label={m.income_input_tactical()}
+								bind:value={tacticalDaily}
+								help={m.income_help_tactical({
+									min: formatInt(tactical.amountRange?.min ?? 0),
+									max: formatInt(tactical.amountRange?.max ?? 0)
+								})}
+							/>
+						{/if}
+
+						{#if raidRank && included.includes(raidRank.id)}
+							<SelectField
+								label={m.income_input_raid_tier()}
+								bind:value={raidTier}
+								options={tierOptions}
+							/>
+						{/if}
+
+						{#if eventSource && included.includes(eventSource.id)}
+							<SelectField
+								label={m.income_input_participation()}
+								bind:value={participation}
+								options={participationOptions}
+								help={m.income_help_event({
+									min: formatInt(eventSource.amountRange?.min ?? 0),
+									max: formatInt(eventSource.amountRange?.max ?? 0),
+									amount: formatInt(eventSource.amount ?? 0)
+								})}
+							/>
+						{/if}
+					</div>
+
+					<div class="grid grid-cols-2 gap-3">
+						{#each data.subscriptions as product (product.id)}
+							<SelectField
+								label={product.name}
+								bind:value={subscriptions[product.id]}
+								options={subscriptionOptions(product.durationDays)}
+								help={m.income_help_subscription({
+									instant: formatInt(product.instant),
+									daily: formatInt(product.daily),
+									days: m.unit_days({ count: formatInt(product.durationDays) })
+								})}
 							/>
 						{/each}
 					</div>
-				</fieldset>
-
-				{#if tactical && included.includes(tactical.id)}
-					<NumberField
-						label={m.income_input_tactical()}
-						bind:value={tacticalDaily}
-						help={m.income_help_tactical({
-							min: formatInt(tactical.amountRange?.min ?? 0),
-							max: formatInt(tactical.amountRange?.max ?? 0)
-						})}
-					/>
-				{/if}
-
-				{#if raidRank && included.includes(raidRank.id)}
-					<SelectField
-						label={m.income_input_raid_tier()}
-						bind:value={raidTier}
-						options={tierOptions}
-					/>
-				{/if}
-
-				{#if eventSource && included.includes(eventSource.id)}
-					<SelectField
-						label={m.income_input_participation()}
-						bind:value={participation}
-						options={participationOptions}
-						help={m.income_help_event({
-							min: formatInt(eventSource.amountRange?.min ?? 0),
-							max: formatInt(eventSource.amountRange?.max ?? 0),
-							amount: formatInt(eventSource.amount ?? 0)
-						})}
-					/>
-				{/if}
-
-				<div class="grid grid-cols-2 gap-3">
-					{#each data.subscriptions as product (product.id)}
-						<SelectField
-							label={product.name}
-							bind:value={subscriptions[product.id]}
-							options={subscriptionOptions(product.durationDays)}
-							help={m.income_help_subscription({
-								instant: formatInt(product.instant),
-								daily: formatInt(product.daily),
-								days: m.unit_days({ count: formatInt(product.durationDays) })
-							})}
-						/>
-					{/each}
 				</div>
-			</div>
-		</Panel>
-
-		<Panel title={m.income_section_spend()}>
-			<NumberField
-				label={m.levelup_input_purchases()}
-				bind:value={habits.apPurchasesPerDay}
-				max={ap.purchase.maxPurchasesPerDay}
-				help={purchaseHelp}
-				hint={purchaseCost
-					? m.levelup_purchases_hint({ gems: formatInt(purchaseCost) })
-					: undefined}
-			/>
-		</Panel>
-	</div>
-
-	{#if result.kind === 'ok'}
-		<div class="flex flex-col gap-4 md:col-start-2 md:row-start-3">
-			<Panel title={m.income_bars_title()}>
-				<SourceBars sources={result.sources} />
 			</Panel>
-			{#if result.records.length > 1}
-				<Panel title={m.income_curve_title()}>
-					<BalanceCurve records={result.records} />
-				</Panel>
-			{/if}
 		</div>
-	{/if}
+	</div>
 </main>

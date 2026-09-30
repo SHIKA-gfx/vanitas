@@ -11,10 +11,12 @@
 		title?: string;
 		/** false면 모서리 + 표식을 뺀다 (패널 안에 패널을 넣을 때 등) */
 		marks?: boolean;
+		/** 배치용 클래스 (예: 칸 높이에 맞춰 늘이기 xl:flex-1) */
+		class?: string;
 		children: Snippet;
 	}
 
-	let { title, marks = true, children }: Props = $props();
+	let { title, marks = true, class: className = '', children }: Props = $props();
 
 	const CORNERS = [
 		'-top-2 -left-1.5',
@@ -24,7 +26,7 @@
 	];
 </script>
 
-<section class="relative rounded-sm border border-navy/15 bg-surface p-4">
+<section class="relative rounded-sm border border-navy/15 bg-surface p-4 {className}">
 	{#if marks}
 		{#each CORNERS as pos (pos)}
 			<span

@@ -15,7 +15,8 @@
 	const max = $derived(Math.max(1, ...pyroxene.map((s) => s.amount)));
 </script>
 
-<ul class="flex flex-col gap-2">
+<!-- 넓은 화면에서는 두 줄로 나눠 세로 길이를 줄인다 -->
+<ul class="grid gap-x-5 gap-y-2 xl:grid-cols-2">
 	{#each pyroxene as s (s.id)}
 		<li>
 			<div class="flex items-baseline justify-between gap-2 text-sm">
