@@ -10,6 +10,8 @@
  * 규칙 (디자인 문서 2-3)
  * - cyan·sky는 흰 바탕 위 글자·아이콘 금지 (1.7:1)
  * - 본문 크기 글자·작은 버튼은 brand가 아니라 brand-strong
+ * - 의미 색은 색만으로 구분하지 않는다. 늘 글자(판정 문장·배지 글자)와 함께 쓴다
+ * - 밝은 색(shortfall)은 면으로만. 글자는 -strong
  */
 
 /*
@@ -36,7 +38,12 @@
 	font-display: swap;
 }
 
-@theme {
+/*
+ * static: 쓰이지 않은 토큰도 CSS 변수로 모두 내보낸다.
+ * Tailwind는 기본적으로 클래스에서 쓰인 토큰만 변수로 만든다. 그런데 의미 색처럼
+ * var(--color-...)를 동적으로 조립하거나 SVG에서 직접 쓰는 값은 감지되지 않아 빠진다 (2026-09-30 발견).
+ */
+@theme static {
 	--color-brand: #1288f8;
 	--color-brand-strong: #0a6fd6;
 	--color-ink: #2b2b2b;
@@ -45,9 +52,50 @@
 	--color-sky: #7cd0ff;
 	--color-surface: #ffffff;
 	--color-wash: #f2f9ff;
+	/* sky의 채도를 40%로 뺀 색. 배경층 삼각형 타일의 둘째 톤 (2026-09-29) */
+	--color-sky-muted: #a3c5d8;
+
+	/*
+	 * 의미 색 — 확보 / 부족 / 불가 (2026-09-29, 게임 상성표의 색)
+	 *   secured          확보. brand-strong과 같은 값 (흰 바탕 4.93, 위의 흰 글자 4.93)
+	 *   shortfall        부족 — 면·배지 전용. 상성표 Weak 주황 (흰 바탕 1.91 → 글자 금지, 위의 ink 글자 7.40)
+	 *   shortfall-strong 부족 — 글자용. 같은 색상을 어둡게 (흰 바탕 4.87, wash 4.58)
+	 *   blocked          불가. 상성표 경장갑·폭발 빨강 (흰 바탕 9.40, 위의 흰 글자 9.40). 입력 오류에도
+	 */
+	--color-secured: #0a6fd6;
+	--color-shortfall: #feaa13;
+	--color-shortfall-strong: #9e6501;
+	--color-blocked: #891928;
 
 	/* 글꼴을 받지 못했거나 2,350자 밖의 글자는 시스템 한글 글꼴로 */
 	--font-sans:
 		'Gyeonggi Title', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic',
 		'Noto Sans KR', sans-serif;
+}
+
+/*
+ * 기본 글자: 본문 경기천년제목 Medium 15px (2026-09-29, 스타일 타일 B안).
+ * 라벨(14px)·안내(12px)·제목은 각 부품에서 크기를 정한다.
+ */
+@layer base {
+	body {
+		font-size: 0.9375rem;
+		font-weight: 500;
+		line-height: 1.6;
+		color: var(--color-ink);
+	}
+}
+
+/*
+ * 배경층 무늬 (2026-09-29). 장식은 배경층까지 — 패널 안(데이터층)에는 쓰지 않는다.
+ *   bg-diagonal  계산기 화면: wash 위 sky 30% 사선
+ *   홈 화면은 삼각형 타일 (TriangleBackground 부품, CSS가 아니라 SVG)
+ */
+@utility bg-diagonal {
+	background-color: var(--color-wash);
+	background-image: repeating-linear-gradient(
+		135deg,
+		color-mix(in srgb, var(--color-sky) 30%, transparent) 0 1px,
+		transparent 1px 12px
+	);
 }

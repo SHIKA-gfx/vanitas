@@ -10,7 +10,7 @@
 		/** 채도를 뺀 sky. 확정되면 토큰(sky-muted)으로 옮긴다 */
 		muted?: string;
 	}
-	let { size = 64, muted = '#a3c5d8' }: Props = $props();
+	let { size = 64, muted = 'var(--color-sky-muted)' }: Props = $props();
 
 	const COLS = 12;
 	const ROWS = 4;
