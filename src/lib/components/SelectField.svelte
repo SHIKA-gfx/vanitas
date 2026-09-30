@@ -15,11 +15,18 @@
 		options: Option[];
 		/** 왜 이 값을 묻는지 설명하는 문단 */
 		help?: string;
+		/** 입력 오류 안내. 있으면 테두리가 blocked 색이 되고 칸 아래에 문장이 나온다 */
+		error?: string;
 	}
 
-	let { label, value = $bindable(), options, help }: Props = $props();
+	let { label, value = $bindable(), options, help, error }: Props = $props();
 	const id = $props.id();
 	let helpOpen = $state(false);
+
+	const describedBy = $derived(
+		[error ? `${id}-error` : '', help && helpOpen ? `${id}-help` : ''].filter(Boolean).join(' ') ||
+			undefined
+	);
 </script>
 
 <div>
@@ -32,13 +39,19 @@
 	<select
 		{id}
 		bind:value
-		aria-describedby={help && helpOpen ? `${id}-help` : undefined}
-		class="w-full rounded border border-navy/60 bg-surface px-3 py-2 text-ink focus:outline-2 focus:outline-brand-strong"
+		aria-describedby={describedBy}
+		aria-invalid={error ? true : undefined}
+		class="w-full rounded border bg-surface px-3 py-2 text-ink focus:outline-2 focus:outline-brand-strong {error
+			? 'border-blocked ring-1 ring-blocked'
+			: 'border-navy/60'}"
 	>
 		{#each options as option (option.value)}
 			<option value={option.value}>{option.label}</option>
 		{/each}
 	</select>
+	{#if error}
+		<p id="{id}-error" class="mt-1 text-xs font-bold text-blocked">{error}</p>
+	{/if}
 	{#if help}
 		<p
 			id="{id}-help"

@@ -16,7 +16,8 @@
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
-<div class="lg:flex">
+<!-- 배경층: 계산기 화면은 사선 (디자인 문서 5-2). 홈은 6단계에서 삼각형 타일로 덮는다 -->
+<div class="min-h-screen bg-diagonal lg:flex">
 	<AppNav />
 	<!-- 모바일은 하단 탭바(56px) + 홈 인디케이터 영역만큼 아래를 비워, 곡선 아랫부분이 가려지지 않게 한다 -->
 	<div class="min-w-0 flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:pb-0">
