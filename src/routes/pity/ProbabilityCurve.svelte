@@ -5,6 +5,9 @@
 
 	라이브러리 없이 SVG로 그린다. 표시 요소가 세 개(보유·천장·축)뿐이라
 	차트 라이브러리의 주석 플러그인보다 직접 그리는 편이 단순하다.
+
+	눈금과 격자 (디자인 문서 5-12, 2026-09-30): 세로 0·25·50·75·100%, 가로 50연 간격 + 끝(천장).
+	격자는 옅게(navy/15) — 읽기를 돕는 선이라 데이터층에 둬도 장식이 아니다.
 -->
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
@@ -32,6 +35,14 @@
 	const beyond = $derived(inRange.filter((c) => c.pulls >= availablePulls));
 	const atPity = $derived(inRange.at(-1)?.probability ?? 0);
 
+	const Y_TICKS = [0, 0.25, 0.5, 0.75, 1];
+	const X_STEP = 50;
+	/** 끝 눈금(천장)과 너무 가까운 중간 눈금은 글자만 뺀다 (선은 그린다) */
+	const LABEL_GAP = 28;
+	const xTicks = $derived(
+		Array.from({ length: Math.floor((pullsToPity - 1) / X_STEP) }, (_, i) => (i + 1) * X_STEP)
+	);
+
 	const toPoints = (cs: CurvePoint[]) =>
 		cs.map((c) => `${x(c.pulls)},${y(c.probability)}`).join(' ');
 </script>
@@ -47,23 +58,15 @@
 		/>
 	{/if}
 
+	<!-- 격자 -->
+	{#each Y_TICKS.slice(1) as p (p)}
+		<line x1={pad.l} y1={y(p)} x2={W - pad.r} y2={y(p)} class="stroke-navy/15" />
+	{/each}
+	{#each xTicks as n (n)}
+		<line x1={x(n)} y1={pad.t} x2={x(n)} y2={y(0)} class="stroke-navy/15" />
+	{/each}
+	<line x1={pad.l} y1={pad.t} x2={pad.l} y2={y(0)} class="stroke-navy/40" />
 	<line x1={pad.l} y1={y(0)} x2={W - pad.r} y2={y(0)} class="stroke-navy/40" />
-	<line
-		x1={pad.l}
-		y1={y(0.5)}
-		x2={W - pad.r}
-		y2={y(0.5)}
-		class="stroke-navy/20"
-		stroke-dasharray="3 3"
-	/>
-	<line
-		x1={pad.l}
-		y1={y(1)}
-		x2={W - pad.r}
-		y2={y(1)}
-		class="stroke-navy/20"
-		stroke-dasharray="3 3"
-	/>
 
 	<polyline points={toPoints(owned)} fill="none" class="stroke-brand" stroke-width="2" />
 	{#if short}
@@ -95,10 +98,20 @@
 		{m.pity_curve_pity({ count: formatInt(pullsToPity) })}
 	</text>
 
-	<text x={pad.l - 6} y={y(1) + 4} text-anchor="end" class="fill-navy text-[11px]">100%</text>
-	<text x={pad.l - 6} y={y(0.5) + 4} text-anchor="end" class="fill-navy text-[11px]">50%</text>
-	<text x={pad.l - 6} y={y(0) + 4} text-anchor="end" class="fill-navy text-[11px]">0%</text>
-	<text x={pad.l} y={H - 8} class="fill-navy text-[11px]">0</text>
+	<!-- 눈금 글자 -->
+	{#each Y_TICKS as p (p)}
+		<text x={pad.l - 6} y={y(p) + 4} text-anchor="end" class="fill-navy text-[11px]">
+			{p * 100}%
+		</text>
+	{/each}
+	<text x={pad.l} y={H - 8} text-anchor="middle" class="fill-navy text-[11px]">0</text>
+	{#each xTicks as n (n)}
+		{#if x(pullsToPity) - x(n) >= LABEL_GAP}
+			<text x={x(n)} y={H - 8} text-anchor="middle" class="fill-navy text-[11px]">
+				{formatInt(n)}
+			</text>
+		{/if}
+	{/each}
 	<text x={W - pad.r} y={H - 8} text-anchor="end" class="fill-navy text-[11px]">
 		{m.unit_pulls({ count: formatInt(pullsToPity) })}
 	</text>

@@ -124,6 +124,13 @@
 	];
 	let view = $state('bars');
 
+	// 입력 오류는 결과 카드와 함께 해당 칸에도 보여준다 (디자인 문서 5-8)
+	const endDateError = $derived(
+		result.kind === 'invalid' && result.field === 'endDate'
+			? m.income_invalid_end_date()
+			: undefined
+	);
+
 	const purchaseCost = $derived(apPurchaseCostPerDay(habits.apPurchasesPerDay));
 </script>
 
@@ -190,6 +197,7 @@
 							label={m.income_input_end_date()}
 							bind:value={endDate}
 							min={addDays(today, 1)}
+							error={endDateError}
 						/>
 					</div>
 				</Panel>

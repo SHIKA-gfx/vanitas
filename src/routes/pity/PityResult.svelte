@@ -38,10 +38,17 @@
 	{:else}
 		{@const v = result.evaluation.verdict}
 
+		<!-- 판정 배지: 의미 색 + 글자 (색만으로 구분하지 않는다, 디자인 문서 2-4) -->
 		{#if v.kind === 'exchange_now'}
-			<p class="text-xl text-ink">{m.pity_verdict_exchange_now()}</p>
+			<p class="flex flex-wrap items-center gap-2 text-xl text-ink">
+				<Badge tone="secured">{m.pity_badge_secured()}</Badge>
+				{m.pity_verdict_exchange_now()}
+			</p>
 		{:else if v.kind === 'guaranteed'}
-			<p class="mb-3 text-xl text-ink">{m.pity_verdict_guaranteed()}</p>
+			<p class="mb-3 flex flex-wrap items-center gap-2 text-xl text-ink">
+				<Badge tone="secured">{m.pity_badge_secured()}</Badge>
+				{m.pity_verdict_guaranteed()}
+			</p>
 			<div class="grid grid-cols-2 gap-2">
 				<Metric
 					label={m.pity_metric_before_pity()}
@@ -54,7 +61,8 @@
 				{/if}
 			</div>
 		{:else if v.kind === 'short'}
-			<p class="mb-3 text-xl text-ink">
+			<p class="mb-3 flex flex-wrap items-center gap-2 text-xl text-ink">
+				<Badge tone="shortfall">{m.pity_badge_short()}</Badge>
 				{m.pity_verdict_short({ gems: formatInt(v.shortfallGems) })}
 			</p>
 			<div class="grid grid-cols-2 gap-2">
@@ -64,6 +72,7 @@
 				<Metric
 					label={m.pity_metric_pulls_to_pity()}
 					value={m.unit_pulls({ count: formatInt(v.shortfallPulls) })}
+					tone="shortfall"
 				/>
 			</div>
 		{:else}
