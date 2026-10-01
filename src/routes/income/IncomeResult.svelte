@@ -49,7 +49,12 @@
 			{/if}
 		</div>
 		{#if hasHoldings}
-			<p class="mb-3 text-sm text-navy tabular-nums">
+			<!-- 잔고가 바닥나면 불가 색 (글자와 함께, 디자인 문서 2-4) -->
+			<p
+				class="mb-3 text-sm tabular-nums {result.endBalance < 0
+					? 'font-bold text-blocked'
+					: 'text-navy'}"
+			>
 				{m.income_verdict_balance({ gems: signed(result.endBalance) })}
 			</p>
 		{:else}
@@ -57,9 +62,21 @@
 		{/if}
 
 		<div class="grid grid-cols-3 gap-2">
-			<Metric label={m.income_metric_per_day()} value={signed(Math.round(result.perDay))} />
-			<Metric label={m.income_metric_per_week()} value={signed(Math.round(result.perWeek))} />
-			<Metric label={m.income_metric_per_month()} value={signed(Math.round(result.perMonth))} />
+			<Metric
+				label={m.income_metric_per_day()}
+				value={signed(Math.round(result.perDay))}
+				tone={result.net < 0 ? 'shortfall' : 'neutral'}
+			/>
+			<Metric
+				label={m.income_metric_per_week()}
+				value={signed(Math.round(result.perWeek))}
+				tone={result.net < 0 ? 'shortfall' : 'neutral'}
+			/>
+			<Metric
+				label={m.income_metric_per_month()}
+				value={signed(Math.round(result.perMonth))}
+				tone={result.net < 0 ? 'shortfall' : 'neutral'}
+			/>
 		</div>
 
 		<div class="mt-2 grid grid-cols-2 gap-2">

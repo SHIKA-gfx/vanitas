@@ -164,6 +164,14 @@
 		disabledIncome = on ? disabledIncome.filter((x) => x !== id) : [...disabledIncome, id];
 	}
 
+	// 입력 오류는 결과 카드와 함께 해당 칸에도 보여준다 (디자인 문서 5-8)
+	const fieldError = (field: 'exp' | 'goal') =>
+		result.kind !== 'invalid' || result.field !== field
+			? undefined
+			: field === 'exp'
+				? m.levelup_invalid_exp()
+				: m.levelup_invalid_goal_date();
+
 	const purchaseCost = $derived(apPurchaseCostPerDay(habits.apPurchasesPerDay));
 	const tacticalCost = $derived(tactical === 'none' ? null : tacticalPerDay(Number(tactical)));
 </script>
@@ -217,6 +225,7 @@
 						<NumberField
 							label={m.levelup_input_exp()}
 							bind:value={exp}
+							error={fieldError('exp')}
 							max={expToNext === null ? 0 : expToNext - 1}
 							hint={expToNext === null
 								? undefined
@@ -236,7 +245,12 @@
 							max={maxLevel}
 						/>
 					{:else}
-						<DateField label={m.levelup_input_target_date()} bind:value={targetDate} min={today} />
+						<DateField
+							label={m.levelup_input_target_date()}
+							bind:value={targetDate}
+							min={today}
+							error={fieldError('goal')}
+						/>
 					{/if}
 				</div>
 			</Panel>

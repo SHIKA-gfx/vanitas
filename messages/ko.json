@@ -34,6 +34,8 @@
 	"pity_metric_pulls_to_pity": "천장까지 더 필요",
 	"pity_note_no_pick_through": "특별 픽업 학생은 픽뚫로 얻을 수 없어요. 놓치면 복각까지 기다려야 해요.",
 	"pity_badge_estimated": "추정 확률",
+	"pity_badge_secured": "확보",
+	"pity_badge_short": "부족",
 	"pity_detail_total_pulls": "가능한 연차",
 	"pity_detail_rate": "1회 획득 확률",
 	"pity_curve_title": "연차별 획득 확률",
