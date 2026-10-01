@@ -16,7 +16,7 @@
 </script>
 
 <div>
-	<label for={id} class="mb-1 block text-sm text-navy">{label}</label>
+	<label for={id} class="mb-2 block text-[0.8125rem] font-medium text-navy">{label}</label>
 	<input
 		{id}
 		type="date"
@@ -24,11 +24,9 @@
 		bind:value
 		aria-describedby={error ? `${id}-error` : undefined}
 		aria-invalid={error ? true : undefined}
-		class="w-full rounded border bg-surface px-3 py-2 text-ink tabular-nums focus:outline-2 focus:outline-brand-strong {error
-			? 'border-blocked ring-1 ring-blocked'
-			: 'border-navy/60'}"
+		class="field tabular-nums {error ? 'field-error' : ''}"
 	/>
 	{#if error}
-		<p id="{id}-error" class="mt-1 text-xs font-bold text-blocked">{error}</p>
+		<p id="{id}-error" class="mt-2 text-xs font-bold text-blocked">{error}</p>
 	{/if}
 </div>

@@ -26,12 +26,12 @@
 	const signed = (n: number) => (n < 0 ? `-${formatInt(-n)}` : formatInt(n));
 </script>
 
-<Panel>
+<Panel marks>
 	{#if result.kind === 'invalid'}
-		<p class="text-lg text-ink">{invalidMessage(result.field)}</p>
+		<p class="text-lg font-bold text-ink">{invalidMessage(result.field)}</p>
 	{:else}
 		<div class="flex flex-wrap items-start justify-between gap-2">
-			<p class="text-xl text-ink">
+			<p class="text-[1.375rem] leading-snug font-bold text-ink">
 				{#if result.net >= 0}
 					{m.income_verdict_gain({
 						date: formatDate(result.endDate),

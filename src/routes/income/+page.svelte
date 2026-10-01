@@ -149,7 +149,9 @@
 <main
 	class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 md:grid md:grid-cols-2 md:gap-6 xl:max-w-7xl xl:grid-cols-3"
 >
-	<h1 class="text-2xl text-ink md:col-span-2 xl:col-span-3">{m.income_page_title()}</h1>
+	<h1 class="text-[1.75rem] font-bold text-ink md:col-span-2 xl:col-span-3">
+		{m.income_page_title()}
+	</h1>
 
 	<!-- 결과 열 -->
 	<div class="contents xl:col-start-3 xl:row-start-2 xl:flex xl:flex-col xl:gap-6">
@@ -161,7 +163,7 @@
 				class="order-3 md:order-none md:col-start-2 md:row-start-3 xl:flex xl:flex-1 xl:flex-col"
 			>
 				<Panel class="xl:flex-1">
-					<div class="flex flex-col gap-3">
+					<div class="flex flex-col gap-4">
 						{#if result.records.length > 1}
 							<SegmentedField
 								label={m.income_view_label()}
@@ -187,9 +189,9 @@
 		<div class="contents xl:col-start-1 xl:row-start-2 xl:flex xl:flex-col xl:gap-6">
 			<div class="order-1 xl:order-none">
 				<Panel title={m.income_section_state()}>
-					<div class="flex flex-col gap-3">
+					<div class="flex flex-col gap-4">
 						<NumberField label={m.pity_input_gems()} bind:value={res.gems} />
-						<div class="grid grid-cols-2 gap-3">
+						<div class="grid grid-cols-2 gap-4">
 							<NumberField label={m.pity_input_single_tickets()} bind:value={res.singleTickets} />
 							<NumberField label={m.pity_input_ten_tickets()} bind:value={res.tenPullTickets} />
 						</div>
@@ -219,7 +221,7 @@
 
 		<div class="order-2 xl:order-none xl:col-start-2 xl:row-start-2 xl:flex xl:flex-col">
 			<Panel title={m.income_section_income()} class="xl:flex-1">
-				<div class="flex flex-col gap-3">
+				<div class="flex flex-col gap-4">
 					<SegmentedField
 						label={m.income_input_preset()}
 						bind:value={() => preset, selectPreset}
@@ -228,7 +230,7 @@
 
 					<fieldset>
 						<legend class="text-sm text-navy">{m.income_input_sources()}</legend>
-						<div class="grid grid-cols-2 gap-x-3">
+						<div class="grid grid-cols-2 gap-x-4">
 							{#each toggleable as source (source.id)}
 								<CheckboxField
 									label={source.name}
@@ -241,7 +243,7 @@
 					</fieldset>
 
 					<!-- 보상에 딸린 칸: 넓은 화면에서는 두 칸씩 -->
-					<div class="grid gap-3 xl:grid-cols-2">
+					<div class="grid gap-4 xl:grid-cols-2">
 						{#if tactical && included.includes(tactical.id)}
 							<NumberField
 								label={m.income_input_tactical()}
@@ -275,7 +277,7 @@
 						{/if}
 					</div>
 
-					<div class="grid grid-cols-2 gap-3">
+					<div class="grid grid-cols-2 gap-4">
 						{#each data.subscriptions as product (product.id)}
 							<SelectField
 								label={product.name}

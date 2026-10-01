@@ -24,6 +24,6 @@
 	};
 </script>
 
-<span class="inline-block rounded px-1.5 text-xs font-bold {TONE_CLASS[tone]}">
+<span class="inline-block rounded px-1.5 py-0.5 text-xs leading-none font-bold {TONE_CLASS[tone]}">
 	{@render children()}
 </span>

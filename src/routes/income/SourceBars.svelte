@@ -20,23 +20,32 @@
 	{#each pyroxene as s (s.id)}
 		<li>
 			<div class="flex items-baseline justify-between gap-2 text-sm">
-				<span class="text-ink">
+				<span class="break-keep text-ink">
 					{s.name}
-					{#if s.paid}<span class="text-xs text-navy">· {m.income_bars_paid()}</span>{/if}
-					{#if s.estimated}<span class="text-xs text-navy">· {m.income_bars_estimated()}</span>{/if}
+					{#if s.paid}<span
+							class="ml-1 inline-block rounded border border-navy/25 px-1 py-px align-middle text-[0.6875rem] leading-none text-navy"
+							>{m.income_bars_paid()}</span
+						>{/if}
+					{#if s.estimated}<span
+							class="ml-1 inline-block rounded border border-navy/25 px-1 py-px align-middle text-[0.6875rem] leading-none text-navy"
+							>{m.income_bars_estimated()}</span
+						>{/if}
 				</span>
 				<span class="text-navy tabular-nums">{formatInt(s.amount)}</span>
 			</div>
-			<div class="mt-1 h-2 rounded bg-wash" aria-hidden="true">
-				<div class="h-2 rounded bg-brand" style="width: {(s.amount / max) * 100}%"></div>
+			<div class="mt-1.5 h-2 rounded-full bg-wash" aria-hidden="true">
+				<div class="h-2 rounded-full bg-brand" style="width: {(s.amount / max) * 100}%"></div>
 			</div>
 		</li>
 	{/each}
 	{#each tickets as s (s.id)}
 		<li class="flex items-baseline justify-between gap-2 text-sm">
-			<span class="text-ink">
+			<span class="break-keep text-ink">
 				{s.name}
-				{#if s.estimated}<span class="text-xs text-navy">· {m.income_bars_estimated()}</span>{/if}
+				{#if s.estimated}<span
+						class="ml-1 inline-block rounded border border-navy/25 px-1 py-px align-middle text-[0.6875rem] leading-none text-navy"
+						>{m.income_bars_estimated()}</span
+					>{/if}
 			</span>
 			<span class="text-navy tabular-nums">{m.unit_tickets({ count: formatInt(s.amount) })}</span>
 		</li>

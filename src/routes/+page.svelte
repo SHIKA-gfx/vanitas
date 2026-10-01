@@ -23,7 +23,10 @@
 	<title>{m.app_title()}</title>
 </svelte:head>
 
-<main class="relative min-h-screen overflow-hidden">
+<!-- 모바일은 레이아웃이 하단 탭바 높이만큼 아래를 비워 두는데, 그 자리까지 홈 배경이 덮도록 아래로 늘인다 -->
+<main
+	class="relative -mb-[calc(3.5rem+env(safe-area-inset-bottom))] min-h-screen overflow-hidden pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:mb-0 lg:pb-0"
+>
 	<!-- 배경층: 레이아웃의 사선을 덮는다 -->
 	<div class="absolute inset-0 bg-wash" aria-hidden="true">
 		<TriangleBackground />
@@ -45,7 +48,9 @@
 					<VanitasSymbol class="w-11 text-white" />
 				</div>
 				<div>
-					<h1 class="text-2xl font-bold text-ink">{m.app_title()}</h1>
+					<h1 class="font-display text-[1.75rem] font-bold tracking-wide text-ink">
+						{m.app_title()}
+					</h1>
 					<p class="text-sm text-navy">{m.app_tagline()}</p>
 				</div>
 			</div>
@@ -55,7 +60,7 @@
 						{#if section.ready}
 							<a
 								href={href(section.path)}
-								class="flex min-h-24 items-center gap-4 rounded-sm border border-navy/60 bg-surface p-4 hover:bg-wash focus-visible:outline-2 focus-visible:outline-brand-strong"
+								class="flex min-h-24 items-center gap-4 rounded-xl border border-navy/60 bg-surface p-4 hover:bg-wash focus-visible:outline-2 focus-visible:outline-brand-strong"
 							>
 								<NavIcon name={section.icon} size={28} class="shrink-0 text-brand-strong" />
 								<span class="flex flex-col gap-0.5">
@@ -66,7 +71,7 @@
 						{:else}
 							<div
 								aria-disabled="true"
-								class="flex min-h-24 items-center gap-4 rounded-sm border border-dashed border-navy/60 bg-surface/70 p-4"
+								class="flex min-h-24 items-center gap-4 rounded-xl border border-dashed border-navy/60 bg-surface/70 p-4"
 							>
 								<NavIcon name={section.icon} size={28} class="shrink-0 text-navy/60" />
 								<span class="flex flex-col gap-0.5">

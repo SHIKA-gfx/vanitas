@@ -62,18 +62,19 @@
 </svelte:head>
 
 <main class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 md:grid md:grid-cols-2 md:gap-6">
-	<h1 class="text-2xl text-ink md:col-span-2">{m.pity_page_title()}</h1>
+	<h1 class="text-[1.75rem] font-bold text-ink md:col-span-2">{m.pity_page_title()}</h1>
 
 	<div class="md:col-start-2 md:row-start-2">
 		<PityResult {result} bannerName={nameOf(banner)} />
 	</div>
 
-	<div class="md:col-start-1 md:row-span-2 md:row-start-2">
-		<Panel>
-			<div class="flex flex-col gap-3">
+	<!-- 두 열의 바닥을 맞춘다: 입력 패널을 오른쪽 열(결과 + 그래프) 높이까지 늘인다 -->
+	<div class="md:col-start-1 md:row-span-2 md:row-start-2 md:flex md:flex-col">
+		<Panel class="md:flex-1">
+			<div class="flex flex-col gap-4">
 				<SelectField label={m.pity_input_banner()} bind:value={bannerId} options={bannerOptions} />
 				<NumberField label={m.pity_input_gems()} bind:value={res.gems} />
-				<div class="grid grid-cols-2 gap-3">
+				<div class="grid grid-cols-2 gap-4">
 					<NumberField label={m.pity_input_single_tickets()} bind:value={res.singleTickets} />
 					<NumberField label={m.pity_input_ten_tickets()} bind:value={res.tenPullTickets} />
 				</div>

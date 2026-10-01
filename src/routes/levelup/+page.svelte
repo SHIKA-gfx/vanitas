@@ -189,7 +189,9 @@
 <main
 	class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 md:grid md:grid-cols-2 md:gap-6 xl:max-w-7xl xl:grid-cols-3"
 >
-	<h1 class="text-2xl text-ink md:col-span-2 xl:col-span-3">{m.levelup_page_title()}</h1>
+	<h1 class="text-[1.75rem] font-bold text-ink md:col-span-2 xl:col-span-3">
+		{m.levelup_page_title()}
+	</h1>
 
 	<!-- 결과 열 -->
 	<div class="contents xl:col-start-3 xl:row-start-2 xl:flex xl:flex-col xl:gap-6">
@@ -213,9 +215,9 @@
 	>
 		<div class="xl:col-start-1 xl:row-start-2 xl:flex xl:flex-col">
 			<Panel title={m.levelup_section_state()} class="xl:flex-1">
-				<div class="flex flex-col gap-3">
+				<div class="flex flex-col gap-4">
 					<SegmentedField label={m.levelup_mode_label()} bind:value={mode} options={modeOptions} />
-					<div class="grid grid-cols-2 gap-3">
+					<div class="grid grid-cols-2 gap-4">
 						<NumberField
 							label={m.levelup_input_level()}
 							bind:value={level}
@@ -257,14 +259,14 @@
 		</div>
 		<div class="xl:col-start-2 xl:row-start-2 xl:flex xl:flex-col">
 			<Panel title={m.levelup_section_income()} class="xl:flex-1">
-				<div class="flex flex-col gap-3">
+				<div class="flex flex-col gap-4">
 					<SelectField
 						label={m.levelup_input_logins()}
 						bind:value={logins}
 						options={loginOptions}
 						help={m.levelup_help_logins()}
 					/>
-					<div class="grid grid-cols-2 gap-3">
+					<div class="grid grid-cols-2 gap-4">
 						<SelectField
 							label={m.levelup_input_cafe_rank()}
 							bind:value={cafeRank}
@@ -285,7 +287,7 @@
 
 					<fieldset>
 						<legend class="text-sm text-navy">{m.levelup_input_fixed_income()}</legend>
-						<div class="grid grid-cols-2 gap-x-3">
+						<div class="grid grid-cols-2 gap-x-4">
 							{#each regularIncome as item (item.id)}
 								<CheckboxField
 									label={item.name}
@@ -298,7 +300,7 @@
 					</fieldset>
 
 					<!-- 넓은 화면에서는 패키지와 전술대회를 나란히 -->
-					<div class="grid gap-3 xl:grid-cols-2">
+					<div class="grid gap-4 xl:grid-cols-2">
 						{#if packageItem}
 							<SelectField
 								label={packageItem.name}

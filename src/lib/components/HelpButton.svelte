@@ -24,7 +24,7 @@
 	aria-controls={controls}
 	aria-label={m.common_help_label({ label })}
 	onclick={() => (open = !open)}
-	class="inline-flex size-6 items-center justify-center rounded-full border border-navy/60 text-xs text-navy focus-visible:outline-2 focus-visible:outline-brand-strong aria-expanded:bg-navy aria-expanded:text-white"
+	class="inline-flex size-5 items-center justify-center rounded-full border border-navy/40 text-[0.6875rem] font-bold text-navy hover:border-navy focus-visible:outline-2 focus-visible:outline-brand-strong aria-expanded:bg-navy aria-expanded:text-white"
 >
 	?
 </button>

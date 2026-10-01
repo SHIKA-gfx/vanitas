@@ -1,9 +1,14 @@
 <!--
 	정수 입력칸. 청휘석·모집권·포인트처럼 0 이상의 정수만 받는다.
-	잘못된 값(빈칸, 음수, 소수)은 즉시 보정하고, 칸을 벗어날 때 표시도 맞춘다.
+	잘못된 값(빈칸, 음수, 소수)은 즉시 보정한다.
+	칸을 벗어나면 쉼표를 넣어 보여주고(27,711), 입력 중에는 숫자만 보여준다 (2026-10-01, 결과 표기와 맞춤).
 	help를 주면 라벨 옆에 "?" 버튼이 붙는다 (SelectField와 같은 방식).
+
+	모양 (디자인 문서 5-8, 2026-10-01): 옅은 바탕(wash) + 테두리 없음, 높이 44px, 모서리 8px.
+	초점이 오면 흰 바탕 + brand-strong 테두리 + 옅은 빛 번짐. 오류면 blocked.
 -->
 <script lang="ts">
+	import { formatInt } from '$lib/format';
 	import HelpButton from './HelpButton.svelte';
 
 	interface Props {
@@ -30,6 +35,7 @@
 	}: Props = $props();
 	const id = $props.id();
 	let helpOpen = $state(false);
+	let focused = $state(false);
 
 	const describedBy = $derived(
 		[error ? `${id}-error` : '', hint ? `${id}-hint` : '', help && helpOpen ? `${id}-help` : '']
@@ -37,8 +43,9 @@
 			.join(' ') || undefined
 	);
 
+	/** 쉼표·공백을 빼고 정수로 읽어 범위 안으로 */
 	function clamp(raw: string): number {
-		const n = Math.floor(Number(raw));
+		const n = Math.floor(Number(raw.replace(/[^\d.-]/g, '')));
 		if (!Number.isFinite(n)) return min;
 		return Math.min(max, Math.max(min, n));
 	}
@@ -46,47 +53,40 @@
 	function onInput(event: Event & { currentTarget: HTMLInputElement }) {
 		value = clamp(event.currentTarget.value);
 	}
-
-	function onBlur(event: Event & { currentTarget: HTMLInputElement }) {
-		event.currentTarget.value = String(value);
-	}
 </script>
 
 <div>
-	<div class="mb-1 flex min-h-6 items-center gap-1.5">
-		<label for={id} class="block text-sm text-navy">{label}</label>
+	<div class="mb-2 flex min-h-6 items-center gap-1.5">
+		<label for={id} class="block text-[0.8125rem] font-medium text-navy">{label}</label>
 		{#if help}
 			<HelpButton {label} controls="{id}-help" bind:open={helpOpen} />
 		{/if}
 	</div>
-	<!-- 테두리 navy/60: 흰 바탕 대비 약 3.4:1 (입력칸 기준 3:1) -->
+	<!-- 숫자 쉼표를 보여주려고 type="number" 대신 text + inputmode="numeric" -->
 	<input
 		{id}
-		type="number"
+		type="text"
 		inputmode="numeric"
-		step="1"
-		{min}
-		{max}
-		{value}
+		autocomplete="off"
+		value={focused ? String(value) : formatInt(value)}
 		aria-describedby={describedBy}
 		aria-invalid={error ? true : undefined}
 		oninput={onInput}
-		onblur={onBlur}
-		class="w-full rounded border bg-surface px-3 py-2 text-ink tabular-nums focus:outline-2 focus:outline-brand-strong {error
-			? 'border-blocked ring-1 ring-blocked'
-			: 'border-navy/60'}"
+		onfocus={() => (focused = true)}
+		onblur={() => (focused = false)}
+		class="field {error ? 'field-error' : ''}"
 	/>
 	{#if error}
-		<p id="{id}-error" class="mt-1 text-xs font-bold text-blocked">{error}</p>
+		<p id="{id}-error" class="mt-2 text-xs font-bold text-blocked">{error}</p>
 	{/if}
 	{#if hint}
-		<p id="{id}-hint" class="mt-1 text-xs text-navy tabular-nums">{hint}</p>
+		<p id="{id}-hint" class="mt-2 text-xs text-navy tabular-nums">{hint}</p>
 	{/if}
 	{#if help}
 		<p
 			id="{id}-help"
 			hidden={!helpOpen}
-			class="mt-2 rounded bg-wash p-3 text-xs leading-relaxed text-navy"
+			class="mt-2 rounded-lg bg-wash p-3 text-xs leading-relaxed text-navy"
 		>
 			{help}
 		</p>

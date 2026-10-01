@@ -16,6 +16,7 @@
 	import DateField from '$lib/components/DateField.svelte';
 	import NavIcon, { type NavIconName } from '$lib/icons/NavIcon.svelte';
 	import TriangleBackground from '$lib/components/TriangleBackground.svelte';
+	import type { CornerMarkVariant } from '$lib/components/CornerMark.svelte';
 
 	// ---------------------------------------------------------------- 색
 
@@ -115,6 +116,39 @@
 		return `${gx(p).toFixed(1)},${gy(v).toFixed(1)}`;
 	}).join(' ');
 
+	// ---------------------------------------------------------------- 결과 패널 표식 시안
+	const markVariants: { id: CornerMarkVariant; label: string }[] = [
+		{ id: 'plus', label: 'plus — 지금의 가는 십자' },
+		{ id: 'bold', label: 'bold — 굵은 십자 (지금 기본값)' },
+		{ id: 'ring', label: 'ring — 원 테두리 안의 십자' },
+		{ id: 'diamond', label: 'diamond — 마름모 테두리 안의 십자' },
+		{ id: 'bracket', label: 'bracket — 십자 + 모서리를 따라 뻗는 선' }
+	];
+
+	// ---------------------------------------------------------------- 영문 글꼴 후보 (VANITAS)
+	// 모두 무료(SIL OFL). 지금 워드마크는 경기천년제목 — 비교 기준으로 맨 앞에 둔다
+	const latinFonts = [
+		{ family: "'Gyeonggi Title'", name: '경기천년제목 (지금)', note: '한글과 같은 글꼴. 통일감' },
+		{ family: "'Rajdhani'", name: 'Rajdhani', note: '좁고 각진 기술 느낌. 게임 UI에 자주 쓰임' },
+		{ family: "'Saira'", name: 'Saira', note: '둥근 모서리의 넓은 글자. 부드러운 SF 느낌' },
+		{ family: "'Exo 2'", name: 'Exo 2', note: '미래적이지만 과하지 않음. 기울임도 있음' },
+		{
+			family: "'Chakra Petch'",
+			name: 'Chakra Petch',
+			note: '모서리를 잘라낸 각진 글자. 개성 강함'
+		},
+		{
+			family: "'Oxanium'",
+			name: 'Oxanium — 선택 (2026-10-01)',
+			note: '모서리를 깎은 사각형 글자. 디지털 계기판 느낌. static/fonts에 넣어 VANITAS에 적용'
+		},
+		{
+			family: "'Outfit'",
+			name: 'Outfit',
+			note: '깔끔한 기하학 산세리프. 게임 느낌은 적고 정돈된 인상'
+		}
+	];
+
 	// ---------------------------------------------------------------- 아이콘
 
 	const icons: { name: NavIconName; label: string }[] = [
@@ -127,6 +161,13 @@
 
 <svelte:head>
 	<title>스타일 타일 (개발용)</title>
+	<!-- 영문 글꼴 비교용 (개발 페이지에서만 불러온다). 고르면 static/fonts에 직접 넣는다 -->
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+	<link
+		rel="stylesheet"
+		href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Saira:wght@600;700&family=Exo+2:ital,wght@0,600;0,700;1,700&family=Chakra+Petch:wght@600;700&family=Outfit:wght@600;700&family=Oxanium:wght@600;700&display=swap"
+	/>
 </svelte:head>
 
 <main class="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-8 text-ink">
@@ -384,6 +425,61 @@
 								<span class={s.text}>{i.label}</span>
 							</div>
 						{/each}
+					</div>
+				</div>
+			{/each}
+		</div>
+	</section>
+
+	<!-- 10. 결과 패널 표식 -->
+	<section class="flex flex-col gap-4">
+		<h2 class="text-xl font-bold">10. 결과 패널 모서리 표식 시안 (CornerMark)</h2>
+		<p class="text-sm text-navy">결과 패널에만 붙는다. 모양을 고르면 Panel의 기본값으로 정한다.</p>
+		<div class="grid gap-8 p-2 md:grid-cols-2 xl:grid-cols-3">
+			{#each markVariants as v (v.id)}
+				<Panel marks markVariant={v.id}>
+					<p class="text-xs text-navy">{v.label}</p>
+					<p
+						class="mt-1 flex flex-wrap items-center gap-2 text-[1.375rem] leading-snug font-bold text-ink"
+					>
+						<Badge tone="secured">확보</Badge>확정으로 데려올 수 있어요
+					</p>
+					<div class="mt-3 grid grid-cols-2 gap-2">
+						<Metric label="천장 전에 나올 확률" value="75.5%" />
+						<Metric label="천장까지 가도 남는 청휘석" value="3,831" />
+					</div>
+				</Panel>
+			{/each}
+		</div>
+	</section>
+
+	<!-- 9. 영문 글꼴 -->
+	<section class="flex flex-col gap-4">
+		<h2 class="text-xl font-bold">9. 영문 글꼴 후보 — VANITAS (무료, SIL OFL)</h2>
+		<p class="text-sm text-navy">
+			홈 원 안(흰 글자), 흰 바탕, 왼쪽 목록 크기로 함께 본다. 개발 페이지에서만 Google Fonts로
+			불러온다.
+		</p>
+		<div class="grid gap-4 md:grid-cols-2">
+			{#each latinFonts as f (f.name)}
+				<div
+					class="flex items-center gap-5 rounded-xl border border-navy/10 bg-surface p-5 shadow-panel"
+				>
+					<div class="flex size-28 shrink-0 items-center justify-center rounded-full bg-brand">
+						<span
+							class="text-2xl font-bold tracking-wide text-white"
+							style="font-family: {f.family}"
+						>
+							VANITAS
+						</span>
+					</div>
+					<div class="flex min-w-0 flex-col gap-1">
+						<p class="text-xs text-navy">{f.name}</p>
+						<p class="text-4xl font-bold tracking-wide text-ink" style="font-family: {f.family}">
+							VANITAS
+						</p>
+						<p class="text-xl font-bold text-ink" style="font-family: {f.family}">VANITAS</p>
+						<p class="text-xs text-navy">{f.note}</p>
 					</div>
 				</div>
 			{/each}

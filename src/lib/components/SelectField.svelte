@@ -30,33 +30,46 @@
 </script>
 
 <div>
-	<div class="mb-1 flex min-h-6 items-center gap-1.5">
-		<label for={id} class="block text-sm text-navy">{label}</label>
+	<div class="mb-2 flex min-h-6 items-center gap-1.5">
+		<label for={id} class="block text-[0.8125rem] font-medium text-navy">{label}</label>
 		{#if help}
 			<HelpButton {label} controls="{id}-help" bind:open={helpOpen} />
 		{/if}
 	</div>
-	<select
-		{id}
-		bind:value
-		aria-describedby={describedBy}
-		aria-invalid={error ? true : undefined}
-		class="w-full rounded border bg-surface px-3 py-2 text-ink focus:outline-2 focus:outline-brand-strong {error
-			? 'border-blocked ring-1 ring-blocked'
-			: 'border-navy/60'}"
-	>
-		{#each options as option (option.value)}
-			<option value={option.value}>{option.label}</option>
-		{/each}
-	</select>
+	<!-- 브라우저 기본 화살표 대신 직접 그린다 (2026-10-01) -->
+	<div class="relative">
+		<select
+			{id}
+			bind:value
+			aria-describedby={describedBy}
+			aria-invalid={error ? true : undefined}
+			class="field appearance-none pr-10 {error ? 'field-error' : ''}"
+		>
+			{#each options as option (option.value)}
+				<option value={option.value}>{option.label}</option>
+			{/each}
+		</select>
+		<svg
+			class="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-navy/60"
+			viewBox="0 0 16 16"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+		>
+			<path d="m4 6 4 4 4-4" />
+		</svg>
+	</div>
 	{#if error}
-		<p id="{id}-error" class="mt-1 text-xs font-bold text-blocked">{error}</p>
+		<p id="{id}-error" class="mt-2 text-xs font-bold text-blocked">{error}</p>
 	{/if}
 	{#if help}
 		<p
 			id="{id}-help"
 			hidden={!helpOpen}
-			class="mt-2 rounded bg-wash p-3 text-xs leading-relaxed text-navy"
+			class="mt-2 rounded-lg bg-wash p-3 text-xs leading-relaxed text-navy"
 		>
 			{help}
 		</p>
