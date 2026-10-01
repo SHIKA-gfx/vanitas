@@ -7,6 +7,9 @@ WOFF2로 저장한다. 굵기당 약 470KB → 약 150KB.
 화면·데이터에 쓰는 한글이 2,350자를 벗어나면 src/lib/font-coverage.test.ts가 실패한다.
 그때는 EXTRA에 글자를 더하고 이 스크립트를 다시 돌린다.
 
+영문 워드마크 글꼴 Oxanium(가변, SIL OFL)도 ASCII만 남겨 Oxanium.woff2로 만든다 (약 8KB).
+원본은 google/fonts 저장소의 ofl/oxanium/Oxanium[wght].ttf. 원본 폴더에 없으면 건너뛴다.
+
 사용: python scripts/subset-fonts.py <원본 폴더>
   원본 폴더에 Title_Light.woff / Title_Medium.woff / Title_Bold.woff 가 있어야 한다.
   필요: pip install fonttools brotli
@@ -55,6 +58,22 @@ def main(src: Path) -> None:
         sub.subset(font)
         font.flavor = "woff2"
         out = OUT / f"GyeonggiTitle-{w}.woff2"
+        font.save(out)
+        print(f"{out.name}: {out.stat().st_size // 1024} KB")
+
+    oxanium = src / "Oxanium[wght].ttf"
+    if oxanium.exists():
+        options = subset.Options()
+        options.flavor = "woff2"
+        options.layout_features = ["*"]
+        options.name_IDs = ["*"]
+        options.notdef_outline = True
+        font = TTFont(oxanium)
+        sub = subset.Subsetter(options)
+        sub.populate(text="".join(chr(c) for c in range(0x20, 0x7F)) + "·–—‘’“”")
+        sub.subset(font)
+        font.flavor = "woff2"
+        out = OUT / "Oxanium.woff2"
         font.save(out)
         print(f"{out.name}: {out.stat().st_size // 1024} KB")
 

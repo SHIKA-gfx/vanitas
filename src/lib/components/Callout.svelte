@@ -8,6 +8,6 @@
 	let { children }: { children: Snippet } = $props();
 </script>
 
-<div class="rounded bg-navy px-4 py-3 text-sm leading-relaxed text-white">
+<div class="rounded-lg bg-navy px-4 py-3 text-sm leading-relaxed text-white">
 	{@render children()}
 </div>

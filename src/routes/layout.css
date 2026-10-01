@@ -43,6 +43,18 @@
  * Tailwind는 기본적으로 클래스에서 쓰인 토큰만 변수로 만든다. 그런데 의미 색처럼
  * var(--color-...)를 동적으로 조립하거나 SVG에서 직접 쓰는 값은 감지되지 않아 빠진다 (2026-09-30 발견).
  */
+/*
+ * Oxanium — 영문 워드마크 "VANITAS" 전용 (2026-10-01, 스타일 타일 비교 후 결정).
+ * SIL OFL 1.1, 예약 글꼴 이름 없음 → 부분집합(ASCII)으로 줄여 같은 이름으로 써도 된다.
+ * 가변 글꼴 하나(굵기 200~800), 약 8KB. 라이선스 전문: static/fonts/Oxanium-OFL.txt
+ */
+@font-face {
+	font-family: 'Oxanium';
+	src: url('/fonts/Oxanium.woff2') format('woff2');
+	font-weight: 200 800;
+	font-display: swap;
+}
+
 @theme static {
 	--color-brand: #1288f8;
 	--color-brand-strong: #0a6fd6;
@@ -67,7 +79,12 @@
 	--color-shortfall-strong: #9e6501;
 	--color-blocked: #891928;
 
+	/* 패널 그림자: 아주 옅게 하나만 (2026-10-01, 선 대신 면과 그림자로 구역을 나눈다) */
+	--shadow-panel: 0 1px 2px rgb(42 66 91 / 0.06), 0 2px 8px rgb(42 66 91 / 0.05);
+
 	/* 글꼴을 받지 못했거나 2,350자 밖의 글자는 시스템 한글 글꼴로 */
+	/* 영문 워드마크용. 한글은 들어가지 않는다 */
+	--font-display: 'Oxanium', var(--font-sans);
 	--font-sans:
 		'Gyeonggi Title', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic',
 		'Noto Sans KR', sans-serif;
@@ -118,4 +135,42 @@
 		color-mix(in srgb, var(--color-sky) 30%, transparent) 0 1px,
 		transparent 1px 12px
 	);
+}
+
+/*
+ * 입력칸 공통 모양 (2026-10-01, 디자인 문서 5-8). NumberField·SelectField·DateField가 쓴다.
+ *   기본: 옅은 바탕(wash) + 연한 테두리, 높이 44px, 모서리 8px
+ *   초점: 흰 바탕 + brand-strong 테두리 + 옅은 빛 번짐
+ *   오류: blocked 테두리 + 옅은 빛 번짐 (초점이 와도 오류 색 유지)
+ * 칸의 경계는 연하지만, 라벨이 늘 위에 붙어 있고 바탕색이 패널과 달라 칸이 구분된다.
+ */
+@utility field {
+	@apply h-11 w-full rounded-lg border bg-wash px-3.5 text-ink transition-[border-color,box-shadow,background-color] outline-none;
+	border-color: color-mix(in srgb, var(--color-navy) 18%, transparent);
+	&:hover {
+		border-color: color-mix(in srgb, var(--color-navy) 35%, transparent);
+	}
+	&:focus {
+		border-color: var(--color-brand-strong);
+		background-color: var(--color-surface);
+		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand) 18%, transparent);
+	}
+}
+@utility field-error {
+	border-color: var(--color-blocked);
+	background-color: var(--color-surface);
+	box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-blocked) 12%, transparent);
+	&:hover,
+	&:focus {
+		border-color: var(--color-blocked);
+		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-blocked) 18%, transparent);
+	}
+}
+
+@layer base {
+	/* 날짜 칸의 달력 아이콘을 다른 아이콘과 같은 옅은 색으로 */
+	input[type='date']::-webkit-calendar-picker-indicator {
+		opacity: 0.55;
+		cursor: pointer;
+	}
 }

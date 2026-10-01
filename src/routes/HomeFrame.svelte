@@ -43,7 +43,7 @@
 		/** 가운데 원 반지름 */
 		radius: 128,
 		/** 타일 바깥 모서리 반경 */
-		corner: 4,
+		corner: 12,
 		/** 테두리 굵기 */
 		stroke: 1.5,
 		/** 타일 안쪽 여백 (글자 자리) */
@@ -178,6 +178,6 @@
 		)}; width: {pct(GEO.radius * 2, GEO.width)}; height: {pct(GEO.radius * 2, GEO.height)}"
 	>
 		<VanitasSymbol class="w-[34%]" />
-		<h1 class="text-2xl font-bold tracking-wide">{m.app_title()}</h1>
+		<h1 class="font-display text-[1.75rem] font-bold tracking-wider">{m.app_title()}</h1>
 	</div>
 </div>

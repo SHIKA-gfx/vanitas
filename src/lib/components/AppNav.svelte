@@ -41,7 +41,11 @@
 <aside
 	class="sticky top-0 hidden h-screen w-56 shrink-0 border-r border-navy/15 bg-surface lg:block"
 >
-	<a href={href('/')} class="block px-5 py-6 text-xl font-bold text-ink">{m.app_title()}</a>
+	<a
+		href={href('/')}
+		class="block px-5 py-6 font-display text-[1.375rem] font-bold tracking-wide text-ink"
+		>{m.app_title()}</a
+	>
 	<nav aria-label={m.nav_label()}>
 		<ul>
 			{#each items as item (item.path)}
