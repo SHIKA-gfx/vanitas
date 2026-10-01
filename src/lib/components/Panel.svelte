@@ -10,21 +10,19 @@
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import CornerMark, { type Corner, type CornerMarkVariant } from './CornerMark.svelte';
+	import CornerMark, { type Corner } from './CornerMark.svelte';
 
 	interface Props {
 		/** 패널 머리의 제목. 없으면 생략 */
 		title?: string;
 		/** true면 네 모서리에 + 표식 (결과 패널) */
 		marks?: boolean;
-		/** 표식 모양 (CornerMark). 스타일 타일 비교용 — 정해지면 기본값만 남긴다 */
-		markVariant?: CornerMarkVariant;
 		/** 배치용 클래스 (예: 칸 높이에 맞춰 늘이기 xl:flex-1) */
 		class?: string;
 		children: Snippet;
 	}
 
-	let { title, marks = false, markVariant, class: className = '', children }: Props = $props();
+	let { title, marks = false, class: className = '', children }: Props = $props();
 
 	const CORNERS: Corner[] = ['tl', 'tr', 'bl', 'br'];
 </script>
@@ -34,7 +32,7 @@
 >
 	{#if marks}
 		{#each CORNERS as corner (corner)}
-			<CornerMark {corner} variant={markVariant} />
+			<CornerMark {corner} />
 		{/each}
 	{/if}
 	{#if title}
