@@ -172,7 +172,7 @@
 							/>
 						{/if}
 						{#if view === 'curve' && result.records.length > 1}
-							<BalanceCurve records={result.records} />
+							<BalanceCurve records={result.records} {today} />
 						{:else}
 							<SourceBars sources={result.sources} />
 						{/if}

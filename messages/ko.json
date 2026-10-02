@@ -48,6 +48,10 @@
 	"unit_times": "{count}회",
 	"unit_tickets": "{count}장",
 	"common_help_label": "{label} 설명",
+	"nav_home": "홈으로",
+	"chart_today": "오늘",
+	"chart_after_days": "{days} 후",
+	"chart_hint": "좌우로 훑거나 방향키로 날짜별 값을 볼 수 있어요.",
 	"levelup_page_title": "레벨업 계산기",
 	"levelup_mode_label": "계산 방식",
 	"levelup_mode_level": "목표 레벨까지",
@@ -107,6 +111,7 @@
 	"levelup_curve_title": "레벨 추이",
 	"levelup_curve_target": "목표 Lv.{level}",
 	"levelup_curve_summary": "{days} 동안 Lv.{from}에서 Lv.{to}까지 오르는 그래프",
+	"levelup_curve_cursor": "Lv.{level}",
 	"income_page_title": "청휘석 수급 계산기",
 	"income_section_state": "지금 가진 재화",
 	"income_section_income": "받는 청휘석",
@@ -143,6 +148,7 @@
 	"income_curve_title": "청휘석 잔고 추이",
 	"income_view_label": "자세히 보기",
 	"income_curve_summary": "{days} 동안 청휘석 잔고가 {from}개에서 {to}개로 바뀌는 그래프",
+	"income_curve_cursor": "잔고 {gems}개",
 	"income_invalid_end_date": "날짜는 내일부터 10년 안으로 골라주세요",
 	"income_invalid_other": "입력값을 확인해주세요"
 }

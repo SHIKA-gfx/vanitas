@@ -203,7 +203,7 @@
 				class="order-3 md:order-none md:col-start-2 md:row-start-3 xl:flex xl:flex-1 xl:flex-col"
 			>
 				<Panel title={m.levelup_curve_title()} class="xl:flex-1">
-					<LevelCurve points={curve.points} target={curve.target} />
+					<LevelCurve points={curve.points} target={curve.target} {today} />
 				</Panel>
 			</div>
 		{/if}
