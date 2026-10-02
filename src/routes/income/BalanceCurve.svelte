@@ -1,13 +1,23 @@
 <!--
 	청휘석 잔고 추이. 차트 라이브러리 없이 SVG (레벨 추이와 같은 방식).
 	잔고가 0 아래로 내려가면 0 기준선을 함께 그린다.
+	마우스로 훑거나 손가락으로 끌면 그 날의 잔고와 날짜를 보여준다 (2026-10-01).
 -->
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import type { IncomeDay } from '$lib/calc/income';
-	import { formatInt } from '$lib/format';
+	import { formatDate, formatInt } from '$lib/format';
+	import { addDays } from '$lib/game-date';
+	import { ChartCursor } from '$lib/chart-cursor.svelte';
+	import ChartCursorMark from '$lib/components/ChartCursor.svelte';
 
-	let { records }: { records: IncomeDay[] } = $props();
+	interface Props {
+		records: IncomeDay[];
+		/** 계산 기준일 (0일째). 커서에 날짜를 보여줄 때 쓴다 */
+		today: string;
+	}
+
+	let { records, today }: Props = $props();
 
 	const W = 320;
 	const H = 180;
@@ -30,6 +40,34 @@
 	const x = (day: number) => PAD.left + (day / Math.max(last.day, 1)) * (W - PAD.left - PAD.right);
 	const y = (v: number) => PAD.top + (1 - (v - yMin) / (yMax - yMin)) * (H - PAD.top - PAD.bottom);
 
+	const signed = (n: number) => (n < 0 ? `-${formatInt(-n)}` : formatInt(n));
+
+	const cursor = new ChartCursor(
+		() => records.map((r) => r.day),
+		(vx) => ((vx - PAD.left) / (W - PAD.left - PAD.right)) * last.day,
+		W
+	);
+	const cursorPoint = $derived(cursor.index === null ? null : (records[cursor.index] ?? null));
+	const cursorLines = $derived(
+		cursorPoint
+			? [
+					m.income_curve_cursor({ gems: signed(cursorPoint.balance) }),
+					formatDate(addDays(today, cursorPoint.day)),
+					cursorPoint.day === 0
+						? m.chart_today()
+						: m.chart_after_days({ days: m.unit_days({ count: formatInt(cursorPoint.day) }) })
+				]
+			: null
+	);
+	const cursorText = $derived(cursorLines?.join(', ') ?? null);
+	const summary = $derived(
+		`${m.income_curve_summary({
+			days: m.unit_days({ count: formatInt(last.day) }),
+			from: formatInt(first.balance),
+			to: formatInt(last.balance)
+		})}. ${m.chart_hint()}`
+	);
+
 	const path = $derived(
 		sampled.map((r) => `${x(r.day).toFixed(1)},${y(r.balance).toFixed(1)}`).join(' ')
 	);
@@ -37,13 +75,19 @@
 
 <svg
 	viewBox="0 0 {W} {H}"
-	class="w-full"
-	role="img"
-	aria-label={m.income_curve_summary({
-		days: m.unit_days({ count: formatInt(last.day) }),
-		from: formatInt(first.balance),
-		to: formatInt(last.balance)
-	})}
+	class="w-full touch-pan-y outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-strong"
+	role="slider"
+	tabindex="0"
+	aria-valuemin={0}
+	aria-valuemax={last.day}
+	aria-valuenow={cursorPoint?.day ?? 0}
+	aria-valuetext={cursorText ?? summary}
+	aria-label={summary}
+	onpointerdown={cursor.onpointerdown}
+	onpointermove={cursor.onpointermove}
+	onpointerleave={cursor.onpointerleave}
+	onkeydown={cursor.onkeydown}
+	onblur={cursor.onblur}
 >
 	<line
 		x1={PAD.left}
@@ -98,4 +142,16 @@
 		stroke-linecap="round"
 		class="stroke-brand"
 	/>
+
+	{#if cursorPoint && cursorLines}
+		<ChartCursorMark
+			x={x(cursorPoint.day)}
+			y={y(cursorPoint.balance)}
+			top={PAD.top}
+			bottom={H - PAD.bottom}
+			width={W}
+			lines={cursorLines}
+			valueClass={cursorPoint.balance < 0 ? 'fill-blocked' : 'fill-ink'}
+		/>
+	{/if}
 </svg>

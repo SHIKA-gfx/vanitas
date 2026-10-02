@@ -5,15 +5,20 @@
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import type { CurvePoint } from '$lib/calc/levelup-adapter';
-	import { formatInt } from '$lib/format';
+	import { formatDate, formatInt } from '$lib/format';
+	import { addDays } from '$lib/game-date';
+	import { ChartCursor } from '$lib/chart-cursor.svelte';
+	import ChartCursorMark from '$lib/components/ChartCursor.svelte';
 
 	interface Props {
 		points: CurvePoint[];
 		/** 목표 레벨 모드일 때 가로 점선 */
 		target: number | null;
+		/** 계산 기준일 (0일째). 커서에 날짜를 보여줄 때 쓴다 */
+		today: string;
 	}
 
-	let { points, target }: Props = $props();
+	let { points, target, today }: Props = $props();
 
 	const W = 320;
 	const H = 180;
@@ -41,6 +46,35 @@
 	const y = (level: number) =>
 		PAD.top + (1 - (level - yMin) / (yMax - yMin)) * (H - PAD.top - PAD.bottom);
 
+	// ---------------------------------------------------------------- 커서 (2026-10-01)
+	// 데스크톱은 마우스로 훑고, 모바일은 손가락으로 끌면 그 날의 레벨과 날짜를 보여준다
+
+	const cursor = new ChartCursor(
+		() => points.map((p) => p.day),
+		(vx) => ((vx - PAD.left) / (W - PAD.left - PAD.right)) * lastDay,
+		W
+	);
+	const cursorPoint = $derived(cursor.index === null ? null : (points[cursor.index] ?? null));
+	const cursorLines = $derived(
+		cursorPoint
+			? [
+					m.levelup_curve_cursor({ level: String(Math.floor(cursorPoint.level)) }),
+					formatDate(addDays(today, cursorPoint.day)),
+					cursorPoint.day === 0
+						? m.chart_today()
+						: m.chart_after_days({ days: m.unit_days({ count: formatInt(cursorPoint.day) }) })
+				]
+			: null
+	);
+	const cursorText = $derived(cursorLines?.join(', ') ?? null);
+	const summary = $derived(
+		`${m.levelup_curve_summary({
+			days: m.unit_days({ count: formatInt(lastDay) }),
+			from: String(fromLevel),
+			to: String(toLevel)
+		})}. ${m.chart_hint()}`
+	);
+
 	const path = $derived(
 		sampled.map((p) => `${x(p.day).toFixed(1)},${y(p.level).toFixed(1)}`).join(' ')
 	);
@@ -48,13 +82,19 @@
 
 <svg
 	viewBox="0 0 {W} {H}"
-	class="w-full"
-	role="img"
-	aria-label={m.levelup_curve_summary({
-		days: m.unit_days({ count: formatInt(lastDay) }),
-		from: String(fromLevel),
-		to: String(toLevel)
-	})}
+	class="w-full touch-pan-y outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-strong"
+	role="slider"
+	tabindex="0"
+	aria-valuemin={0}
+	aria-valuemax={lastDay}
+	aria-valuenow={cursorPoint?.day ?? 0}
+	aria-valuetext={cursorText ?? summary}
+	aria-label={summary}
+	onpointerdown={cursor.onpointerdown}
+	onpointermove={cursor.onpointermove}
+	onpointerleave={cursor.onpointerleave}
+	onkeydown={cursor.onkeydown}
+	onblur={cursor.onblur}
 >
 	<!-- 축 -->
 	<line
@@ -118,4 +158,15 @@
 		stroke-linecap="round"
 		class="stroke-brand"
 	/>
+
+	{#if cursorPoint && cursorLines}
+		<ChartCursorMark
+			x={x(cursorPoint.day)}
+			y={y(cursorPoint.level)}
+			top={PAD.top}
+			bottom={H - PAD.bottom}
+			width={W}
+			lines={cursorLines}
+		/>
+	{/if}
 </svg>
