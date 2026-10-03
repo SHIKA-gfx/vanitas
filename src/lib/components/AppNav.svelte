@@ -79,8 +79,27 @@
 			{/each}
 		</ul>
 	</nav>
-	<!-- 맨 아래: 백업 링크 (다른 기기로 입력 옮기기) -->
+	<!-- 맨 아래: 정보와 출처, 백업 링크 (다른 기기로 입력 옮기기) -->
 	<div class="mt-auto">
+		<a
+			href={href('/about')}
+			aria-current={isCurrent('/about') ? 'page' : undefined}
+			class="mx-3 mb-3 flex min-h-9 items-center gap-2 rounded-lg px-2 text-sm text-navy hover:bg-wash hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-strong aria-[current=page]:font-bold aria-[current=page]:text-brand-strong"
+		>
+			<svg
+				class="size-4"
+				viewBox="0 0 16 16"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.75"
+				stroke-linecap="round"
+				aria-hidden="true"
+			>
+				<circle cx="8" cy="8" r="6.25" />
+				<path d="M8 7.25v4M8 4.75v.01" />
+			</svg>
+			{m.nav_about()}
+		</a>
 		<BackupButton variant="nav" />
 	</div>
 </aside>

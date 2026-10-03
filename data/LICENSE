@@ -1,0 +1,21 @@
+VANITAS 게임 데이터 라이선스 / Game Data License
+================================================
+
+이 폴더(data/)의 데이터는 크리에이티브 커먼즈 저작자표시 4.0 국제 라이선스(CC BY 4.0)로 공개합니다.
+The data in this folder is licensed under the Creative Commons Attribution 4.0 International License.
+
+  https://creativecommons.org/licenses/by/4.0/deed.ko   (한국어 요약)
+  https://creativecommons.org/licenses/by/4.0/legalcode (전문 / full legal code)
+
+쓰는 조건 (요약)
+- 복제·배포·수정·상업적 이용 모두 자유롭게 할 수 있습니다.
+- 출처를 밝혀 주세요. 예: "데이터 출처: VANITAS (https://github.com/SHIKA-gfx/vanitas)"
+- 수정했다면 수정했다는 사실을 밝혀 주세요.
+
+적용 범위
+- 이 라이선스는 VANITAS가 정리한 부분(구조, 검증 기록, 출처 목록, 정리 방식)에 적용됩니다.
+- 블루 아카이브와 관련된 이름, 수치의 원래 권리는 NEXON Games와 Yostar에 있습니다.
+  VANITAS는 이들과 관계가 없는 비공식 팬 도구입니다.
+- 각 수치의 원래 출처는 sources.json과 각 파일의 meta.sources에 적혀 있습니다.
+
+Copyright (c) 2026 SHIKA-gfx

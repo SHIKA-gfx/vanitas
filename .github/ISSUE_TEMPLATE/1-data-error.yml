@@ -1,0 +1,41 @@
+name: 데이터 오류 제보
+description: 수치·일정·확률이 게임과 다를 때 알려 주세요.
+title: '[데이터] '
+labels: ['data', '커뮤니티', '검증필요', 'server:ko']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        제보 고마워요! 게임 화면이나 공지로 확인한 뒤 고칠게요.
+        출처(스크린샷, 공지 링크)가 있으면 훨씬 빨리 확인할 수 있어요.
+  - type: dropdown
+    id: calculator
+    attributes:
+      label: 어느 계산기인가요?
+      options:
+        - 천장·확률 계산기
+        - 레벨업 계산기
+        - 청휘석 수급 계산기
+        - 잘 모르겠어요 / 기타
+    validations:
+      required: true
+  - type: textarea
+    id: wrong
+    attributes:
+      label: 무엇이 다른가요?
+      description: VANITAS에 나온 값과 게임의 값을 적어 주세요.
+      placeholder: '예: 총력전 플래티넘 보상이 1,200개로 나오는데 게임에서는 1,300개예요.'
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: 출처
+      description: 게임 화면 스크린샷을 끌어다 놓거나, 공지 링크를 적어 주세요.
+    validations:
+      required: true
+  - type: input
+    id: share-link
+    attributes:
+      label: 공유 링크 (선택)
+      description: 계산기 결과 카드의 "링크 복사"로 만든 주소를 붙여 넣으면 같은 화면을 바로 볼 수 있어요.

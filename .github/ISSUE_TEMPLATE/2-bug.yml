@@ -1,0 +1,48 @@
+name: 버그 제보
+description: 화면이 깨지거나, 버튼이 동작하지 않거나, 계산이 이상할 때 알려 주세요.
+title: '[버그] '
+labels: ['bug', '커뮤니티']
+body:
+  - type: dropdown
+    id: where
+    attributes:
+      label: 어디에서 생겼나요?
+      options:
+        - 홈
+        - 천장·확률 계산기
+        - 레벨업 계산기
+        - 청휘석 수급 계산기
+        - 정보 페이지 / 기타
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: 무슨 일이 있었나요?
+      description: 무엇을 눌렀더니 어떻게 됐는지 순서대로 적어 주세요. 스크린샷이 있으면 좋아요.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 원래 어떻게 되어야 하나요?
+  - type: dropdown
+    id: device
+    attributes:
+      label: 기기
+      options:
+        - PC
+        - 휴대폰
+        - 태블릿
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: 브라우저 (선택)
+      placeholder: '예: 크롬, 사파리, 삼성 인터넷'
+  - type: input
+    id: share-link
+    attributes:
+      label: 공유 링크 (선택)
+      description: 계산기 결과 카드의 "링크 복사"로 만든 주소를 붙여 넣으면 같은 화면을 바로 볼 수 있어요.

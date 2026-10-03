@@ -1,0 +1,16 @@
+name: 기능 제안
+description: 있으면 좋겠는 기능이나 바뀌었으면 하는 점을 알려 주세요.
+title: '[제안] '
+labels: ['enhancement', '커뮤니티']
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: 어떤 기능이면 좋겠나요?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: 왜 필요한가요?
+      description: 어떤 상황에서 불편했는지 적어 주시면 우선순위를 정하는 데 큰 도움이 돼요.

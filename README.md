@@ -1,42 +1,10 @@
-# sv
+## 라이선스
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+- **코드**: [MIT](LICENSE)
+- **게임 데이터** (`data/`): [CC BY 4.0](data/LICENSE) — 출처(VANITAS)를 밝히면 자유롭게 쓸 수 있어요
+- **글꼴**: 경기천년체(경기도, 공공누리 제1유형), Oxanium([SIL OFL 1.1](static/fonts/Oxanium-OFL.txt))
 
-## Creating a project
+VANITAS는 블루 아카이브 팬이 만든 비공식 도구이며 NEXON Games·Yostar와 관계가 없습니다.
+블루 아카이브 관련 이름과 자료의 권리는 NEXON Games와 Yostar에 있습니다.
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-npx sv@0.17.0 create --template minimal --types ts --add prettier eslint vitest="usages:unit" tailwindcss="plugins:none" --install npm .
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+데이터 오류·버그·제안은 [이슈](https://github.com/SHIKA-gfx/vanitas/issues/new/choose)로 알려 주세요.

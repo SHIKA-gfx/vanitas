@@ -9,6 +9,7 @@
 	import VanitasSymbol from '$lib/components/VanitasSymbol.svelte';
 	import SharedViewBar from '$lib/components/SharedViewBar.svelte';
 	import BackupImportBar from '$lib/components/BackupImportBar.svelte';
+	import SiteFooter from '$lib/components/SiteFooter.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { provideUserState } from '$lib/state/user-state.svelte';
 	import { provideSavedStore } from '$lib/state/saved.svelte';
@@ -21,6 +22,8 @@
 
 	// 모바일·태블릿에는 하단 탭바에 홈이 없다 → 홈이 아닌 화면의 오른쪽 위에 로고를 두어 홈으로 (2026-10-01)
 	const isHome = $derived(page.route.id === '/');
+	// 한 줄 푸터: 홈은 자기 배치 안에서 따로 그리고, 정보 페이지는 자기 자신을 가리키므로 뺀다
+	const showFooter = $derived(!isHome && page.route.id !== '/about');
 	const homeHref = $derived(resolve(localizeHref('/') as Pathname));
 </script>
 
@@ -42,6 +45,11 @@
 			</a>
 		{/if}
 		{@render children()}
+		{#if showFooter}
+			<footer class="px-4 pt-2 pb-6">
+				<SiteFooter />
+			</footer>
+		{/if}
 	</div>
 	<SharedViewBar />
 	<BackupImportBar />
