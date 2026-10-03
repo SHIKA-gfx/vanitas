@@ -15,6 +15,7 @@
 	import { page } from '$app/state';
 	import { localizeHref } from '$lib/paraglide/runtime';
 	import { m } from '$lib/paraglide/messages.js';
+	import { track } from '$lib/analytics';
 	import { getSavedStore } from '$lib/state/saved.svelte';
 	import { BACKUP_PARAM, encodeBackup } from '$lib/state/backup';
 	import HelpButton from './HelpButton.svelte';
@@ -34,6 +35,7 @@
 		const link = `${page.url.origin}${resolve(localizeHref('/') as Pathname)}?${BACKUP_PARAM}=${code}`;
 		try {
 			await navigator.clipboard.writeText(link);
+			track('backup-create', { where: variant === 'nav' ? 'nav' : 'home' });
 			helpOpen = false;
 			clearTimeout(timer);
 			copied = true;

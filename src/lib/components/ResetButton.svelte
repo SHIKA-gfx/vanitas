@@ -6,7 +6,9 @@
 -->
 <script lang="ts">
 	import { onDestroy } from 'svelte';
+	import { page } from '$app/state';
 	import { m } from '$lib/paraglide/messages.js';
+	import { calcName, track } from '$lib/analytics';
 	import Toast from './Toast.svelte';
 
 	interface Props {
@@ -23,6 +25,7 @@
 	function reset() {
 		clearTimeout(timer);
 		undo = onreset();
+		track('reset', { calc: calcName(page.route.id) });
 		timer = setTimeout(() => (undo = null), UNDO_MS);
 	}
 
@@ -30,6 +33,7 @@
 		clearTimeout(timer);
 		undo?.();
 		undo = null;
+		track('reset-undo', { calc: calcName(page.route.id) });
 	}
 
 	onDestroy(() => clearTimeout(timer));

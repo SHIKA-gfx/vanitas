@@ -27,6 +27,7 @@
 	import { isFutureDate, isInt, isOneOf, isRecordOf, isSubsetOf } from '$lib/state/persist';
 	import ResetButton from '$lib/components/ResetButton.svelte';
 	import ShareButton from '$lib/components/ShareButton.svelte';
+	import { track } from '$lib/analytics';
 	import LevelUpResult from './LevelUpResult.svelte';
 	import LevelCurve from './LevelCurve.svelte';
 
@@ -314,7 +315,18 @@
 		<div class="xl:col-start-1 xl:row-start-2 xl:flex xl:flex-col">
 			<Panel title={m.levelup_section_state()} class="xl:flex-1">
 				<div class="flex flex-col gap-4">
-					<SegmentedField label={m.levelup_mode_label()} bind:value={mode} options={modeOptions} />
+					<SegmentedField
+						label={m.levelup_mode_label()}
+						bind:value={
+							() => mode,
+							(v) => {
+								mode = v;
+								// 최고 레벨이면 날짜 모드 = 숙련증서 계산
+								track('levelup-mode', { mode: v, cap: level >= maxLevel ? 'yes' : 'no' });
+							}
+						}
+						options={modeOptions}
+					/>
 					<div class="grid grid-cols-2 gap-4">
 						<NumberField
 							label={m.levelup_input_level()}

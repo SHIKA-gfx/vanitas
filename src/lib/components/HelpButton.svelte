@@ -4,6 +4,8 @@
 	설명 문단은 필드 컴포넌트가 그리고, 이 버튼은 open 상태만 바꾼다.
 -->
 <script lang="ts">
+	import { page } from '$app/state';
+	import { calcName, track } from '$lib/analytics';
 	import { m } from '$lib/paraglide/messages.js';
 
 	interface Props {
@@ -23,7 +25,11 @@
 	aria-expanded={open}
 	aria-controls={controls}
 	aria-label={m.common_help_label({ label })}
-	onclick={() => (open = !open)}
+	onclick={() => {
+		open = !open;
+		// 어느 칸이 어려운지 (사용 통계)
+		if (open) track('help-open', { calc: calcName(page.route.id), field: label });
+	}}
 	class="inline-flex size-5 items-center justify-center rounded-full border border-navy/40 text-[0.6875rem] font-bold text-navy hover:border-navy focus-visible:outline-2 focus-visible:outline-brand-strong aria-expanded:bg-navy aria-expanded:text-white"
 >
 	?

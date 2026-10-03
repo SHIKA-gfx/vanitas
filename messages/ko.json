@@ -88,6 +88,8 @@
 	"about_data_body": "수치와 일정은 공식 공지를 먼저 보고, 두 곳 이상의 자료로 교차 확인해 정리했어요. 확인이 끝나지 않은 값은 화면에 '추정'으로 표시해요. 실제 게임과 다를 수 있으니, 중요한 결정 전에는 게임 안 공지를 확인해 주세요.",
 	"about_storage_title": "입력값 저장",
 	"about_storage_body": "입력한 값은 이 기기의 브라우저에만 저장되고 서버로 보내지 않아요. 공유 링크와 백업 링크에는 입력값이 담겨요. 특히 백업 링크에는 모든 입력이 담기니, 남에게 줄 때 주의해 주세요.",
+	"about_analytics_title": "익명 방문 통계",
+	"about_analytics_body": "어떤 계산기와 기능이 쓰이는지 알기 위해, 쿠키를 쓰지 않는 익명 통계(Umami)를 모아요. 입력값과 계산 결과, 공유·백업 링크의 내용은 보내지 않아요. 브라우저에서 '추적 안 함'을 켜면 모으지 않아요.",
 	"about_fonts_title": "글꼴",
 	"about_fonts_gyeonggi": "경기천년체 — 경기도, 공공누리 제1유형(출처 표시)",
 	"about_fonts_oxanium": "Oxanium — The Oxanium Project Authors, SIL Open Font License 1.1",

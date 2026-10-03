@@ -18,6 +18,7 @@
 	import { isOneOf } from '$lib/state/persist';
 	import ResetButton from '$lib/components/ResetButton.svelte';
 	import ShareButton from '$lib/components/ShareButton.svelte';
+	import { track } from '$lib/analytics';
 	import PityResult from './PityResult.svelte';
 	import ProbabilityCurve from './ProbabilityCurve.svelte';
 
@@ -98,7 +99,17 @@
 	<div class="md:col-start-1 md:row-span-2 md:row-start-2 md:flex md:flex-col">
 		<Panel class="md:flex-1">
 			<div class="flex flex-col gap-4">
-				<SelectField label={m.pity_input_banner()} bind:value={bannerId} options={bannerOptions} />
+				<SelectField
+					label={m.pity_input_banner()}
+					bind:value={
+						() => bannerId,
+						(v) => {
+							bannerId = v;
+							track('pity-banner', { banner: v });
+						}
+					}
+					options={bannerOptions}
+				/>
 				<NumberField label={m.pity_input_gems()} bind:value={res.gems} />
 				<div class="grid grid-cols-2 gap-4">
 					<NumberField label={m.pity_input_single_tickets()} bind:value={res.singleTickets} />

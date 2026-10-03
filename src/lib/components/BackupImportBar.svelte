@@ -7,6 +7,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { m } from '$lib/paraglide/messages.js';
+	import { track } from '$lib/analytics';
 	import { clearQuery, getSavedStore } from '$lib/state/saved.svelte';
 	import { BACKUP_PARAM, decodeBackup } from '$lib/state/backup';
 	import type { SaveFile } from '$lib/state/persist';
@@ -29,6 +30,7 @@
 		decodeBackup(code).then((file) => {
 			if (file) pending = file;
 			else {
+				track('backup-import', { result: 'invalid' });
 				clearQuery();
 				show(m.backup_invalid());
 			}
@@ -38,6 +40,7 @@
 
 	function accept() {
 		if (pending) store.importFile(pending);
+		track('backup-import', { result: 'import' });
 		pending = null;
 		clearQuery();
 		show(m.backup_imported());
@@ -45,6 +48,7 @@
 
 	function cancel() {
 		pending = null;
+		track('backup-import', { result: 'cancel' });
 		clearQuery();
 	}
 </script>
