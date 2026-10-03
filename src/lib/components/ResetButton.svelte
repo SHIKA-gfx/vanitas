@@ -7,6 +7,7 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { m } from '$lib/paraglide/messages.js';
+	import Toast from './Toast.svelte';
 
 	interface Props {
 		/** 입력을 기본값으로 돌리고, 되돌리기 함수를 돌려준다 (persistSection().reset) */
@@ -57,15 +58,9 @@
 </button>
 
 {#if undo}
-	<!-- 하단 탭바 위에 뜬다 (넓은 화면은 화면 아래) -->
-	<div
-		class="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+0.75rem)] z-30 flex justify-center px-4 lg:bottom-6"
-	>
-		<div
-			role="status"
-			class="flex items-center gap-4 rounded-lg bg-navy px-4 py-3 text-sm text-white shadow-panel"
-		>
-			{m.common_reset_done()}
+	<Toast>
+		{m.common_reset_done()}
+		{#snippet actions()}
 			<button
 				type="button"
 				onclick={runUndo}
@@ -73,6 +68,6 @@
 			>
 				{m.common_undo()}
 			</button>
-		</div>
-	</div>
+		{/snippet}
+	</Toast>
 {/if}
