@@ -3,6 +3,7 @@
 // 그래프(SVG)는 role="slider"로 두고, 고른 점의 내용을 aria-valuetext로 알린다.
 
 import { keyStep, nearestIndex, viewBoxX } from './chart';
+import { track } from './analytics';
 
 type SvgPointerEvent = PointerEvent & { currentTarget: SVGSVGElement };
 
@@ -19,15 +20,29 @@ export class ChartCursor {
 	 * @param dayAt viewBox x 좌표 → 날짜
 	 * @param width viewBox 너비
 	 */
-	constructor(days: () => number[], dayAt: (viewX: number) => number, width: number) {
+	#name: string;
+	#used = false;
+
+	/**
+	 * @param name 통계용 계산기 이름 — 커서를 처음 쓸 때 한 번 알린다 (사용 통계)
+	 */
+	constructor(days: () => number[], dayAt: (viewX: number) => number, width: number, name = '') {
 		this.#days = days;
 		this.#dayAt = dayAt;
 		this.#width = width;
+		this.#name = name;
+	}
+
+	#noteUse() {
+		if (this.#used || !this.#name) return;
+		this.#used = true;
+		track('chart-cursor', { calc: this.#name });
 	}
 
 	#pick(svg: SVGSVGElement, clientX: number) {
 		const i = nearestIndex(this.#days(), this.#dayAt(viewBoxX(svg, clientX, this.#width)));
 		this.index = i < 0 ? null : i;
+		if (i >= 0) this.#noteUse();
 	}
 
 	onpointerdown = (e: SvgPointerEvent) => {
@@ -75,6 +90,7 @@ export class ChartCursor {
 		}
 		e.preventDefault();
 		this.index = next;
+		this.#noteUse();
 	};
 
 	onblur = () => {

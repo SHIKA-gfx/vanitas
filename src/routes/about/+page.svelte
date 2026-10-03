@@ -17,6 +17,7 @@
 		{ title: m.about_copyright_title(), body: [m.about_copyright_body()] },
 		{ title: m.about_data_title(), body: [m.about_data_body()] },
 		{ title: m.about_storage_title(), body: [m.about_storage_body()] },
+		{ title: m.about_analytics_title(), body: [m.about_analytics_body()] },
 		{ title: m.about_fonts_title(), body: [m.about_fonts_gyeonggi(), m.about_fonts_oxanium()] }
 	];
 
@@ -52,6 +53,8 @@
 				<p class="flex flex-wrap gap-x-4 gap-y-1 text-sm">
 					<a
 						href="https://github.com/SHIKA-gfx/vanitas/blob/main/LICENSE"
+						data-umami-event="outbound"
+						data-umami-event-to="license-code"
 						target="_blank"
 						rel="noopener noreferrer"
 						class={LINK}
@@ -60,6 +63,8 @@
 					</a>
 					<a
 						href="https://github.com/SHIKA-gfx/vanitas/blob/main/data/LICENSE"
+						data-umami-event="outbound"
+						data-umami-event-to="license-data"
 						target="_blank"
 						rel="noopener noreferrer"
 						class={LINK}
@@ -75,6 +80,8 @@
 				<p class="text-sm">
 					<a
 						href="https://github.com/SHIKA-gfx/vanitas/issues/new/choose"
+						data-umami-event="outbound"
+						data-umami-event-to="issues"
 						target="_blank"
 						rel="noopener noreferrer"
 						class={LINK}

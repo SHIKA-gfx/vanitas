@@ -16,6 +16,7 @@
 	import { isFutureDate, isInt, isOneOf, isRecordOf, isSubsetOf } from '$lib/state/persist';
 	import ResetButton from '$lib/components/ResetButton.svelte';
 	import ShareButton from '$lib/components/ShareButton.svelte';
+	import { track } from '$lib/analytics';
 	import Panel from '$lib/components/Panel.svelte';
 	import NumberField from '$lib/components/NumberField.svelte';
 	import SelectField from '$lib/components/SelectField.svelte';
@@ -244,7 +245,13 @@
 						{#if result.records.length > 1}
 							<SegmentedField
 								label={m.income_view_label()}
-								bind:value={view}
+								bind:value={
+									() => view,
+									(v) => {
+										view = v;
+										track('income-view', { view: v });
+									}
+								}
 								options={viewOptions}
 							/>
 						{/if}

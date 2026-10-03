@@ -52,7 +52,8 @@
 	const cursor = new ChartCursor(
 		() => points.map((p) => p.day),
 		(vx) => ((vx - PAD.left) / (W - PAD.left - PAD.right)) * lastDay,
-		W
+		W,
+		'levelup'
 	);
 	const cursorPoint = $derived(cursor.index === null ? null : (points[cursor.index] ?? null));
 	const cursorLines = $derived(

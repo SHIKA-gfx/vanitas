@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { dev } from '$app/environment';
 	import type { Pathname } from '$app/types';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
@@ -33,6 +34,20 @@
 	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 	<link rel="manifest" href="/site.webmanifest" />
 	<meta name="theme-color" content="#1288f8" />
+	<!--
+		사용 통계 Umami (이벤트 목록: src/lib/analytics.ts). 개발 서버에서는 불러오지 않고,
+		data-domains로 vanitas.live에서 온 방문만 센다 (미리보기 배포·로컬 빌드는 세지 않는다).
+		data-do-not-track: 브라우저의 "추적 안 함"을 켠 방문은 세지 않는다.
+	-->
+	{#if !dev}
+		<script
+			defer
+			src="https://cloud.umami.is/script.js"
+			data-website-id="70d30c26-ed3e-40da-8c03-9d2a29a3cd43"
+			data-domains="vanitas.live"
+			data-do-not-track="true"
+		></script>
+	{/if}
 </svelte:head>
 
 <!-- 배경층: 계산기 화면은 사선 (디자인 문서 5-2). 홈은 6단계에서 삼각형 타일로 덮는다 -->

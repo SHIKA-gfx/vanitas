@@ -5,7 +5,9 @@
 -->
 <script lang="ts">
 	import { onDestroy } from 'svelte';
+	import { page } from '$app/state';
 	import { m } from '$lib/paraglide/messages.js';
+	import { calcName, track } from '$lib/analytics';
 	import Toast from './Toast.svelte';
 
 	interface Props {
@@ -22,6 +24,7 @@
 		const link = url();
 		try {
 			await navigator.clipboard.writeText(link);
+			track('share-copy', { calc: calcName(page.route.id) });
 			clearTimeout(timer);
 			copied = true;
 			timer = setTimeout(() => (copied = false), 3000);

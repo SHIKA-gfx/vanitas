@@ -30,6 +30,7 @@ import {
 	type SaveFile
 } from './persist';
 import { decodeShare, shareQuery, type ShareField } from './share';
+import { track } from '$lib/analytics';
 import type { UserState } from './user-state.svelte';
 
 const KEY = Symbol('saved-store');
@@ -53,6 +54,7 @@ export class SavedStore {
 		restoreMine: () => void;
 		saveAll: () => void;
 		clearUrl: () => void;
+		onLeave: (kept: boolean) => void;
 	} | null = null;
 
 	constructor(user: UserState) {
@@ -128,11 +130,12 @@ export class SavedStore {
 		snapshot: () => string,
 		restoreMine: () => void,
 		saveAll: () => void,
-		clearUrl: () => void = () => {}
+		clearUrl: () => void = () => {},
+		onLeave: (kept: boolean) => void = () => {}
 	) {
 		this.paused = true;
 		this.sharedView = true;
-		this.#shared = { snapshot, baseline: snapshot(), restoreMine, saveAll, clearUrl };
+		this.#shared = { snapshot, baseline: snapshot(), restoreMine, saveAll, clearUrl, onLeave };
 	}
 
 	/** 값이 바뀔 때마다 부른다. 공유 링크 보기 중에 사용자가 값을 고쳤으면 내 값으로 받아들인다 */
@@ -154,6 +157,7 @@ export class SavedStore {
 		this.paused = false;
 		if (keepCurrent) s?.saveAll();
 		s?.clearUrl();
+		s?.onLeave(keepCurrent);
 	}
 
 	// ---------------------------------------------------------------- 백업 (다른 기기로 옮기기)
@@ -321,13 +325,28 @@ export function persistSection<T extends Record<string, unknown>>(
 				store.write(name, snapshotSection());
 				store.saveUser();
 			},
-			clearQuery
+			clearQuery,
+			(kept) => track(kept ? 'shared-keep' : 'shared-back', { calc: name })
 		);
+		track('shared-open', { calc: name });
 	}
+
+	// 이 화면에서 처음 값을 바꾸면 한 번 알린다 (불러오기·공유 링크로 바뀐 값은 세지 않는다)
+	let baseline = '';
+	let used = false;
+	const combined = () => JSON.stringify([snapshotSection(), store.userFlat()]);
 
 	$effect(() => {
 		const value = snapshotSection();
+		JSON.stringify(store.userFlat()); // 공유 값(보유 청휘석 등)을 바꿔도 "계산했다"로 본다
 		if (!ready) return;
+		if (!used) {
+			if (!baseline) baseline = combined();
+			else if (combined() !== baseline) {
+				used = true;
+				track('calc-used', { calc: name });
+			}
+		}
 		store.noteChange();
 		store.write(name, value);
 	});

@@ -45,7 +45,8 @@
 	const cursor = new ChartCursor(
 		() => records.map((r) => r.day),
 		(vx) => ((vx - PAD.left) / (W - PAD.left - PAD.right)) * last.day,
-		W
+		W,
+		'income'
 	);
 	const cursorPoint = $derived(cursor.index === null ? null : (records[cursor.index] ?? null));
 	const cursorLines = $derived(
