@@ -152,7 +152,7 @@ def og_image() -> str:
         symbol_at(cx, cy + 4, r * 1.25, "#ffffff"),
         text_path("VANITAS", "Oxanium.woff2", 132, 580, 330, INK, tracking=0.04, weight=700),
         text_path("블루 아카이브 재화·픽업 플래너", "GyeonggiTitle-Bold.woff2", 42, 584, 405, NAVY),
-        text_path("비공식 팬 도구", "GyeonggiTitle-Medium.woff2", 26, 586, 455, NAVY),
+        text_path("비공식 팬 사이트", "GyeonggiTitle-Medium.woff2", 26, 586, 455, NAVY),
     ]
     return svg(w, h, "".join(body))
 
