@@ -4,6 +4,7 @@
 	데스크톱: 왼쪽 입력, 오른쪽 결과 + 곡선
 -->
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { getApConfig, getCafeRank, getLevelTable, listCafeRanks } from '$lib/data';
 	import {
@@ -268,9 +269,10 @@
 	const tacticalCost = $derived(tactical === 'none' ? null : tacticalPerDay(Number(tactical)));
 </script>
 
-<svelte:head>
-	<title>{m.levelup_page_title()} | {m.app_title()}</title>
-</svelte:head>
+<Seo
+	title={`${m.levelup_page_title()} | ${m.app_title()}`}
+	description={m.meta_levelup_description()}
+/>
 
 <!--
 	배치 (2026-09-30, 수급 계산기와 같은 방식)
