@@ -4,6 +4,7 @@
 	데스크톱: 왼쪽 입력, 오른쪽 결과 + 곡선
 -->
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { getLocale } from '$lib/paraglide/runtime.js';
 	import { getPointPool, listBannerTypes } from '$lib/data';
@@ -78,9 +79,7 @@
 	});
 </script>
 
-<svelte:head>
-	<title>{m.pity_page_title()} | {m.app_title()}</title>
-</svelte:head>
+<Seo title={`${m.pity_page_title()} | ${m.app_title()}`} description={m.meta_pity_description()} />
 
 <main class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 md:grid md:grid-cols-2 md:gap-6">
 	<!-- 제목 줄: 제목 + 입력 초기화 (모바일은 오른쪽 끝에 홈 로고가 있어 초기화는 아이콘만) -->

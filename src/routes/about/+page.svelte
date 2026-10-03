@@ -8,6 +8,7 @@
 	바깥 주소인지 알 수 없어 오류로 본다. 레포 주소가 바뀌면 이 파일에서 바꾼다. 레포 공개 전까지는 열리지 않는다.
 -->
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import Panel from '$lib/components/Panel.svelte';
 
@@ -23,9 +24,10 @@
 		'text-brand-strong underline underline-offset-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-strong';
 </script>
 
-<svelte:head>
-	<title>{m.about_page_title()} | {m.app_title()}</title>
-</svelte:head>
+<Seo
+	title={`${m.about_page_title()} | ${m.app_title()}`}
+	description={m.meta_about_description()}
+/>
 
 <main class="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
 	<div class="flex flex-col gap-2">

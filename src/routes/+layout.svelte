@@ -4,7 +4,6 @@
 	import { page } from '$app/state';
 	import { locales, localizeHref } from '$lib/paraglide/runtime';
 	import './layout.css';
-	import favicon from '$lib/assets/favicon.svg';
 	import AppNav from '$lib/components/AppNav.svelte';
 	import VanitasSymbol from '$lib/components/VanitasSymbol.svelte';
 	import SharedViewBar from '$lib/components/SharedViewBar.svelte';
@@ -27,7 +26,14 @@
 	const homeHref = $derived(resolve(localizeHref('/') as Pathname));
 </script>
 
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
+<!-- 아이콘 (scripts/make-icons.py가 만든다). 페이지 제목·설명은 각 페이지의 Seo -->
+<svelte:head>
+	<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+	<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/site.webmanifest" />
+	<meta name="theme-color" content="#1288f8" />
+</svelte:head>
 
 <!-- 배경층: 계산기 화면은 사선 (디자인 문서 5-2). 홈은 6단계에서 삼각형 타일로 덮는다 -->
 <div class="min-h-screen bg-diagonal lg:flex">

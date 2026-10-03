@@ -4,6 +4,7 @@
 	데스크톱: 왼쪽 입력, 오른쪽 결과 + 막대·곡선
 -->
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { getApConfig, getIncomeSources, listIncomePresets } from '$lib/data';
 	import { calculateIncome, listToggleableSources, presetIncluded } from '$lib/calc/income-adapter';
@@ -205,9 +206,10 @@
 	const purchaseCost = $derived(apPurchaseCostPerDay(habits.apPurchasesPerDay));
 </script>
 
-<svelte:head>
-	<title>{m.income_page_title()} | {m.app_title()}</title>
-</svelte:head>
+<Seo
+	title={`${m.income_page_title()} | ${m.app_title()}`}
+	description={m.meta_income_description()}
+/>
 
 <!--
 	배치 (2026-09-30)

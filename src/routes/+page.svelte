@@ -6,6 +6,7 @@
 	타일 목록은 내비게이션과 같은 src/lib/nav.ts를 쓴다 (순서·준비 상태·아이콘이 늘 같다).
 -->
 <script lang="ts">
+	import Seo from '$lib/components/Seo.svelte';
 	import type { Pathname } from '$app/types';
 	import { resolve } from '$app/paths';
 	import { localizeHref } from '$lib/paraglide/runtime';
@@ -21,9 +22,7 @@
 	const href = (path: string) => resolve(localizeHref(path) as Pathname);
 </script>
 
-<svelte:head>
-	<title>{m.app_title()}</title>
-</svelte:head>
+<Seo title={m.meta_home_title()} description={m.meta_home_description()} />
 
 <!-- 모바일은 레이아웃이 하단 탭바 높이만큼 아래를 비워 두는데, 그 자리까지 홈 배경이 덮도록 아래로 늘인다 -->
 <main
