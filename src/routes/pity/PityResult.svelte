@@ -3,6 +3,7 @@
 	판정 규칙 자체는 src/lib/calc/gacha.ts 에 있다 — 여기서 조건을 새로 만들지 않는다.
 -->
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { GachaFailure, GachaResult } from '$lib/calc/gacha-adapter';
 	import { formatInt, formatPercent, formatRate } from '$lib/format';
@@ -14,9 +15,11 @@
 	interface Props {
 		result: GachaResult;
 		bannerName: string;
+		/** 카드 아래쪽 동작 (공유 링크 복사 등) */
+		actions?: Snippet;
 	}
 
-	let { result, bannerName }: Props = $props();
+	let { result, bannerName, actions }: Props = $props();
 
 	const failMessages: Record<GachaFailure, () => string> = {
 		no_pity: m.pity_fail_no_pity,
@@ -97,5 +100,8 @@
 			<dt>{m.pity_detail_rate()}</dt>
 			<dd class="text-right text-ink">{formatRate(result.ratePercent / 100)}</dd>
 		</dl>
+	{/if}
+	{#if actions}
+		<div class="mt-4 flex justify-end">{@render actions()}</div>
 	{/if}
 </Panel>

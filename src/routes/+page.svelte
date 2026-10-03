@@ -15,6 +15,7 @@
 	import VanitasSymbol from '$lib/components/VanitasSymbol.svelte';
 	import TriangleBackground from '$lib/components/TriangleBackground.svelte';
 	import HomeFrame from './HomeFrame.svelte';
+	import BackupButton from '$lib/components/BackupButton.svelte';
 
 	const href = (path: string) => resolve(localizeHref(path) as Pathname);
 </script>
@@ -34,7 +35,7 @@
 
 	<!-- 데스크톱은 화면 높이 안에서 위아래 가운데. 모바일은 위에서부터 (하단 탭바가 있어서) -->
 	<div
-		class="relative mx-auto flex max-w-4xl flex-col gap-6 px-4 py-10 md:min-h-screen md:justify-center"
+		class="relative mx-auto flex max-w-4xl flex-col gap-6 px-4 pt-10 pb-24 md:min-h-screen md:justify-center lg:py-10"
 	>
 		<!-- 데스크톱 -->
 		<div class="hidden md:block">
@@ -91,5 +92,14 @@
 				{/each}
 			</ul>
 		</div>
+	</div>
+	<!--
+		백업 링크: 왼쪽 목록이 없는 화면(모바일·태블릿)에서는 홈 맨 아래, 하단 탭바 바로 위에 (2026-10-02).
+		목록 위쪽 여백(pb-24)으로 타일과 겹치지 않게 자리를 비워 둔다.
+	-->
+	<div
+		class="absolute inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+1.25rem)] flex justify-center lg:hidden"
+	>
+		<BackupButton variant="block" />
 	</div>
 </main>

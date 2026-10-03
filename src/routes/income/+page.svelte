@@ -11,6 +11,10 @@
 	import { addDays, gameToday } from '$lib/game-date';
 	import { formatInt } from '$lib/format';
 	import { getUserState } from '$lib/state/user-state.svelte';
+	import { persistSection } from '$lib/state/saved.svelte';
+	import { isFutureDate, isInt, isOneOf, isRecordOf, isSubsetOf } from '$lib/state/persist';
+	import ResetButton from '$lib/components/ResetButton.svelte';
+	import ShareButton from '$lib/components/ShareButton.svelte';
 	import Panel from '$lib/components/Panel.svelte';
 	import NumberField from '$lib/components/NumberField.svelte';
 	import SelectField from '$lib/components/SelectField.svelte';
@@ -76,15 +80,82 @@
 
 	// ---------------------------------------------------------------- 입력 상태
 
-	let endDate = $state(addDays(today, 90));
-	let preset = $state(presets[0]?.id ?? 'full');
-	// 프리셋을 고르면 포함 목록이 그 프리셋으로 바뀌고, 그 뒤 체크로 고칠 수 있다
-	let included = $state(presetIncluded(presets[0]?.id ?? 'full'));
-	let tacticalDaily = $state(tactical?.amount ?? 0);
-	let raidTier = $state(raidRank?.tiers?.[0]?.id ?? '');
-	let participation = $state(data.eventParticipation[0]?.id ?? '');
-	let subscriptions = $state<Record<string, string>>(
-		Object.fromEntries(data.subscriptions.map((p) => [p.id, '0']))
+	// 기본값. 초기화와 저장값 검사에서도 쓴다
+	const defaults = () => ({
+		endDate: addDays(today, 90),
+		preset: presets[0]?.id ?? 'full',
+		// 프리셋을 고르면 포함 목록이 그 프리셋으로 바뀌고, 그 뒤 체크로 고칠 수 있다
+		included: presetIncluded(presets[0]?.id ?? 'full'),
+		tacticalDaily: tactical?.amount ?? 0,
+		raidTier: raidRank?.tiers?.[0]?.id ?? '',
+		participation: data.eventParticipation[0]?.id ?? '',
+		subscriptions: Object.fromEntries(data.subscriptions.map((p) => [p.id, '0'])) as Record<
+			string,
+			string
+		>
+	});
+	const start = defaults();
+
+	let endDate = $state(start.endDate);
+	let preset = $state(start.preset);
+	let included = $state(start.included);
+	let tacticalDaily = $state(start.tacticalDaily);
+	let raidTier = $state(start.raidTier);
+	let participation = $state(start.participation);
+	let subscriptions = $state(start.subscriptions);
+
+	// 브라우저 저장 (2026-10-02). 칸마다 검사해서 맞지 않는 칸(지나간 날짜 등)만 기본값으로
+	const SUBSCRIPTION_VALUES = [
+		'0',
+		...Array.from({ length: SUBSCRIPTION_MAX_COUNT }, (_, i) => String(i + 1)),
+		'continuous'
+	];
+	const saved = persistSection(
+		'income',
+		() => ({
+			endDate,
+			preset,
+			included,
+			tacticalDaily,
+			raidTier,
+			participation,
+			subscriptions
+		}),
+		(v) => {
+			endDate = v.endDate;
+			preset = v.preset;
+			included = v.included;
+			tacticalDaily = v.tacticalDaily;
+			raidTier = v.raidTier;
+			participation = v.participation;
+			subscriptions = v.subscriptions;
+		},
+		defaults,
+		{
+			endDate: isFutureDate(today),
+			preset: isOneOf(presets.map((p) => p.id)),
+			included: isSubsetOf(toggleable.map((s) => s.id)),
+			tacticalDaily: isInt(0),
+			raidTier: isOneOf((raidRank?.tiers ?? []).map((t) => t.id)),
+			participation: isOneOf(data.eventParticipation.map((p) => p.id)),
+			subscriptions: isRecordOf(
+				data.subscriptions.map((p) => p.id),
+				(_, v) => isOneOf(SUBSCRIPTION_VALUES)(v)
+			)
+		},
+		// 공유 링크: 기본값과 다른 칸만 짧은 이름으로 (예: ?d=2026-12-31&tier=gold&sub=monthly-pass.continuous&g=3000)
+		{
+			fields: [
+				{ key: 'endDate', param: 'd', kind: 'str' },
+				{ key: 'preset', param: 'ps', kind: 'str' },
+				{ key: 'included', param: 'inc', kind: 'list' },
+				{ key: 'tacticalDaily', param: 'tac', kind: 'int' },
+				{ key: 'raidTier', param: 'tier', kind: 'str' },
+				{ key: 'participation', param: 'ev', kind: 'str' },
+				{ key: 'subscriptions', param: 'sub', kind: 'map-str' }
+			],
+			user: ['gems', 'singleTickets', 'tenPullTickets', 'apPurchasesPerDay']
+		}
 	);
 
 	function selectPreset(id: string) {
@@ -149,14 +220,18 @@
 <main
 	class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 md:grid md:grid-cols-2 md:gap-6 xl:max-w-7xl xl:grid-cols-3"
 >
-	<h1 class="text-[1.75rem] font-bold text-ink md:col-span-2 xl:col-span-3">
-		{m.income_page_title()}
-	</h1>
+	<!-- 제목 줄: 제목 + 입력 초기화 (모바일은 오른쪽 끝에 홈 로고가 있어 초기화는 아이콘만) -->
+	<div class="flex items-center gap-2 md:col-span-2 xl:col-span-3">
+		<h1 class="text-[1.75rem] font-bold text-ink">{m.income_page_title()}</h1>
+		<ResetButton onreset={saved.reset} />
+	</div>
 
 	<!-- 결과 열 -->
 	<div class="contents xl:col-start-3 xl:row-start-2 xl:flex xl:flex-col xl:gap-6">
 		<div class="order-1 md:order-none md:col-start-2 md:row-start-2">
-			<IncomeResult {result} hasHoldings={res.gems + res.singleTickets + res.tenPullTickets > 0} />
+			<IncomeResult {result} hasHoldings={res.gems + res.singleTickets + res.tenPullTickets > 0}>
+				{#snippet actions()}<ShareButton url={saved.shareUrl} />{/snippet}
+			</IncomeResult>
 		</div>
 		{#if result.kind === 'ok'}
 			<div

@@ -22,6 +22,10 @@
 	import CheckboxField from '$lib/components/CheckboxField.svelte';
 	import DateField from '$lib/components/DateField.svelte';
 	import { getUserState } from '$lib/state/user-state.svelte';
+	import { persistSection } from '$lib/state/saved.svelte';
+	import { isFutureDate, isInt, isOneOf, isRecordOf, isSubsetOf } from '$lib/state/persist';
+	import ResetButton from '$lib/components/ResetButton.svelte';
+	import ShareButton from '$lib/components/ShareButton.svelte';
 	import LevelUpResult from './LevelUpResult.svelte';
 	import LevelCurve from './LevelCurve.svelte';
 
@@ -110,20 +114,108 @@
 
 	// ---------------------------------------------------------------- 입력 상태
 
-	let mode = $state('level');
-	let level = $state(1);
-	let exp = $state(0);
-	let currentAp = $state(0);
-	let targetLevel = $state(maxLevel);
-	let targetDate = $state(addDays(today, 30));
+	// 기본값. 초기화와 저장값 검사에서도 쓴다
+	const defaults = () => ({
+		mode: 'level',
+		level: 1,
+		exp: 0,
+		currentAp: 0,
+		targetLevel: maxLevel,
+		targetDate: addDays(today, 30),
+		logins: '2',
+		cafeRank: '1',
+		// 쾌적도는 랭크별로 기억한다. 처음 고른 랭크는 그 랭크의 최대 쾌적도로 시작한다.
+		comfortByRank: {} as Record<string, number>,
+		disabledIncome: [] as string[],
+		apPackage: '0',
+		tactical: 'none'
+	});
+	const start = defaults();
 
-	let logins = $state('2');
-	let cafeRank = $state('1');
-	// 쾌적도는 랭크별로 기억한다. 처음 고른 랭크는 그 랭크의 최대 쾌적도로 시작한다.
-	let comfortByRank = $state<Record<string, number>>({});
-	let disabledIncome = $state<string[]>([]);
-	let apPackage = $state('0');
-	let tactical = $state('none');
+	let mode = $state(start.mode);
+	let level = $state(start.level);
+	let exp = $state(start.exp);
+	let currentAp = $state(start.currentAp);
+	let targetLevel = $state(start.targetLevel);
+	let targetDate = $state(start.targetDate);
+
+	let logins = $state(start.logins);
+	let cafeRank = $state(start.cafeRank);
+	let comfortByRank = $state(start.comfortByRank);
+	let disabledIncome = $state(start.disabledIncome);
+	let apPackage = $state(start.apPackage);
+	let tactical = $state(start.tactical);
+
+	// 브라우저 저장 (2026-10-02). 저장값은 칸마다 검사해서 맞지 않는 칸만 기본값으로 돌린다
+	// (지나간 날짜, 데이터에서 사라진 선택지 등)
+	const saved = persistSection(
+		'levelup',
+		() => ({
+			mode,
+			level,
+			exp,
+			currentAp,
+			targetLevel,
+			targetDate,
+			logins,
+			cafeRank,
+			comfortByRank,
+			disabledIncome,
+			apPackage,
+			tactical
+		}),
+		(v) => {
+			mode = v.mode;
+			level = v.level;
+			exp = v.exp;
+			currentAp = v.currentAp;
+			targetLevel = v.targetLevel;
+			targetDate = v.targetDate;
+			logins = v.logins;
+			cafeRank = v.cafeRank;
+			comfortByRank = v.comfortByRank;
+			disabledIncome = v.disabledIncome;
+			apPackage = v.apPackage;
+			tactical = v.tactical;
+		},
+		defaults,
+		{
+			mode: isOneOf(modeOptions.map((o) => o.value)),
+			level: isInt(1, maxLevel),
+			exp: isInt(0),
+			currentAp: isInt(0),
+			targetLevel: isInt(1, maxLevel),
+			targetDate: isFutureDate(today),
+			logins: isOneOf(loginOptions.map((o) => o.value)),
+			cafeRank: isOneOf(rankOptions.map((o) => o.value)),
+			comfortByRank: isRecordOf(
+				rankOptions.map((o) => o.value),
+				(rank, v) => isInt(0, getCafeRank(Number(rank)).maxComfort)(v)
+			),
+			disabledIncome: isSubsetOf(regularIncome.map((i) => i.id)),
+			apPackage: isOneOf(packageOptions.map((o) => o.value)),
+			tactical: isOneOf(tacticalOptions.map((o) => o.value))
+		},
+		// 공유 링크: 기본값과 다른 칸만 짧은 이름으로 (예: ?lv=60&exp=1200&c=8&cf=8.4500&buy=6)
+		{
+			fields: [
+				{ key: 'mode', param: 'm', kind: 'str' },
+				{ key: 'level', param: 'lv', kind: 'int' },
+				{ key: 'exp', param: 'exp', kind: 'int' },
+				{ key: 'currentAp', param: 'ap', kind: 'int' },
+				{ key: 'targetLevel', param: 'to', kind: 'int' },
+				{ key: 'targetDate', param: 'd', kind: 'str' },
+				{ key: 'logins', param: 'li', kind: 'str' },
+				{ key: 'cafeRank', param: 'c', kind: 'str' },
+				{ key: 'comfortByRank', param: 'cf', kind: 'map-int' },
+				{ key: 'disabledIncome', param: 'off', kind: 'list' },
+				{ key: 'apPackage', param: 'pk', kind: 'str' },
+				{ key: 'tactical', param: 'tac', kind: 'str' }
+			],
+			user: ['apPurchasesPerDay']
+		}
+	);
+
 	// 하루 AP 구매 횟수는 청휘석 수급 계산기와 함께 쓴다 (UserState)
 	const habits = getUserState().habits;
 
@@ -189,14 +281,18 @@
 <main
 	class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 md:grid md:grid-cols-2 md:gap-6 xl:max-w-7xl xl:grid-cols-3"
 >
-	<h1 class="text-[1.75rem] font-bold text-ink md:col-span-2 xl:col-span-3">
-		{m.levelup_page_title()}
-	</h1>
+	<!-- 제목 줄: 제목 + 입력 초기화 (모바일은 오른쪽 끝에 홈 로고가 있어 초기화는 아이콘만) -->
+	<div class="flex items-center gap-2 md:col-span-2 xl:col-span-3">
+		<h1 class="text-[1.75rem] font-bold text-ink">{m.levelup_page_title()}</h1>
+		<ResetButton onreset={saved.reset} />
+	</div>
 
 	<!-- 결과 열 -->
 	<div class="contents xl:col-start-3 xl:row-start-2 xl:flex xl:flex-col xl:gap-6">
 		<div class="order-1 md:order-none md:col-start-2 md:row-start-2">
-			<LevelUpResult {result} target={targetLevel} />
+			<LevelUpResult {result} target={targetLevel}>
+				{#snippet actions()}<ShareButton url={saved.shareUrl} />{/snippet}
+			</LevelUpResult>
 		</div>
 		{#if curve}
 			<div

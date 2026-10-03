@@ -7,13 +7,17 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import AppNav from '$lib/components/AppNav.svelte';
 	import VanitasSymbol from '$lib/components/VanitasSymbol.svelte';
+	import SharedViewBar from '$lib/components/SharedViewBar.svelte';
+	import BackupImportBar from '$lib/components/BackupImportBar.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { provideUserState } from '$lib/state/user-state.svelte';
+	import { provideSavedStore } from '$lib/state/saved.svelte';
 
 	let { children } = $props();
 
 	// 여러 계산기가 함께 쓰는 값. 방문자마다 하나씩 만들어 모든 페이지에 내려준다
-	provideUserState();
+	// 브라우저 저장: 공유 값은 여기서, 계산기별 입력은 각 페이지에서 (src/lib/state/saved.svelte.ts)
+	provideSavedStore(provideUserState());
 
 	// 모바일·태블릿에는 하단 탭바에 홈이 없다 → 홈이 아닌 화면의 오른쪽 위에 로고를 두어 홈으로 (2026-10-01)
 	const isHome = $derived(page.route.id === '/');
@@ -39,6 +43,8 @@
 		{/if}
 		{@render children()}
 	</div>
+	<SharedViewBar />
+	<BackupImportBar />
 </div>
 
 <div style="display:none">

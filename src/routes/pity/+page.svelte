@@ -13,6 +13,10 @@
 	import NumberField from '$lib/components/NumberField.svelte';
 	import SelectField from '$lib/components/SelectField.svelte';
 	import { getUserState } from '$lib/state/user-state.svelte';
+	import { persistSection } from '$lib/state/saved.svelte';
+	import { isOneOf } from '$lib/state/persist';
+	import ResetButton from '$lib/components/ResetButton.svelte';
+	import ShareButton from '$lib/components/ShareButton.svelte';
 	import PityResult from './PityResult.svelte';
 	import ProbabilityCurve from './ProbabilityCurve.svelte';
 
@@ -26,7 +30,24 @@
 		label: bannerAvailability(b.id) ? m.pity_banner_preparing({ name: nameOf(b) }) : nameOf(b)
 	}));
 
-	let bannerId = $state(banners.find((b) => b.id === 'pickup_normal')?.id ?? banners[0].id);
+	const defaultBanner = banners.find((b) => b.id === 'pickup_normal')?.id ?? banners[0].id;
+	let bannerId = $state(defaultBanner);
+
+	// 브라우저 저장 (2026-10-02). 보유 재화는 공유 값이라 레이아웃이 저장한다
+	const saved = persistSection(
+		'pity',
+		() => ({ bannerId }),
+		(v) => {
+			bannerId = v.bannerId;
+		},
+		() => ({ bannerId: defaultBanner }),
+		{ bannerId: isOneOf(banners.map((b) => b.id)) },
+		// 공유 링크: 모집 + 보유 재화 (예: ?b=pickup_fes&g=24000)
+		{
+			fields: [{ key: 'bannerId', param: 'b', kind: 'str' }],
+			user: ['gems', 'singleTickets', 'tenPullTickets', 'pointsByPool']
+		}
+	);
 	// 보유 재화는 다른 계산기와 함께 쓴다 (UserState)
 	const res = getUserState().resources;
 	// 포인트는 풀별로 따로 기억한다(UserState). 배너를 바꾸면 해당 풀의 값이 불러와진다.
@@ -62,10 +83,16 @@
 </svelte:head>
 
 <main class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 md:grid md:grid-cols-2 md:gap-6">
-	<h1 class="text-[1.75rem] font-bold text-ink md:col-span-2">{m.pity_page_title()}</h1>
+	<!-- 제목 줄: 제목 + 입력 초기화 (모바일은 오른쪽 끝에 홈 로고가 있어 초기화는 아이콘만) -->
+	<div class="flex items-center gap-2 md:col-span-2">
+		<h1 class="text-[1.75rem] font-bold text-ink">{m.pity_page_title()}</h1>
+		<ResetButton onreset={saved.reset} />
+	</div>
 
 	<div class="md:col-start-2 md:row-start-2">
-		<PityResult {result} bannerName={nameOf(banner)} />
+		<PityResult {result} bannerName={nameOf(banner)}>
+			{#snippet actions()}<ShareButton url={saved.shareUrl} />{/snippet}
+		</PityResult>
 	</div>
 
 	<!-- 두 열의 바닥을 맞춘다: 입력 패널을 오른쪽 열(결과 + 그래프) 높이까지 늘인다 -->

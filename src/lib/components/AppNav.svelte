@@ -14,6 +14,7 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import { sections as items } from '$lib/nav';
 	import NavIcon from '$lib/icons/NavIcon.svelte';
+	import BackupButton from './BackupButton.svelte';
 
 	const href = (path: string) => resolve(localizeHref(path) as Pathname);
 	const isCurrent = (path: string) => page.route.id?.startsWith(path) ?? false;
@@ -39,7 +40,7 @@
 
 <!-- 데스크톱: 좌측 세로 목록 -->
 <aside
-	class="sticky top-0 hidden h-screen w-56 shrink-0 border-r border-navy/15 bg-surface lg:block"
+	class="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-navy/15 bg-surface lg:flex"
 >
 	<a
 		href={href('/')}
@@ -78,6 +79,10 @@
 			{/each}
 		</ul>
 	</nav>
+	<!-- 맨 아래: 백업 링크 (다른 기기로 입력 옮기기) -->
+	<div class="mt-auto">
+		<BackupButton variant="nav" />
+	</div>
 </aside>
 
 <!-- 모바일·태블릿: 하단 탭바 -->
