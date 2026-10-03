@@ -1,0 +1,9 @@
+# Cloudflare Pages 배포 설정 (공개 준비 6번).
+name = "vanitas"
+pages_build_output_dir = ".svelte-kit/cloudflare"
+
+# 실행 환경의 기준 날짜. 
+compatibility_date = "2026-10-01"
+
+# Node 기능 
+compatibility_flags = ["nodejs_compat"]
