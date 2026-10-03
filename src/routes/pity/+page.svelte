@@ -16,6 +16,7 @@
 	import { persistSection } from '$lib/state/saved.svelte';
 	import { isOneOf } from '$lib/state/persist';
 	import ResetButton from '$lib/components/ResetButton.svelte';
+	import ShareButton from '$lib/components/ShareButton.svelte';
 	import PityResult from './PityResult.svelte';
 	import ProbabilityCurve from './ProbabilityCurve.svelte';
 
@@ -40,7 +41,12 @@
 			bannerId = v.bannerId;
 		},
 		() => ({ bannerId: defaultBanner }),
-		{ bannerId: isOneOf(banners.map((b) => b.id)) }
+		{ bannerId: isOneOf(banners.map((b) => b.id)) },
+		// 공유 링크: 모집 + 보유 재화 (예: ?b=pickup_fes&g=24000)
+		{
+			fields: [{ key: 'bannerId', param: 'b', kind: 'str' }],
+			user: ['gems', 'singleTickets', 'tenPullTickets', 'pointsByPool']
+		}
 	);
 	// 보유 재화는 다른 계산기와 함께 쓴다 (UserState)
 	const res = getUserState().resources;
@@ -84,7 +90,9 @@
 	</div>
 
 	<div class="md:col-start-2 md:row-start-2">
-		<PityResult {result} bannerName={nameOf(banner)} />
+		<PityResult {result} bannerName={nameOf(banner)}>
+			{#snippet actions()}<ShareButton url={saved.shareUrl} />{/snippet}
+		</PityResult>
 	</div>
 
 	<!-- 두 열의 바닥을 맞춘다: 입력 패널을 오른쪽 열(결과 + 그래프) 높이까지 늘인다 -->

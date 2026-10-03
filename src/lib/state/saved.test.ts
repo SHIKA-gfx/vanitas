@@ -59,3 +59,52 @@ describe('SavedStore', () => {
 		expect(store.read('pity')).toBeUndefined();
 	});
 });
+
+describe('공유 링크 보기 (B안)', () => {
+	function setup() {
+		const map = fakeStorage({ version: 1, sections: { user: { gems: 500 } } });
+		const user = createUserState();
+		const store = new SavedStore(user);
+		store.restoreUser();
+		// 링크의 값으로 바꾼 상태라고 가정
+		const mine = store.userFlat();
+		store.applyUserFlat({ ...mine, gems: 24000 });
+		let saved = 0;
+		store.enterShared(
+			() => JSON.stringify(store.userFlat()),
+			() => store.applyUserFlat(mine),
+			() => {
+				saved += 1;
+				store.saveUser();
+			}
+		);
+		return { map, user, store, savedCount: () => saved };
+	}
+
+	it('보는 동안에는 저장하지 않는다 (내 저장값 그대로)', () => {
+		const { map, store } = setup();
+		expect(store.sharedView).toBe(true);
+		store.noteChange(); // 값이 그대로면 보기 유지
+		store.saveUser();
+		expect(store.sharedView).toBe(true);
+		expect(JSON.parse(map.get(STORAGE_KEY)!).sections.user.gems).toBe(500);
+	});
+
+	it('값을 고치면 그때부터 지금 값이 내 저장값이 된다', () => {
+		const { map, user, store, savedCount } = setup();
+		user.resources.gems = 30000;
+		store.noteChange();
+		expect(store.sharedView).toBe(false);
+		expect(savedCount()).toBe(1);
+		expect(JSON.parse(map.get(STORAGE_KEY)!).sections.user.gems).toBe(30000);
+	});
+
+	it('"내 값으로 돌아가기"는 내 값을 되살리고 저장값을 건드리지 않는다', () => {
+		const { map, user, store, savedCount } = setup();
+		store.backToMine();
+		expect(store.sharedView).toBe(false);
+		expect(user.resources.gems).toBe(500);
+		expect(savedCount()).toBe(0);
+		expect(JSON.parse(map.get(STORAGE_KEY)!).sections.user.gems).toBe(500);
+	});
+});

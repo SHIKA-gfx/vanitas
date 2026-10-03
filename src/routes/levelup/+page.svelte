@@ -25,6 +25,7 @@
 	import { persistSection } from '$lib/state/saved.svelte';
 	import { isFutureDate, isInt, isOneOf, isRecordOf, isSubsetOf } from '$lib/state/persist';
 	import ResetButton from '$lib/components/ResetButton.svelte';
+	import ShareButton from '$lib/components/ShareButton.svelte';
 	import LevelUpResult from './LevelUpResult.svelte';
 	import LevelCurve from './LevelCurve.svelte';
 
@@ -194,6 +195,24 @@
 			disabledIncome: isSubsetOf(regularIncome.map((i) => i.id)),
 			apPackage: isOneOf(packageOptions.map((o) => o.value)),
 			tactical: isOneOf(tacticalOptions.map((o) => o.value))
+		},
+		// 공유 링크: 기본값과 다른 칸만 짧은 이름으로 (예: ?lv=60&exp=1200&c=8&cf=8.4500&buy=6)
+		{
+			fields: [
+				{ key: 'mode', param: 'm', kind: 'str' },
+				{ key: 'level', param: 'lv', kind: 'int' },
+				{ key: 'exp', param: 'exp', kind: 'int' },
+				{ key: 'currentAp', param: 'ap', kind: 'int' },
+				{ key: 'targetLevel', param: 'to', kind: 'int' },
+				{ key: 'targetDate', param: 'd', kind: 'str' },
+				{ key: 'logins', param: 'li', kind: 'str' },
+				{ key: 'cafeRank', param: 'c', kind: 'str' },
+				{ key: 'comfortByRank', param: 'cf', kind: 'map-int' },
+				{ key: 'disabledIncome', param: 'off', kind: 'list' },
+				{ key: 'apPackage', param: 'pk', kind: 'str' },
+				{ key: 'tactical', param: 'tac', kind: 'str' }
+			],
+			user: ['apPurchasesPerDay']
 		}
 	);
 
@@ -271,7 +290,9 @@
 	<!-- 결과 열 -->
 	<div class="contents xl:col-start-3 xl:row-start-2 xl:flex xl:flex-col xl:gap-6">
 		<div class="order-1 md:order-none md:col-start-2 md:row-start-2">
-			<LevelUpResult {result} target={targetLevel} />
+			<LevelUpResult {result} target={targetLevel}>
+				{#snippet actions()}<ShareButton url={saved.shareUrl} />{/snippet}
+			</LevelUpResult>
 		</div>
 		{#if curve}
 			<div

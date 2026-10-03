@@ -7,6 +7,8 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import AppNav from '$lib/components/AppNav.svelte';
 	import VanitasSymbol from '$lib/components/VanitasSymbol.svelte';
+	import SharedViewBar from '$lib/components/SharedViewBar.svelte';
+	import BackupImportBar from '$lib/components/BackupImportBar.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { provideUserState } from '$lib/state/user-state.svelte';
 	import { provideSavedStore } from '$lib/state/saved.svelte';
@@ -41,6 +43,8 @@
 		{/if}
 		{@render children()}
 	</div>
+	<SharedViewBar />
+	<BackupImportBar />
 </div>
 
 <div style="display:none">

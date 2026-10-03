@@ -3,6 +3,7 @@
 	판정 규칙은 src/lib/calc/income-adapter.ts 에 있다 — 여기서 조건을 새로 만들지 않는다.
 -->
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import type { IncomeField, IncomeOutcome } from '$lib/calc/income-adapter';
 	import { formatDate, formatInt } from '$lib/format';
@@ -15,9 +16,11 @@
 		result: IncomeOutcome;
 		/** 보유 재화를 넣었으면 그날 예상 잔고를 보여준다 */
 		hasHoldings: boolean;
+		/** 카드 아래쪽 동작 (공유 링크 복사 등) */
+		actions?: Snippet;
 	}
 
-	let { result, hasHoldings }: Props = $props();
+	let { result, hasHoldings, actions }: Props = $props();
 
 	function invalidMessage(field: IncomeField): string {
 		return field === 'endDate' ? m.income_invalid_end_date() : m.income_invalid_other();
@@ -119,5 +122,8 @@
 			{/if}
 			<p>{m.income_note_assumptions()}</p>
 		</div>
+	{/if}
+	{#if actions}
+		<div class="mt-4 flex justify-end">{@render actions()}</div>
 	{/if}
 </Panel>

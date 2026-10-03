@@ -3,6 +3,7 @@
 	판정 규칙은 src/lib/calc/levelup.ts / levelup-adapter.ts 에 있다 — 여기서 조건을 새로 만들지 않는다.
 -->
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import {
 		HORIZON_DAYS,
@@ -20,9 +21,11 @@
 		result: LevelUpOutcome;
 		/** 목표 레벨 모드의 목표. already 문구에 쓴다 */
 		target: number;
+		/** 카드 아래쪽 동작 (공유 링크 복사 등) */
+		actions?: Snippet;
 	}
 
-	let { result, target }: Props = $props();
+	let { result, target, actions }: Props = $props();
 
 	const packageName =
 		getApConfig().fixedIncome.find((i) => i.durationDays !== undefined)?.name ?? '';
@@ -126,5 +129,8 @@
 
 	{#if result.kind === 'reached' || result.kind === 'projected'}
 		<p class="mt-3 text-xs leading-relaxed text-navy">{m.levelup_assumptions()}</p>
+	{/if}
+	{#if actions}
+		<div class="mt-4 flex justify-end">{@render actions()}</div>
 	{/if}
 </Panel>

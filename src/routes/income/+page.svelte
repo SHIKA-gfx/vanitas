@@ -14,6 +14,7 @@
 	import { persistSection } from '$lib/state/saved.svelte';
 	import { isFutureDate, isInt, isOneOf, isRecordOf, isSubsetOf } from '$lib/state/persist';
 	import ResetButton from '$lib/components/ResetButton.svelte';
+	import ShareButton from '$lib/components/ShareButton.svelte';
 	import Panel from '$lib/components/Panel.svelte';
 	import NumberField from '$lib/components/NumberField.svelte';
 	import SelectField from '$lib/components/SelectField.svelte';
@@ -141,6 +142,19 @@
 				data.subscriptions.map((p) => p.id),
 				(_, v) => isOneOf(SUBSCRIPTION_VALUES)(v)
 			)
+		},
+		// 공유 링크: 기본값과 다른 칸만 짧은 이름으로 (예: ?d=2026-12-31&tier=gold&sub=monthly-pass.continuous&g=3000)
+		{
+			fields: [
+				{ key: 'endDate', param: 'd', kind: 'str' },
+				{ key: 'preset', param: 'ps', kind: 'str' },
+				{ key: 'included', param: 'inc', kind: 'list' },
+				{ key: 'tacticalDaily', param: 'tac', kind: 'int' },
+				{ key: 'raidTier', param: 'tier', kind: 'str' },
+				{ key: 'participation', param: 'ev', kind: 'str' },
+				{ key: 'subscriptions', param: 'sub', kind: 'map-str' }
+			],
+			user: ['gems', 'singleTickets', 'tenPullTickets', 'apPurchasesPerDay']
 		}
 	);
 
@@ -215,7 +229,9 @@
 	<!-- 결과 열 -->
 	<div class="contents xl:col-start-3 xl:row-start-2 xl:flex xl:flex-col xl:gap-6">
 		<div class="order-1 md:order-none md:col-start-2 md:row-start-2">
-			<IncomeResult {result} hasHoldings={res.gems + res.singleTickets + res.tenPullTickets > 0} />
+			<IncomeResult {result} hasHoldings={res.gems + res.singleTickets + res.tenPullTickets > 0}>
+				{#snippet actions()}<ShareButton url={saved.shareUrl} />{/snippet}
+			</IncomeResult>
 		</div>
 		{#if result.kind === 'ok'}
 			<div
