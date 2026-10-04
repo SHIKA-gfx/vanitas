@@ -1,13 +1,25 @@
 #!/usr/bin/env bash
 # 청휘석 일일 실측 로그 기록 도구
 # 사용법: bash scripts/log-income.sh [YYYY-MM-DD]   (날짜 생략 시 오늘)
+#
+# 기록은 레포 밖의 개인 폴더에 둔다 (2026-10-04).
+# - 레포가 공개라, 매일의 잔고·과금 기록을 공개 레포에 쌓지 않는다
+# - main은 PR로만 바뀌도록 보호되어 있어, 기록 한 줄마다 PR·CI·배포를 돌릴 수 없다
+# 실측이 충분히 쌓이면 그 결론(이벤트 수급량 보정 등)만 출처와 함께 data/에 PR로 반영한다.
+#
+# 기록 파일 위치: 기본은 레포와 나란한 ../VANITAS_DECISIONS/LOG/daily-income.csv
+# 다른 곳에 두려면 VANITAS_LOG_DIR 환경 변수로 폴더를 지정한다.
+#   예: VANITAS_LOG_DIR=/e/somewhere bash scripts/log-income.sh
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-CSV="logs/daily-income.csv"
-[ -f "$CSV" ] || { echo "오류: $CSV 없음"; exit 1; }
-
-git pull --quiet --ff-only || echo "경고: git pull 실패. 원격과 다를 수 있음"
+LOG_DIR="${VANITAS_LOG_DIR:-../VANITAS_DECISIONS/LOG}"
+CSV="$LOG_DIR/daily-income.csv"
+[ -f "$CSV" ] || {
+  echo "오류: 기록 파일이 없습니다: $CSV"
+  echo "  기존 기록 파일을 이 위치로 옮기거나, VANITAS_LOG_DIR로 폴더를 지정하세요."
+  exit 1
+}
 
 DATE="${1:-$(date +%F)}"
 echo "$DATE" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' || { echo "오류: 날짜 형식은 YYYY-MM-DD"; exit 1; }
@@ -84,7 +96,4 @@ case "$OK" in [yY]*) ;; *) echo "취소했습니다."; exit 0 ;; esac
 [ -n "$(tail -c1 "$CSV")" ] && echo >> "$CSV"
 echo "$ROW" >> "$CSV"
 
-git add "$CSV"
-git commit --quiet -m "log: $DATE"
-git push --quiet
-echo "기록 완료: $DATE"
+echo "기록 완료: $DATE → $CSV"
