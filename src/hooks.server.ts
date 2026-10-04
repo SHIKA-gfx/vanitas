@@ -2,6 +2,15 @@ import { redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
+import { mainDomainRedirect } from '$lib/main-domain';
+
+const handleMainDomain: Handle = ({ event, resolve }) => {
+	const target = mainDomainRedirect(event.url);
+	if (target) {
+		redirect(301, target);
+	}
+	return resolve(event);
+};
 
 /** 두 로케일 모두 URL 접두어를 쓰므로, 접두어 없는 루트 접속은 기본 로케일로 보낸다. */
 const handleRootRedirect: Handle = ({ event, resolve }) => {
@@ -23,4 +32,4 @@ const handleParaglide: Handle = ({ event, resolve }) =>
 		});
 	});
 
-export const handle: Handle = sequence(handleRootRedirect, handleParaglide);
+export const handle: Handle = sequence(handleMainDomain, handleRootRedirect, handleParaglide);
