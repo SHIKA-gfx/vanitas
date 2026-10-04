@@ -35,3 +35,6 @@ Thumbs.db
 # Paraglide
 src/lib/paraglide
 project.inlang/cache/
+
+# 개인 실측 기록은 레포 밖(../VANITAS_DECISIONS/LOG)에 둔다
+logs/
