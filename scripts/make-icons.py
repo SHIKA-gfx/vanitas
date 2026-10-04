@@ -13,6 +13,9 @@ VANITAS 파비콘·앱 아이콘·공유 미리보기 이미지 만들기 (공�
   icon-192.png, icon-512.png   안드로이드 홈 화면·앱 설치 (가장자리 여유를 둔 maskable)
   og-image.png           링크 미리보기 (1200×630)
 
+만드는 파일 (.github/assets/ — 사이트에는 배포되지 않는다)
+  readme-banner.png      GitHub README 맨 위 배너 (1280×400)
+
 사용: python scripts/make-icons.py
 필요: pip install fonttools brotli cairosvg
 """
@@ -157,6 +160,22 @@ def og_image() -> str:
     return svg(w, h, "".join(body))
 
 
+def readme_banner() -> str:
+    """GitHub README 배너. 미리보기 이미지와 같은 구성을 가로로 넓게"""
+    w, h = 1280, 400
+    cx, cy, r = 250, 200, 118
+    body = [
+        triangles(w, h, 110),
+        f'<circle cx="{cx}" cy="{cy}" r="{r + 14}" fill="#ffffff" fill-opacity="0.75"/>',
+        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{BRAND}"/>',
+        symbol_at(cx, cy + 3, r * 1.25, "#ffffff"),
+        text_path("VANITAS", "Oxanium.woff2", 112, 430, 215, INK, tracking=0.04, weight=700),
+        text_path("블루 아카이브 재화·픽업 플래너", "GyeonggiTitle-Bold.woff2", 36, 434, 278, NAVY),
+        text_path("내 청휘석으로 누구를 데려올 수 있는지 계산해요", "GyeonggiTitle-Medium.woff2", 24, 436, 322, NAVY),
+    ]
+    return svg(w, h, "".join(body))
+
+
 def main() -> None:
     STATIC.mkdir(exist_ok=True)
     (STATIC / "favicon.svg").write_text(icon_round(), encoding="utf-8")
@@ -167,6 +186,10 @@ def main() -> None:
     for size in (192, 512):
         cairosvg.svg2png(bytestring=icon_square(size, 0.56).encode(), write_to=str(STATIC / f"icon-{size}.png"))
     cairosvg.svg2png(bytestring=og_image().encode(), write_to=str(STATIC / "og-image.png"))
+    assets = ROOT / ".github" / "assets"
+    assets.mkdir(parents=True, exist_ok=True)
+    cairosvg.svg2png(bytestring=readme_banner().encode(), write_to=str(assets / "readme-banner.png"))
+    print(f"readme-banner.png: {(assets / 'readme-banner.png').stat().st_size // 1024} KB")
     for name in ("favicon.svg", "favicon-32.png", "apple-touch-icon.png", "icon-192.png", "icon-512.png", "og-image.png"):
         print(f"{name}: {(STATIC / name).stat().st_size // 1024} KB")
 
