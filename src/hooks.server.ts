@@ -3,6 +3,7 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { getTextDirection } from '$lib/paraglide/runtime';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { mainDomainRedirect } from '$lib/main-domain';
+import { handleSiteVerification } from '$lib/site-verification';
 
 const handleMainDomain: Handle = ({ event, resolve }) => {
 	const target = mainDomainRedirect(event.url);
@@ -32,4 +33,9 @@ const handleParaglide: Handle = ({ event, resolve }) =>
 		});
 	});
 
-export const handle: Handle = sequence(handleMainDomain, handleRootRedirect, handleParaglide);
+export const handle: Handle = sequence(
+	handleSiteVerification,
+	handleMainDomain,
+	handleRootRedirect,
+	handleParaglide
+);
