@@ -13,6 +13,9 @@ import {
  */
 
 const AS_OF = '2026-09-19';
+/** 규칙을 고르는 게임 날짜. 실행 날짜에 따라 결과가 바뀌지 않도록 고정한다 */
+const BEFORE = '2026-11-09'; // 포인트 방식 마지막 날
+const AFTER = '2026-11-10'; // 모집 스택 첫날
 
 describe('defaultTargetGroup', () => {
 	it('픽업 모집은 픽업 그룹을 고른다', () => {
@@ -32,6 +35,7 @@ describe('evaluateBanner', () => {
 	it('픽업 모집: 0.7%, 천장 200, 24000 청휘석 = 200연', () => {
 		const r = evaluateBanner({
 			bannerId: 'pickup_normal',
+			date: BEFORE,
 			gems: 24000,
 			currentPoints: 0,
 			asOf: AS_OF
@@ -52,6 +56,7 @@ describe('evaluateBanner', () => {
 	it('상시 모집: 3.0% ÷ 109명 (2026-09-19 스냅샷)', () => {
 		const r = evaluateBanner({
 			bannerId: 'standard',
+			date: BEFORE,
 			gems: 0,
 			currentPoints: 0,
 			asOf: AS_OF
@@ -65,6 +70,7 @@ describe('evaluateBanner', () => {
 	it('없는 목표 그룹 id는 no_target_group', () => {
 		const r = evaluateBanner({
 			bannerId: 'pickup_normal',
+			date: BEFORE,
 			targetGroupId: '__none__',
 			gems: 0,
 			currentPoints: 0
@@ -75,14 +81,40 @@ describe('evaluateBanner', () => {
 
 describe('bannerAvailability', () => {
 	it('계산할 수 있는 배너는 null', () => {
-		expect(bannerAvailability('pickup_normal', { asOf: AS_OF })).toBeNull();
-		expect(bannerAvailability('standard', { asOf: AS_OF })).toBeNull();
+		expect(bannerAvailability('pickup_normal', { date: BEFORE, asOf: AS_OF })).toBeNull();
+		expect(bannerAvailability('standard', { date: BEFORE, asOf: AS_OF })).toBeNull();
 	});
 
 	it('evaluateBanner와 같은 이유를 돌려준다', () => {
-		for (const id of ['pickup_normal', 'standard', 'archive']) {
-			const r = evaluateBanner({ bannerId: id, gems: 0, currentPoints: 0, asOf: AS_OF });
-			expect(bannerAvailability(id, { asOf: AS_OF })).toBe(r.ok ? null : r.reason);
+		for (const date of [BEFORE, AFTER]) {
+			for (const id of ['pickup_normal', 'standard', 'archive', 'recollect']) {
+				const r = evaluateBanner({ bannerId: id, date, gems: 0, currentPoints: 0, asOf: AS_OF });
+				expect(bannerAvailability(id, { date, asOf: AS_OF })).toBe(r.ok ? null : r.reason);
+			}
+		}
+	});
+});
+
+describe('모집 스택 전환 (2026-11-10)', () => {
+	const query = { gems: 24000, currentPoints: 0, asOf: AS_OF };
+
+	it('전환일부터 픽업 모집은 스택 방식으로 계산한다', () => {
+		const before = evaluateBanner({ bannerId: 'pickup_normal', date: BEFORE, ...query });
+		const after = evaluateBanner({ bannerId: 'pickup_normal', date: AFTER, ...query });
+		expect(before.ok && before.evaluation.pity.system).toBe('point_exchange');
+		expect(after.ok && after.evaluation.pity.system).toBe('charge');
+	});
+
+	it('아카이브 모집은 전환 뒤에도 아카이브 포인트를 쓴다', () => {
+		const r = evaluateBanner({ bannerId: 'archive', date: AFTER, ...query });
+		expect(r.ok).toBe(true);
+		if (!r.ok) return;
+		expect(r.evaluation.pity.system).toBe('point_exchange');
+	});
+
+	it('규칙이 공지되지 않은 상시·리콜렉트는 전환 뒤 rule_unconfirmed', () => {
+		for (const id of ['standard', 'recollect']) {
+			expect(bannerAvailability(id, { date: AFTER, asOf: AS_OF })).toBe('rule_unconfirmed');
 		}
 	});
 });

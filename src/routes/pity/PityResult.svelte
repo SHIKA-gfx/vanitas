@@ -24,7 +24,8 @@
 	const failMessages: Record<GachaFailure, () => string> = {
 		no_pity: m.pity_fail_no_pity,
 		no_target_group: m.pity_fail_no_target_group,
-		unknown_pool_size: m.pity_fail_unknown_pool_size
+		unknown_pool_size: m.pity_fail_unknown_pool_size,
+		rule_unconfirmed: m.pity_fail_rule_unconfirmed
 	};
 </script>
 

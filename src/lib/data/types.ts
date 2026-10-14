@@ -39,6 +39,11 @@ export interface PointPool {
 	/** true면 기간이 끝나도 포인트가 보존된다 (archive만 해당). */
 	carryOver: boolean;
 	onExpiry: string | null;
+	/**
+	 * 스택 방식(charge) 이후 이 풀이 어떻게 되는가.
+	 * replaced: 스택으로 대체 / kept: 그대로 유지(아카이브) / unconfirmed: 미확인 → 계산기 "준비 중"
+	 */
+	underCharge: 'replaced' | 'kept' | 'unconfirmed';
 	note?: string;
 	availableInKo?: boolean;
 }
@@ -53,6 +58,7 @@ export interface BannerType {
 	observedDurationDays: number[] | null;
 	payment: string[] | null;
 	pointPool: PointPool['id'] | null;
+	/** 스택 방식에서 쓰는 스택 (ChargeType id). 한국에서 확인되지 않은 배너는 null. */
 	chargeType: string | null;
 	has2StarPickup: boolean;
 	/** false면 픽뚫로 획득할 수 없다 (특별·앙코르). 플래너 판정에 직결. */
@@ -94,16 +100,56 @@ export interface PoolSizesFile {
 
 // ---------------------------------------------------------------- 게임 설정
 
-/** 천장 시스템. 두 방식은 리셋 조건이 정반대다. */
+/**
+ * 천장 시스템. 두 방식은 리셋 조건이 정반대다.
+ * charge는 일본의 '모집 차지', 한국의 '모집 스택'을 함께 부르는 내부 이름이다.
+ */
 export type PitySystem = 'point_exchange' | 'charge';
+
+/** 한 천장 시스템이 적용되기 시작한 날. 게임 날짜 기준 */
+export interface PitySystemPeriod {
+	system: PitySystem;
+	/** 'YYYY-MM-DD' 게임 날짜 */
+	effectiveFrom: string;
+	status: 'announced' | 'estimated';
+	sources?: string[];
+}
+
+/** 스택 종류 (한국: 모집 스택 / 특별 스택). 종류끼리 공유되지 않는다. */
+export interface ChargeType {
+	id: string;
+	name: string;
+	/** 이 스택이 쌓이는 배너 타입 id */
+	appliesTo: string[];
+	verified: boolean;
+}
+
+/** 모집 마일리지. 같은 기간의 모집끼리 공유하고 기간이 끝나면 사라진다. */
+export interface RecruitMileage {
+	name: string;
+	perPull: number;
+	sharedAcross: string[];
+	carryOver: boolean;
+	/** 10회 모집 티켓(기간제)을 1장 받는 누적 마일리지 (초회 보상) */
+	tenPullTicketAt: number[];
+	ticketKind: string;
+	/** 초회 보상의 마지막 단계 */
+	firstTimeLast: number;
+	repeatAfterFirstTime: boolean;
+	repeatRewardsIncludeTickets: boolean;
+	/** 초회 보상이 기간마다 다시 시작되는지 (공지 미확인) */
+	firstTimeScope: 'period' | 'account' | 'unconfirmed';
+	firstTimeScopeAssumed?: 'period' | 'account';
+	note?: string;
+	verified: boolean;
+}
 
 export interface GameConfig {
 	meta: Meta;
 	pitySystem: {
-		current: PitySystem;
 		available: PitySystem[];
-		effectiveFrom: string | null;
-		effectiveTo: string | null;
+		/** effectiveFrom 오름차순. 날짜별 적용은 getPitySystem으로 조회 */
+		schedule: PitySystemPeriod[];
 		note?: string;
 	};
 	recruitCost: {
@@ -129,8 +175,17 @@ export interface GameConfig {
 	};
 	chargeSystem: {
 		_status?: string;
-		softPity: { count: number; guaranteedRarity: Rarity; pickupChance: number };
-		hardPity: { count: number };
+		sources?: string[];
+		perPull: number;
+		softPity: { count: number; guaranteedRarity: Rarity; pickupChance: number; verified: boolean };
+		hardPity: { count: number; verified: boolean };
+		chargeTypes: ChargeType[];
+		/** 개편 후 규칙이 공지되지 않은 배너 타입 id */
+		unconfirmedBanners: string[];
+		sharedBetweenTypes: boolean;
+		carryOver: boolean;
+		resetOnPickupObtained: boolean;
+		mileage: RecruitMileage;
 		[key: string]: unknown;
 	};
 	[key: string]: unknown;
