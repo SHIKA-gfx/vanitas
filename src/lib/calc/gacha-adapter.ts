@@ -14,7 +14,7 @@ import {
 	getBannerType,
 	getGameConfig,
 	getPerUnitRate,
-	getPointPool,
+	getPityRule,
 	type ServerId
 } from '$lib/data';
 import type { BannerType, RateGroup } from '$lib/data/types';
@@ -22,6 +22,12 @@ import { evaluatePickup, type PickupEvaluationInput, type PickupEvaluation } fro
 
 export interface GachaQuery {
 	bannerId: string;
+	/**
+	 * 어느 날의 규칙으로 계산할지 ('YYYY-MM-DD' 게임 날짜).
+	 * 화면은 오늘을 넘기고, "개편 이후 기준으로 보기"는 전환일을 넘긴다.
+	 * 기본값을 두지 않는다 — 테스트가 실행 날짜에 따라 결과가 바뀌지 않도록.
+	 */
+	date: string;
 	/** 목표 확률 그룹 id. 생략하면 defaultTargetGroup으로 고른다. */
 	targetGroupId?: string;
 	gems: number;
@@ -45,7 +51,9 @@ export type GachaFailure =
 	/** 배너에 ★3 확률 그룹이 없거나, 지정한 id가 없다 */
 	| 'no_target_group'
 	/** 풀 크기를 알 수 없다 (dynamic 풀, 스냅샷 미수집) */
-	| 'unknown_pool_size';
+	| 'unknown_pool_size'
+	/** 개편 후 이 배너의 천장 규칙이 아직 공지되지 않았다 (상시·리콜렉트·앙코르) */
+	| 'rule_unconfirmed';
 
 export type GachaResult =
 	| {
@@ -90,25 +98,25 @@ export function evaluateBanner(query: GachaQuery): GachaResult {
 	const ratePercent = getPerUnitRate(target, { asOf: query.asOf, server });
 	if (ratePercent === null) return fail('unknown_pool_size');
 
-	// 3. 천장
+	// 3. 천장 — 규칙은 날짜에 따라 data 계층이 고른다 (getPityRule)
+	const rule = getPityRule(query.bannerId, query.date, server);
 	let pity: PickupEvaluationInput['pity'];
-	if (config.pitySystem.current === 'point_exchange') {
-		if (!banner.pointPool) return fail('no_pity');
-		const pool = getPointPool(banner.pointPool, server);
+	if (rule.kind === 'none') return fail(rule.reason);
+	if (rule.kind === 'point') {
 		pity = {
 			system: 'point_exchange',
 			currentPoints: query.currentPoints,
 			// 풀별 천장은 PointPool이 정본 (archive 등이 recruit와 다를 수 있음)
-			pityThreshold: pool.pityThreshold,
+			pityThreshold: rule.pool.pityThreshold,
 			pointsPerPull: config.recruitPoint.perPull
 		};
 	} else {
-		if (!banner.chargeType) return fail('no_pity');
 		pity = {
 			system: 'charge',
 			currentCharge: query.currentPoints,
 			halfThreshold: config.chargeSystem.softPity.count,
-			fullThreshold: config.chargeSystem.hardPity.count
+			fullThreshold: config.chargeSystem.hardPity.count,
+			chargePerPull: config.chargeSystem.perPull
 		};
 	}
 
@@ -144,7 +152,7 @@ export function evaluateBanner(query: GachaQuery): GachaResult {
  */
 export function bannerAvailability(
 	bannerId: string,
-	options: { asOf?: string; server?: ServerId } = {}
+	options: { date: string; asOf?: string; server?: ServerId }
 ): GachaFailure | null {
 	const r = evaluateBanner({ bannerId, gems: 0, currentPoints: 0, ...options });
 	return r.ok ? null : r.reason;

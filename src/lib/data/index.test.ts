@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { getGameConfig, getPerUnitRate, getPoolEntry, getRateGroups, listBannerTypes } from './index';
+import {
+	getGameConfig,
+	getPerUnitRate,
+	getPityRule,
+	getPitySystem,
+	getPoolEntry,
+	getRateGroups,
+	listBannerTypes
+} from './index';
 
 describe('확률 그룹', () => {
 	it('한국 운영 배너의 모든 variant는 합이 100%다', () => {
@@ -45,10 +53,64 @@ describe('풀 조회', () => {
 });
 
 describe('천장 설정', () => {
-	it('한국은 포인트 방식이며 픽업 획득 시 초기화되지 않는다', () => {
+	it('한국 포인트 방식은 픽업 획득 시 초기화되지 않는다', () => {
 		const c = getGameConfig();
-		expect(c.pitySystem.current).toBe('point_exchange');
 		expect(c.recruitPoint.resetOnPickupObtained).toBe(false);
 		expect(c.recruitPoint.pityThreshold).toBe(200);
+	});
+
+	it('2026-11-10부터 모집 스택 방식이다 (경계 전날·당일)', () => {
+		expect(getPitySystem('2026-11-09').system).toBe('point_exchange');
+		expect(getPitySystem('2026-11-10').system).toBe('charge');
+		expect(getPitySystem('2027-01-01').system).toBe('charge');
+	});
+
+	it('서비스 개시 전 날짜는 규칙이 없다', () => {
+		expect(() => getPitySystem('2021-01-01')).toThrow();
+	});
+
+	it('스택은 픽업 획득 시 초기화되고 기간을 넘어 이월된다', () => {
+		const c = getGameConfig().chargeSystem;
+		expect(c.softPity).toMatchObject({ count: 100, pickupChance: 0.5 });
+		expect(c.hardPity.count).toBe(200);
+		expect(c.resetOnPickupObtained).toBe(true);
+		expect(c.carryOver).toBe(true);
+		expect(c.sharedBetweenTypes).toBe(false);
+	});
+
+	it('마일리지 10회 모집 티켓은 8장이며 오름차순이다', () => {
+		const at = getGameConfig().chargeSystem.mileage.tenPullTicketAt;
+		expect(at).toEqual([70, 130, 150, 170, 270, 330, 350, 370]);
+	});
+});
+
+describe('getPityRule', () => {
+	const AFTER = '2026-11-10';
+
+	it('전환 전에는 모든 천장 배너가 포인트 풀을 쓴다', () => {
+		const r = getPityRule('pickup_normal', '2026-11-09');
+		expect(r.kind === 'point' && r.pool.id).toBe('recruit');
+	});
+
+	it('전환 후 픽업은 모집 스택, 특별·페스는 특별 스택', () => {
+		const pick = (id: string) => {
+			const r = getPityRule(id, AFTER);
+			return r.kind === 'charge' ? r.chargeType.name : r.kind;
+		};
+		expect(pick('pickup_normal')).toBe('모집 스택');
+		expect(pick('pickup_limited')).toBe('특별 스택');
+		expect(pick('fes')).toBe('특별 스택');
+	});
+
+	it('아카이브는 전환 후에도 포인트, 선별 모집은 천장 없음', () => {
+		const archive = getPityRule('archive', AFTER);
+		expect(archive.kind === 'point' && archive.pool.id).toBe('archive');
+		expect(getPityRule('selection', AFTER)).toMatchObject({ kind: 'none', reason: 'no_pity' });
+	});
+
+	it('미확인 배너는 rule_unconfirmed', () => {
+		for (const id of getGameConfig().chargeSystem.unconfirmedBanners) {
+			expect(getPityRule(id, AFTER), id).toMatchObject({ kind: 'none', reason: 'rule_unconfirmed' });
+		}
 	});
 });

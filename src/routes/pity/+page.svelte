@@ -7,7 +7,8 @@
 	import Seo from '$lib/components/Seo.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { getLocale } from '$lib/paraglide/runtime.js';
-	import { getPointPool, listBannerTypes } from '$lib/data';
+	import { getApConfig, getPointPool, listBannerTypes } from '$lib/data';
+	import { gameToday } from '$lib/game-date';
 	import type { BannerType } from '$lib/data/types';
 	import { bannerAvailability, evaluateBanner } from '$lib/calc/gacha-adapter';
 	import Panel from '$lib/components/Panel.svelte';
@@ -22,6 +23,10 @@
 	import PityResult from './PityResult.svelte';
 	import ProbabilityCurve from './ProbabilityCurve.svelte';
 
+	// 천장 규칙은 날짜에 따라 바뀐다 (2026-11-10 모집 스택 전환). 오늘의 게임 날짜로 계산한다
+	const ap = getApConfig();
+	const today = gameToday(new Date(), ap.purchase.resetTime, ap.purchase.resetTimezone);
+
 	// 천장이 없는 배너(선별 모집)는 이 계산기의 대상이 아니므로 목록에서 뺀다.
 	const banners = listBannerTypes().filter((b) => b.pointPool !== null);
 	const nameOf = (b: BannerType) => (getLocale() === 'ja' ? b.nameJa : b.nameKo);
@@ -29,7 +34,9 @@
 	// 데이터가 아직 없는 배너(특별 픽업·페스 등)는 숨기지 않고 "준비 중"으로 보여준다.
 	const bannerOptions = banners.map((b) => ({
 		value: b.id,
-		label: bannerAvailability(b.id) ? m.pity_banner_preparing({ name: nameOf(b) }) : nameOf(b)
+		label: bannerAvailability(b.id, { date: today })
+			? m.pity_banner_preparing({ name: nameOf(b) })
+			: nameOf(b)
 	}));
 
 	const defaultBanner = banners.find((b) => b.id === 'pickup_normal')?.id ?? banners[0].id;
@@ -61,6 +68,7 @@
 	const result = $derived(
 		evaluateBanner({
 			bannerId,
+			date: today,
 			gems: res.gems,
 			singleTickets: res.singleTickets,
 			tenPullTickets: res.tenPullTickets,

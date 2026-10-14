@@ -129,6 +129,112 @@ def check_banners(strict):
         err(f"banner-types: --strict 모드에서 미검증 확률 그룹 {unverified}개 발견")
 
 
+# ---------------------------------------------------------------- 천장 규칙 (포인트 → 모집 스택)
+PITY_SYSTEMS = {"point_exchange", "charge"}
+UNDER_CHARGE = {"replaced", "kept", "unconfirmed"}
+# 계산으로 얻는 값은 저장하지 않는다 (설계 원칙 1). 예전에 있던 키가 되살아나지 않게 막는다
+DERIVED_KEYS = {"effectivePityCostPyroxene", "nominalPityCostPyroxene"}
+
+
+def check_pity_rules():
+    cfg = load("ko/game-config.json")
+    bt = load("ko/banner-types.json")
+    src = load("sources.json")["sources"]
+    banners = {b["id"]: b for b in bt["bannerTypes"]}
+    pools = {p["id"]: p for p in bt["pointPools"]}
+
+    # 1. 날짜별 천장 시스템
+    ps = cfg["pitySystem"]
+    rows = ps.get("schedule", [])
+    if not rows:
+        err("game-config: pitySystem.schedule이 비어 있음")
+    prev = None
+    for i, row in enumerate(rows):
+        tag = f"pitySystem.schedule[{i}]"
+        if row["system"] not in PITY_SYSTEMS or row["system"] not in ps["available"]:
+            err(f"game-config: {tag} system '{row['system']}'이 available에 없음")
+        try:
+            day = datetime.date.fromisoformat(row["effectiveFrom"])
+        except (KeyError, TypeError, ValueError):
+            err(f"game-config: {tag} effectiveFrom 형식 오류 (YYYY-MM-DD)")
+            continue
+        if prev and day <= prev:
+            err(f"game-config: {tag} effectiveFrom {day}이 앞 행보다 늦지 않음 (오름차순이어야 한다)")
+        prev = day
+        if row.get("status") not in {"announced", "estimated"}:
+            err(f"game-config: {tag} status는 announced | estimated")
+        if i > 0 and row.get("status") == "announced":
+            tiers = [src.get(s, {}).get("tier") for s in row.get("sources", [])]
+            if "official" not in tiers:
+                err(f"game-config: {tag} 공지된 전환인데 공식 출처가 없음")
+    if rows and rows[0]["system"] != "point_exchange":
+        err("game-config: 한국 서버의 첫 천장 시스템은 point_exchange")
+    if "current" in ps:
+        err("game-config: pitySystem.current는 쓰지 않는다 — 날짜별 schedule이 정본 (getPitySystem)")
+
+    # 2. 스택 규칙
+    cs = cfg["chargeSystem"]
+    for key in DERIVED_KEYS & set(cs):
+        err(f"game-config: chargeSystem.{key}는 파생값 — 저장하지 않는다")
+    soft, hard = cs["softPity"], cs["hardPity"]
+    if not 0 < soft["count"] < hard["count"]:
+        err(f"game-config: 반천장 {soft['count']} < 천장 {hard['count']}이어야 함")
+    if not 0 < soft["pickupChance"] <= 1:
+        err(f"game-config: 반천장 픽업 확률 {soft['pickupChance']}은 0 초과 1 이하")
+
+    type_ids = set()
+    claimed = {}
+    for ct in cs["chargeTypes"]:
+        type_ids.add(ct["id"])
+        for b in ct["appliesTo"]:
+            if b not in banners:
+                err(f"game-config: 스택 '{ct['id']}'의 appliesTo '{b}'가 banner-types에 없음")
+            if b in claimed:
+                err(f"game-config: 배너 '{b}'가 두 스택({claimed[b]}, {ct['id']})에 속함")
+            claimed[b] = ct["id"]
+    for bid in cs.get("unconfirmedBanners", []):
+        if bid not in banners:
+            err(f"game-config: unconfirmedBanners '{bid}'가 banner-types에 없음")
+        elif banners[bid]["chargeType"] is not None:
+            err(f"game-config: '{bid}'는 미확인 배너인데 chargeType이 있음")
+
+    # 3. 마일리지
+    mil = cs["mileage"]
+    at = mil["tenPullTicketAt"]
+    if at != sorted(set(at)) or any(x <= 0 for x in at):
+        err(f"game-config: 마일리지 티켓 기준 {at}은 중복 없는 양수 오름차순이어야 함")
+    if at and at[-1] > mil["firstTimeLast"]:
+        err(f"game-config: 티켓 기준 {at[-1]}이 초회 보상 마지막 단계 {mil['firstTimeLast']}보다 큼")
+    for b in mil["sharedAcross"]:
+        if b not in banners:
+            err(f"game-config: 마일리지 sharedAcross '{b}'가 banner-types에 없음")
+
+    # 4. 배너 ↔ 스택 ↔ 포인트 풀
+    for b in banners.values():
+        ct = b["chargeType"]
+        if ct is not None and ct not in type_ids:
+            err(f"banner-types: {b['id']} chargeType '{ct}'가 chargeSystem.chargeTypes에 없음")
+        if ct is not None and claimed.get(b["id"]) != ct:
+            err(f"banner-types: {b['id']} chargeType '{ct}'와 game-config appliesTo가 다름")
+    for p in pools.values():
+        if p.get("underCharge") not in UNDER_CHARGE:
+            err(f"banner-types: 포인트 풀 {p['id']} underCharge는 {sorted(UNDER_CHARGE)} 중 하나")
+
+    # 개편 후 '준비 중'이 되는 배너 (계산기 목록에서 보이는 것만)
+    pending = [b["id"] for b in banners.values()
+               if b["availableInKo"] and b["pointPool"] and b["chargeType"] is None
+               and pools[b["pointPool"]].get("underCharge") != "kept"]
+    unverified = [k for k, v in (("softPity", soft), ("hardPity", hard), ("mileage", mil))
+                  if not v.get("verified")]
+    print(f"  pity-rules: 전환 {len(rows)}단계 (마지막 {rows[-1]['system']} {rows[-1]['effectiveFrom']}) / "
+          f"스택 {len(type_ids)}종 / 마일리지 티켓 {len(at)}장 / 개편 후 준비 중 {pending}"
+          + (f" / 미검증 {unverified}" if unverified else ""))
+    if mil.get("firstTimeScope") == "unconfirmed":
+        warn("game-config: 마일리지 초회 보상이 기간마다 다시 시작되는지 미확인 (기간마다로 가정)")
+    if cs.get("pointsAtSwitch", {}).get("value") == "unconfirmed":
+        warn("game-config: 전환 시 남은 모집 포인트 처리 미확인 (기간 종료 변환으로 가정)")
+
+
 # ---------------------------------------------------------------- 풀 크기 대조
 def check_pool_sizes():
     bt = load("ko/banner-types.json")
@@ -471,6 +577,7 @@ def main():
     check_level_table()
     check_cafe()
     check_banners(strict)
+    check_pity_rules()
     check_pool_sizes()
     check_ap()
     check_income_sources(strict)

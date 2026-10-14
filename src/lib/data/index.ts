@@ -17,10 +17,12 @@ import type {
 	BannerTypesFile,
 	CafeRank,
 	CafeRanksFile,
+	ChargeType,
 	GameConfig,
 	IncomePreset,
 	IncomeSourcesFile,
 	LevelTableFile,
+	PitySystemPeriod,
 	PointPool,
 	PoolEntry,
 	PoolSizesFile,
@@ -78,6 +80,56 @@ export function getPointPool(id: string, server: ServerId = 'ko'): PointPool {
 	const found = dataset(server).banners.pointPools.find((p) => p.id === id);
 	if (!found) throw new Error(`알 수 없는 포인트 풀: ${id}`);
 	return found;
+}
+
+// ---------------------------------------------------------------- 천장 규칙 (날짜별)
+
+/**
+ * 게임 날짜 date에 적용되는 천장 시스템.
+ * pitySystem.schedule에서 effectiveFrom이 date 이하인 마지막 행이다.
+ * 규칙을 날짜의 함수로 두어, 전환일이 되면 배포 없이 계산이 바뀌고
+ * 플래너도 날짜마다 같은 함수로 규칙을 고른다 (2026-10-14).
+ */
+export function getPitySystem(date: string, server: ServerId = 'ko'): PitySystemPeriod {
+	let found: PitySystemPeriod | undefined;
+	for (const row of getGameConfig(server).pitySystem.schedule) {
+		if (row.effectiveFrom <= date) found = row;
+	}
+	if (!found) throw new Error(`${date}에 적용되는 천장 시스템이 없다`);
+	return found;
+}
+
+export function getChargeType(id: string, server: ServerId = 'ko'): ChargeType {
+	const found = getGameConfig(server).chargeSystem.chargeTypes.find((c) => c.id === id);
+	if (!found) throw new Error(`알 수 없는 스택 종류: ${id}`);
+	return found;
+}
+
+/**
+ * 한 배너가 그 날짜에 따르는 천장 규칙.
+ * - point: 포인트를 모아 교환 (개편 전 모든 풀, 개편 후에도 유지되는 아카이브)
+ * - charge: 스택 (개편 후 픽업·특별·페스)
+ * - none: 계산할 수 없음. 천장이 없는 배너(no_pity) 또는 개편 후 규칙이 공지되지 않은 배너(rule_unconfirmed)
+ */
+export type PityRule =
+	| { kind: 'point'; system: PitySystemPeriod; pool: PointPool }
+	| { kind: 'charge'; system: PitySystemPeriod; chargeType: ChargeType }
+	| { kind: 'none'; system: PitySystemPeriod; reason: 'no_pity' | 'rule_unconfirmed' };
+
+export function getPityRule(bannerId: string, date: string, server: ServerId = 'ko'): PityRule {
+	const system = getPitySystem(date, server);
+	const banner = getBannerType(bannerId, server);
+	const pool = banner.pointPool ? getPointPool(banner.pointPool, server) : null;
+
+	if (system.system === 'point_exchange') {
+		return pool ? { kind: 'point', system, pool } : { kind: 'none', system, reason: 'no_pity' };
+	}
+	if (pool?.underCharge === 'kept') return { kind: 'point', system, pool };
+	if (banner.chargeType) {
+		return { kind: 'charge', system, chargeType: getChargeType(banner.chargeType, server) };
+	}
+	// 포인트 풀은 있었지만 개편 후 어디에 쌓이는지 공지되지 않았다 (상시·리콜렉트·앙코르)
+	return { kind: 'none', system, reason: pool ? 'rule_unconfirmed' : 'no_pity' };
 }
 
 /** 배너의 확률 그룹. 해당 variant가 없으면 undefined. */

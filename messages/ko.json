@@ -55,6 +55,7 @@
 	"pity_fail_no_pity": "이 모집에는 천장이 없어요",
 	"pity_fail_no_target_group": "이 모집에서 고를 수 있는 목표가 없어요",
 	"pity_fail_unknown_pool_size": "이 모집은 확률 정보를 모으는 중이에요. 준비되는 대로 계산을 열어둘게요.",
+	"pity_fail_rule_unconfirmed": "모집 개편 뒤 이 모집의 천장 규칙은 아직 공지되지 않았어요. 공지되는 대로 계산을 열어둘게요.",
 	"unit_days": "{count}일",
 	"unit_times": "{count}회",
 	"unit_tickets": "{count}장",
