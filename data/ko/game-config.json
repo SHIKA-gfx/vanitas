@@ -4,15 +4,16 @@
     "id": "game-config",
     "description": "한국 서버 모집 공통 상수 및 천장 시스템 설정. 배너 타입별 확률은 banner-types.json 참조.",
     "server": "ko",
-    "verifiedAt": "2026-09-16",
-    "sources": ["19", "20"]
+    "verifiedAt": "2026-10-14",
+    "sources": ["19", "20", "30"]
   },
   "pitySystem": {
-    "current": "point_exchange",
     "available": ["point_exchange", "charge"],
-    "note": "일본 서버는 2026-07-29부터 charge 방식. 한국 서버 도입 예정이므로 두 방식을 모두 지원해야 한다.",
-    "effectiveFrom": null,
-    "effectiveTo": null
+    "schedule": [
+      { "system": "point_exchange", "effectiveFrom": "2021-11-09", "status": "announced" },
+      { "system": "charge",         "effectiveFrom": "2026-11-10", "status": "announced", "sources": ["30"] }
+    ],
+    "note": "게임 날짜마다 effectiveFrom이 그 날 이하인 마지막 행이 적용된다 (getPitySystem). 배포 없이 날짜가 되면 바뀐다. 한국은 2026-11-10 점검 후 모집 스택 방식(내부 이름 charge)."
   },
   "recruitCost": {
     "currency": "pyroxene",
@@ -60,20 +61,40 @@
     "note": "모집 포인트 만료 시 포인트 1당 기동석 조각 1개로 변환. 조각 10개 = 기동석 1개"
   },
   "chargeSystem": {
-    "_status": "unverified",
-    "_note": "일본 서버 현행. 한국 도입 시 pitySystem.current를 charge로 전환하고 effectiveFrom을 기입할 것.",
-    "softPity": { "count": 100, "guaranteedRarity": 3, "pickupChance": 0.5 },
-    "hardPity": { "count": 200 },
+    "_status": "partial",
+    "_note": "2026-10-08 사전 안내(출처 30)로 확인한 값만 verified. 상세는 별도 공지·공식 생방송 예정. 공식 용어는 '스택'(일본은 '차지')이며 내부 이름 charge는 그대로 쓴다.",
+    "sources": ["30"],
+    "perPull": 1,
+    "softPity": { "count": 100, "guaranteedRarity": 3, "pickupChance": 0.5, "verified": true },
+    "hardPity": { "count": 200, "verified": true },
     "chargeTypes": [
-      { "id": "normal",  "name": "모집 차지",      "appliesTo": ["pickup_normal"] },
-      { "id": "limited", "name": "한정·모집 차지", "appliesTo": ["pickup_limited", "fes", "recollect", "encore"] }
+      { "id": "normal",  "name": "모집 스택", "appliesTo": ["pickup_normal"],          "verified": true },
+      { "id": "limited", "name": "특별 스택", "appliesTo": ["pickup_limited", "fes"],  "verified": true }
     ],
+    "unconfirmedBanners": ["standard", "recollect", "encore"],
+    "unconfirmedNote": "사전 안내에 없는 배너. 상시 모집의 존속과 스택 적립, 리콜렉트·앙코르가 쓰는 스택(또는 포인트)은 후속 공지로 확인한다. 확인 전까지 개편 후 계산은 '준비 중'.",
     "sharedBetweenTypes": false,
     "carryOver": true,
+    "carryOverNote": "모집 기간이 끝나도 초기화되지 않는다. 모집 스택은 다음 픽업 모집으로, 특별 스택은 다음 특별 픽업·페스 모집으로 이월.",
     "resetOnPickupObtained": true,
-    "milestoneRewards": { "carryOver": false, "resetOnBannerEnd": true },
-    "effectivePityCostPyroxene": 19200,
-    "nominalPityCostPyroxene": 24000
+    "ticketsAccumulate": true,
+    "ticketsNote": "개편 전에 보유한 1회·10회 모집 티켓도 개편 후 사용 가능하며 모집 스택이 쌓인다.",
+    "pointsAtSwitch": { "value": "unconfirmed", "assumed": "평소처럼 기간 종료 시 기동석 조각 1:1 변환. 스택으로 넘어가지 않는다고 가정" },
+    "mileage": {
+      "name": "모집 마일리지",
+      "perPull": 1,
+      "sharedAcross": ["pickup_normal", "pickup_limited", "fes"],
+      "carryOver": false,
+      "tenPullTicketAt": [70, 130, 150, 170, 270, 330, 350, 370],
+      "ticketKind": "10회 모집 티켓(기간제)",
+      "firstTimeLast": 390,
+      "repeatAfterFirstTime": true,
+      "repeatRewardsIncludeTickets": false,
+      "firstTimeScope": "unconfirmed",
+      "firstTimeScopeAssumed": "period",
+      "note": "같은 기간의 일반·특별·페스 모집이 공유하고, 기간이 끝나면 이월되지 않는다. 초회 보상(390까지)을 모두 받은 뒤 반복 보상. 초회가 기간마다 다시 시작되는지는 미확인 — 마일리지가 기간마다 초기화되므로 기간마다로 가정. 티켓 외 보상은 계산에 쓰지 않아 옮기지 않았다 (출처 30 표 참조).",
+      "verified": true
+    }
   },
   "changeLog": [
     { "date": "2021-11-09", "server": "ko", "change": "서비스 개시. 천장 200포인트" },
@@ -81,6 +102,6 @@
     { "date": "2025-09-23", "server": "ko", "change": "아카이브 모집 조기 도입 / 픽업 ★3 초회 엘레프 100 지급 시작" },
     { "date": "2026-05-05", "server": "ko", "change": "리콜렉트 모집 첫 진행" },
     { "date": "2026-07-29", "server": "jp", "change": "모집 포인트 폐지 → 모집 차지(반천장) / 상시 모집 폐지" },
-    { "date": null, "server": "ko", "change": "모집 차지 도입 예정", "status": "pending" }
+    { "date": "2026-11-10", "server": "ko", "change": "모집 포인트 폐지 → 모집 스택·특별 스택(100 반천장·200 천장, 픽업 획득 시 초기화, 기간 간 이월) / 모집 마일리지 도입 / 아카이브 포인트 유지", "status": "announced", "sources": ["30"] }
   ]
 }

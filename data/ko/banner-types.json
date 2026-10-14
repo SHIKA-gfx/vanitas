@@ -5,11 +5,13 @@
     "description": "배너 타입 마스터 + 타입별 확률 그룹 + 포인트 풀 규칙. 확률은 % 단위.",
     "server": "ko",
     "verifiedAt": "2026-09-19",
-    "sources": ["19", "20", "24", "25"],
+    "sources": ["19", "20", "24", "25", "30"],
     "notes": [
       "개별 학생 확률 = 그룹 확률 ÷ 그룹 풀 크기. 풀 크기는 pool-sizes.json의 스냅샷 참조.",
       "rateGroups의 각 variant는 합이 100이 되어야 한다. validate.py가 검사한다.",
-      "poolRef는 풀 크기를 조회할 키. 'dynamic'은 시점마다 변하는 풀."
+      "poolRef는 풀 크기를 조회할 키. 'dynamic'은 시점마다 변하는 풀.",
+      "pointPools[].underCharge: 모집 스택 방식(game-config.json pitySystem) 이후 그 풀이 어떻게 되는가. replaced(스택으로 대체) / kept(그대로 유지) / unconfirmed(미확인 → 계산기 '준비 중').",
+      "bannerTypes[].chargeType: 스택 방식에서 쓰는 스택 (game-config.json chargeSystem.chargeTypes의 id). 한국에서 확인되지 않은 배너는 null."
     ]
   },
   "pointPools": [
@@ -21,6 +23,7 @@
       "sharedAcrossBanners": true,
       "carryOver": false,
       "onExpiry": "기동석 조각 1:1 변환",
+      "underCharge": "replaced",
       "note": "배너별로 나뉘지 않고 기간 단위로 합산된다. 190뽑 + 10뽑을 다른 배너에 나눠 써도 천장 하나가 완성된다."
     },
     {
@@ -31,6 +34,7 @@
       "sharedAcrossBanners": false,
       "carryOver": true,
       "onExpiry": null,
+      "underCharge": "kept",
       "note": "무기한 보존(사실상 2099년까지). 플래너의 '저축 플랜' 시나리오가 성립하는 유일한 풀."
     },
     {
@@ -40,7 +44,8 @@
       "exchangeTarget": "리콜렉트 학생만",
       "sharedAcrossBanners": false,
       "carryOver": false,
-      "onExpiry": "미확인"
+      "onExpiry": "미확인",
+      "underCharge": "unconfirmed"
     },
     {
       "id": "encore",
@@ -50,6 +55,7 @@
       "sharedAcrossBanners": false,
       "carryOver": false,
       "onExpiry": "미확인",
+      "underCharge": "unconfirmed",
       "availableInKo": false
     }
   ],
@@ -230,7 +236,7 @@
       "observedDurationDays": [7],
       "payment": ["pyroxene", "normal_ticket"],
       "pointPool": "recollect",
-      "chargeType": "limited",
+      "chargeType": null,
       "has2StarPickup": false,
       "pickThroughObtainable": true,
       "rateGroups": {
@@ -256,7 +262,7 @@
       "observedDurationDays": null,
       "payment": ["pyroxene", "normal_ticket"],
       "pointPool": "encore",
-      "chargeType": "limited",
+      "chargeType": null,
       "has2StarPickup": false,
       "pickThroughObtainable": false,
       "rateGroups": {
