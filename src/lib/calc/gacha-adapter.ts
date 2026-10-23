@@ -20,6 +20,9 @@ import {
 import type { BannerType, RateGroup } from '$lib/data/types';
 import { evaluatePickup, type PickupEvaluationInput, type PickupEvaluation } from './gacha';
 
+/** 마일리지 보상인 "10회 모집 티켓" 1장의 연차 (이름 그대로 10) */
+const TEN_PULL_TICKET_PULLS = 10;
+
 export interface GachaQuery {
 	bannerId: string;
 	/**
@@ -33,8 +36,10 @@ export interface GachaQuery {
 	gems: number;
 	singleTickets?: number;
 	tenPullTickets?: number;
-	/** 이 배너가 쓰는 포인트 풀(차지 방식이면 차지)에 현재 쌓인 값 */
+	/** 이 배너가 쓰는 포인트 풀(스택 방식이면 그 스택)에 현재 쌓인 값 */
 	currentPoints: number;
+	/** 이번 모집 기간의 모집 마일리지 (스택 방식만). 기본 0 */
+	mileage?: number;
 	/** 풀 크기 스냅샷 기준일. 생략하면 최신 */
 	asOf?: string;
 	server?: ServerId;
@@ -66,6 +71,11 @@ export type GachaResult =
 			pickThroughObtainable: boolean;
 			/** false면 "공시 미대조" 표시 */
 			verified: boolean;
+			/**
+			 * 결과가 공지로 확인되지 않은 가정에 기대는지.
+			 * 마일리지 초회 보상(티켓)이 기간마다 다시 시작된다는 가정 — 화면은 "추정" 표시
+			 */
+			mileageAssumed: boolean;
 			evaluation: PickupEvaluation;
 	  }
 	| { ok: false; reason: GachaFailure; banner: BannerType };
@@ -101,6 +111,7 @@ export function evaluateBanner(query: GachaQuery): GachaResult {
 	// 3. 천장 — 규칙은 날짜에 따라 data 계층이 고른다 (getPityRule)
 	const rule = getPityRule(query.bannerId, query.date, server);
 	let pity: PickupEvaluationInput['pity'];
+	let mileageAssumed = false;
 	if (rule.kind === 'none') return fail(rule.reason);
 	if (rule.kind === 'point') {
 		pity = {
@@ -111,12 +122,26 @@ export function evaluateBanner(query: GachaQuery): GachaResult {
 			pointsPerPull: config.recruitPoint.perPull
 		};
 	} else {
+		const cs = config.chargeSystem;
+		// 모집 마일리지는 일반·특별·페스가 공유한다. 그 밖의 배너는 티켓을 받지 않는다
+		const usesMileage = cs.mileage.sharedAcross.includes(query.bannerId);
+		mileageAssumed = usesMileage && cs.mileage.firstTimeScope === 'unconfirmed';
 		pity = {
 			system: 'charge',
-			currentCharge: query.currentPoints,
-			halfThreshold: config.chargeSystem.softPity.count,
-			fullThreshold: config.chargeSystem.hardPity.count,
-			chargePerPull: config.chargeSystem.perPull
+			// 스택은 천장 미만만 존재한다. 입력칸이 범위를 막지만 계산이 던지지 않도록 한 번 더 자른다
+			currentCharge: Math.min(Math.max(0, query.currentPoints), cs.hardPity.count - 1),
+			halfThreshold: cs.softPity.count,
+			halfPickupChance: cs.softPity.pickupChance,
+			fullThreshold: cs.hardPity.count,
+			chargePerPull: cs.perPull,
+			mileage: usesMileage
+				? {
+						current: query.mileage ?? 0,
+						ticketAt: cs.mileage.tenPullTicketAt,
+						pullsPerTicket: TEN_PULL_TICKET_PULLS,
+						perPull: cs.mileage.perPull
+					}
+				: undefined
 		};
 	}
 
@@ -141,6 +166,7 @@ export function evaluateBanner(query: GachaQuery): GachaResult {
 		ratePercent,
 		pickThroughObtainable: banner.pickThroughObtainable,
 		verified: target.verified,
+		mileageAssumed,
 		evaluation
 	};
 }
