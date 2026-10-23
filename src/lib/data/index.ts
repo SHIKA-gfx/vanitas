@@ -99,6 +99,18 @@ export function getPitySystem(date: string, server: ServerId = 'ko'): PitySystem
 	return found;
 }
 
+/**
+ * date 다음에 오는 천장 시스템 전환. 없으면 null.
+ * 화면은 이것으로 "11월 10일부터 바뀌어요" 안내와 "개편 이후 기준으로 보기"를 띄운다.
+ * 전환일 당일부터는 null이 되어 안내와 선택지가 저절로 사라진다.
+ */
+export function getNextPitySystem(
+	date: string,
+	server: ServerId = 'ko'
+): PitySystemPeriod | null {
+	return getGameConfig(server).pitySystem.schedule.find((row) => row.effectiveFrom > date) ?? null;
+}
+
 export function getChargeType(id: string, server: ServerId = 'ko'): ChargeType {
 	const found = getGameConfig(server).chargeSystem.chargeTypes.find((c) => c.id === id);
 	if (!found) throw new Error(`알 수 없는 스택 종류: ${id}`);
