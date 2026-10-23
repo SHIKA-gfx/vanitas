@@ -112,6 +112,51 @@ describe('모집 스택 전환 (2026-11-10)', () => {
 		expect(r.evaluation.pity.system).toBe('point_exchange');
 	});
 
+	it('스택 방식은 마일리지 티켓을 더해 19,200개로 확정, 마일리지 가정을 표시한다', () => {
+		const r = evaluateBanner({
+			bannerId: 'pickup_normal',
+			date: AFTER,
+			gems: 19200,
+			currentPoints: 0,
+			asOf: AS_OF
+		});
+		expect(r.ok).toBe(true);
+		if (!r.ok) return;
+		expect(r.evaluation.budget).toMatchObject({ fromMileage: 40, total: 200 });
+		expect(r.evaluation.verdict).toMatchObject({ kind: 'guaranteed', leftoverGemsAtPity: 0 });
+		expect(r.mileageAssumed).toBe(true);
+	});
+
+	it('이번 기간 마일리지를 넘기면 이미 받은 티켓은 빼고 센다', () => {
+		const r = evaluateBanner({
+			bannerId: 'pickup_normal',
+			date: AFTER,
+			gems: 0,
+			currentPoints: 0,
+			mileage: 380,
+			asOf: AS_OF
+		});
+		expect(r.ok && r.evaluation.verdict).toMatchObject({ kind: 'short', shortfallGems: 24000 });
+	});
+
+	it('범위를 넘는 스택은 천장 직전으로 자른다 (계산이 던지지 않게)', () => {
+		const r = evaluateBanner({
+			bannerId: 'pickup_normal',
+			date: AFTER,
+			gems: 0,
+			currentPoints: 250,
+			asOf: AS_OF
+		});
+		expect(r.ok && r.evaluation.verdict).toMatchObject({ kind: 'short', pullsToPity: 1 });
+	});
+
+	it('포인트 방식(전환 전·아카이브)은 마일리지 가정이 없다', () => {
+		const before = evaluateBanner({ bannerId: 'pickup_normal', date: BEFORE, ...query });
+		const archive = evaluateBanner({ bannerId: 'archive', date: AFTER, ...query });
+		expect(before.ok && before.mileageAssumed).toBe(false);
+		expect(archive.ok && archive.mileageAssumed).toBe(false);
+	});
+
 	it('규칙이 공지되지 않은 상시·리콜렉트는 전환 뒤 rule_unconfirmed', () => {
 		for (const id of ['standard', 'recollect']) {
 			expect(bannerAvailability(id, { date: AFTER, asOf: AS_OF })).toBe('rule_unconfirmed');
