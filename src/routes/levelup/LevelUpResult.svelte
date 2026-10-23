@@ -66,7 +66,7 @@
 	</div>
 {/snippet}
 
-<Panel marks>
+<Panel marks class="font-num">
 	{#if result.kind === 'invalid'}
 		<p class="text-lg font-bold text-ink">{invalidMessage(result.field)}</p>
 	{:else if result.kind === 'at_cap'}

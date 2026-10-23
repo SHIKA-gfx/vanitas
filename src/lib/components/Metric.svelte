@@ -22,6 +22,6 @@
 </script>
 
 <div class="rounded-xl bg-wash p-4">
-	<div class="text-xl font-bold tabular-nums {VALUE_CLASS[tone]}">{value}</div>
+	<div class="font-num text-xl font-bold tabular-nums {VALUE_CLASS[tone]}">{value}</div>
 	<div class="mt-1 text-xs text-navy">{label}</div>
 </div>

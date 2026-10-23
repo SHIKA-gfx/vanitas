@@ -24,7 +24,7 @@
 		bind:value
 		aria-describedby={error ? `${id}-error` : undefined}
 		aria-invalid={error ? true : undefined}
-		class="field tabular-nums {error ? 'field-error' : ''}"
+		class="field font-num tabular-nums {error ? 'field-error' : ''}"
 	/>
 	{#if error}
 		<p id="{id}-error" class="mt-2 text-xs font-bold text-blocked">{error}</p>
