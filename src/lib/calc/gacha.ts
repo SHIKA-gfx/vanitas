@@ -11,6 +11,12 @@
  * 10회차 보정은 ★1 그룹을 ★2로 옮길 뿐 ★3 확률은 1~9회차와 동일하다.
  * 따라서 ★3 목표는 매 연차가 독립 시행이며 `1 - (1-p)^n`이 그대로 성립한다.
  * 예외는 ★2 픽업(10연 블록 분기)과 차지 방식(반천장 분기) 두 가지뿐이다.
+ *
+ * 차지 방식 = 한국의 모집 스택 (2026-11-10~). 내부 이름은 charge로 통일한다.
+ * - 스택이 반천장(100)이 되는 연차: ★3 확정, 픽업 확률 50% → 그 연차만 실패 확률이 0.5
+ * - 스택이 천장(200)이 되는 연차: 픽업 확정 → 실패 확률 0
+ * - 그 밖의 연차는 독립 시행 그대로. 그래서 닫힌 식에 두 항만 더하면 된다
+ * - 모집 마일리지의 10회 모집 티켓은 연차를 늘린다 (받은 티켓으로 뽑아도 마일리지가 쌓인다)
  */
 
 // ---------------------------------------------------------------------------
@@ -126,6 +132,11 @@ export interface PullBudgetInput {
 export interface PullBudget {
 	fromGems: number;
 	fromTickets: number;
+	/**
+	 * 보유분을 쓰는 동안 모집 마일리지로 받는 10회 모집 티켓의 연차 (스택 방식만, 그 밖에는 0).
+	 * total에 포함된다.
+	 */
+	fromMileage: number;
 	total: number;
 	/** 연차로 바꾸지 못하고 남는 청휘석 */
 	leftoverGems: number;
@@ -164,9 +175,172 @@ export function pullBudget(input: PullBudgetInput): PullBudget {
 	return {
 		fromGems,
 		fromTickets,
+		fromMileage: 0,
 		total: fromGems + fromTickets,
 		leftoverGems: remaining
 	};
+}
+
+// ---------------------------------------------------------------------------
+// 모집 마일리지 (스택 방식)
+// ---------------------------------------------------------------------------
+
+export interface MileageInput {
+	/** 이번 모집 기간에 이미 쌓인 마일리지 */
+	current: number;
+	/** 10회 모집 티켓을 받는 누적 마일리지 (오름차순) */
+	ticketAt: readonly number[];
+	/** 티켓 1장으로 하는 연차 (10회 모집 티켓 → 10) */
+	pullsPerTicket: number;
+	/** 1회당 적립. 기본 1 */
+	perPull?: number;
+}
+
+/** pulls연을 하는 동안 받는 티켓 장수. 지금 마일리지 초과 ~ 모집 후 마일리지 이하의 기준을 센다. */
+export function mileageTicketsEarned(m: MileageInput, pulls: number): number {
+	const perPull = m.perPull ?? 1;
+	const from = m.current;
+	const to = m.current + Math.max(0, pulls) * perPull;
+	return m.ticketAt.filter((t) => t > from && t <= to).length;
+}
+
+/**
+ * 재화로 할 수 있는 연차(basePulls)를 다 쓰는 동안 받는 티켓까지 더한 총 연차.
+ * 받은 티켓으로 뽑아도 마일리지가 쌓이므로, 더 늘지 않을 때까지 반복한다 (티켓이 유한해 끝난다).
+ * 마지막 연차에 받은 티켓도 이어서 쓸 수 있으므로 포함한다.
+ */
+export function pullsWithMileage(basePulls: number, m?: MileageInput): number {
+	if (!m || basePulls <= 0) return Math.max(0, basePulls);
+	let total = basePulls;
+	for (;;) {
+		const next = basePulls + mileageTicketsEarned(m, total) * m.pullsPerTicket;
+		if (next === total) return total;
+		total = next;
+	}
+}
+
+/**
+ * target연을 채우려면 청휘석으로 몇 연을 해야 하는가.
+ * 보유 티켓(ticketPulls)을 먼저 쓰고, 모집하며 받은 티켓은 받는 즉시 쓴다.
+ * target연째에 받은 티켓은 이 목표에는 쓰이지 않는다(남는다).
+ *
+ * 한 연차씩 진행하는 짧은 루프(최대 천장 200회)라 닫힌 식보다 규칙이 그대로 드러난다.
+ */
+export function gemPullsToReach(
+	target: number,
+	ticketPulls: number,
+	m?: MileageInput
+): { gemPulls: number; earnedTicketPulls: number } {
+	const perPull = m?.perPull ?? 1;
+	const thresholds = new Set(m?.ticketAt ?? []);
+	let tickets = Math.max(0, ticketPulls);
+	let mileage = m?.current ?? 0;
+	let gemPulls = 0;
+	let earned = 0;
+	for (let i = 0; i < target; i++) {
+		if (tickets > 0) tickets -= 1;
+		else gemPulls += 1;
+		if (!m) continue;
+		for (let k = 0; k < perPull; k++) {
+			mileage += 1;
+			if (thresholds.has(mileage)) {
+				tickets += m.pullsPerTicket;
+				earned += m.pullsPerTicket;
+			}
+		}
+	}
+	return { gemPulls, earnedTicketPulls: earned };
+}
+
+// ---------------------------------------------------------------------------
+// 스택(차지) 방식 확률
+// ---------------------------------------------------------------------------
+
+/** 스택 규칙. 값은 game-config.json chargeSystem에서 어댑터가 넘긴다 */
+export interface ChargeRule {
+	/** 반천장 (한국 100) */
+	half: number;
+	/** 반천장 연차에 픽업이 나올 확률 (한국 0.5) */
+	halfPickupChance: number;
+	/** 천장 (한국 200) */
+	full: number;
+	/** 1회당 스택. 기본 1 */
+	perPull?: number;
+}
+
+function chargeGaps(currentCharge: number, rule: ChargeRule) {
+	const perPull = rule.perPull ?? 1;
+	if (currentCharge < 0 || currentCharge >= rule.full) {
+		throw new Error(`스택은 0 이상 ${rule.full} 미만이어야 한다 (받은 값: ${currentCharge})`);
+	}
+	return {
+		/** 천장 연차 — 이 연차에 픽업 확정 */
+		full: gapToThreshold(currentCharge, rule.full, perPull),
+		/** 반천장 연차. 이미 지났으면(스택 ≥ 반천장) null */
+		half: currentCharge < rule.half ? gapToThreshold(currentCharge, rule.half, perPull) : null
+	};
+}
+
+/**
+ * 스택 방식에서 pulls연 안에 픽업을 최소 1회 얻을 확률.
+ * 반천장 연차는 실패 확률 (1 - halfPickupChance), 천장 연차에 도달하면 1.
+ * 이미 반천장을 지난 스택(이전 기간에서 이월)은 천장만 남는다.
+ */
+export function chargeProbAtLeastOne(
+	p: number,
+	currentCharge: number,
+	pulls: number,
+	rule: ChargeRule
+): number {
+	assertProbability(p);
+	assertProbability(rule.halfPickupChance);
+	const gap = chargeGaps(currentCharge, rule);
+	if (pulls <= 0) return 0;
+	if (pulls >= gap.full) return 1;
+	const halfInRange = gap.half !== null && gap.half <= pulls;
+	const normalPulls = pulls - (halfInRange ? 1 : 0);
+	const missNormal = normalPulls > 0 ? Math.exp(normalPulls * Math.log1p(-p)) : 1;
+	const missHalf = halfInRange ? 1 - rule.halfPickupChance : 1;
+	return 1 - missNormal * missHalf;
+}
+
+/**
+ * 스택 방식의 첫 픽업까지 기대 연차 (천장에서 잘림). 생존 확률의 합.
+ * 화면에는 쓰지 않는다(평균 소비 비표시 결정). 플래너 기대값 검토용.
+ */
+export function chargeExpectedPulls(p: number, currentCharge: number, rule: ChargeRule): number {
+	const gap = chargeGaps(currentCharge, rule);
+	let expected = 0;
+	for (let k = 0; k < gap.full; k++) {
+		expected += 1 - chargeProbAtLeastOne(p, currentCharge, k, rule);
+	}
+	return expected;
+}
+
+/**
+ * 스택 방식 확률 곡선. 반천장·천장에서 계단처럼 뛴다.
+ * step이 1보다 커도 계단 앞뒤 점(반천장-1, 반천장, 천장-1, 천장)은 반드시 넣는다.
+ */
+export function chargeProbabilityCurve(
+	p: number,
+	currentCharge: number,
+	maxPulls: number,
+	rule: ChargeRule,
+	step = 1
+): CurvePoint[] {
+	if (step <= 0) throw new Error('step은 1 이상이어야 한다');
+	const gap = chargeGaps(currentCharge, rule);
+	const xs = new Set<number>();
+	for (let n = 0; n <= maxPulls; n += step) xs.add(n);
+	for (const n of [gap.half, gap.full]) {
+		if (n === null) continue;
+		if (n - 1 >= 0 && n - 1 <= maxPulls) xs.add(n - 1);
+		if (n <= maxPulls) xs.add(n);
+	}
+	if (maxPulls > 0) xs.add(maxPulls);
+	return [...xs]
+		.sort((a, b) => a - b)
+		.map((n) => ({ pulls: n, probability: chargeProbAtLeastOne(p, currentCharge, n, rule) }));
 }
 
 // ---------------------------------------------------------------------------
@@ -213,6 +387,10 @@ export interface ChargePityInput {
 	availablePulls: number;
 	costPerPull: number;
 	chargePerPull?: number;
+	/** 반천장 연차의 픽업 확률. 판정·확률 계산(evaluatePickup)에 필요 */
+	halfPickupChance?: number;
+	/** 모집 마일리지. 없으면 티켓을 받지 않는다고 본다 */
+	mileage?: MileageInput;
 }
 
 export interface ChargePityResult {
@@ -230,6 +408,9 @@ export type PityResult = PointPityResult | ChargePityResult;
  * 두 방식의 차이는 리셋 조건이지만(포인트는 픽업 획득해도 유지, 차지는 리셋),
  * "지금부터 천장까지 얼마가 더 필요한가"는 현재 보유값에서 출발하므로 같은 꼴이다.
  * 리셋 규칙은 여러 배너를 이어 계산하는 플래너 쪽에서 다룬다.
+ *
+ * 차지 방식의 shortfallGems는 마일리지 티켓을 반영하지 않은 단순 곱이다.
+ * 화면에 보여줄 부족분은 chargeVerdict가 정본이다.
  */
 export function evaluatePity(input: PointPityInput): PointPityResult;
 export function evaluatePity(input: ChargePityInput): ChargePityResult;
@@ -317,9 +498,23 @@ export type Verdict =
 			probability: number | null;
 			shortfallPulls: number;
 			shortfallGems: number;
+			/** 스택 방식만: 다 쓰고 못 얻었을 때 이월되는 스택 (포인트 방식은 이월 없음) */
+			chargeIfMissed?: number;
+			/** 스택 방식만: 반천장까지 모자란 청휘석. 반천장을 이미 지났으면 없음 */
+			halfShortfallGems?: number;
 	  }
-	/** 차지 방식 — 반천장의 픽업 확률 반영 전까지 판정하지 않는다 */
-	| { kind: 'unsupported' };
+	/** 스택 방식 — 반천장까지는 닿지만 천장에는 모자란다 */
+	| {
+			kind: 'half_reachable';
+			pullsToHalf: number;
+			pullsToPity: number;
+			/** 보유분을 전부 썼을 때 획득 확률 (반천장의 50% 포함) */
+			probability: number;
+			shortfallPulls: number;
+			shortfallGems: number;
+			/** 보유분을 다 쓰고도 픽업이 안 나왔을 때 다음 모집으로 넘어가는 스택 */
+			chargeIfMissed: number;
+	  };
 
 export interface PointVerdictInput {
 	gems: number;
@@ -361,6 +556,78 @@ export function pointVerdict(input: PointVerdictInput): Verdict {
 	};
 }
 
+export interface ChargeVerdictInput {
+	gems: number;
+	/** 보유 모집권 연차 (1회권 + 10회권 × 10) */
+	ticketPulls: number;
+	costPerPull: number;
+	currentCharge: number;
+	rule: ChargeRule;
+	targetRate: number;
+	mileage?: MileageInput;
+}
+
+/**
+ * 스택 방식의 결과 카드 분기.
+ * - guaranteed: 천장(200)까지 닿는다 → 확정
+ * - half_reachable: 반천장(100)까지만 → 그때까지 나올 확률(50% 포함)과 천장까지 부족분
+ * - short: 반천장에도 못 닿는다 (또는 반천장을 이미 지났고 천장에 모자람)
+ * 부족한 청휘석은 마일리지 티켓을 받는다고 보고 계산한다 (gemPullsToReach).
+ * 포인트 방식의 exchange_now는 없다 — 스택은 천장에 닿는 순간 자동으로 픽업이 나온다.
+ */
+export function chargeVerdict(input: ChargeVerdictInput): Verdict {
+	const { gems, ticketPulls, costPerPull, currentCharge, rule, targetRate, mileage } = input;
+	if (costPerPull <= 0) throw new Error('costPerPull은 1 이상이어야 한다');
+	const gap = chargeGaps(currentCharge, rule);
+	const gemsNeeded = (target: number) =>
+		gemPullsToReach(target, ticketPulls, mileage).gemPulls * costPerPull;
+
+	const gemsForFull = gemsNeeded(gap.full);
+	if (gems >= gemsForFull) {
+		return {
+			kind: 'guaranteed',
+			pullsToPity: gap.full,
+			// 천장 연차는 확정이므로 "천장 전에"는 그 앞 연차까지
+			probabilityBeforePity: chargeProbAtLeastOne(targetRate, currentCharge, gap.full - 1, rule),
+			leftoverGemsAtPity: gems - gemsForFull
+		};
+	}
+
+	const available = pullsWithMileage(Math.floor(gems / costPerPull) + ticketPulls, mileage);
+	const perPull = rule.perPull ?? 1;
+	const common = {
+		pullsToPity: gap.full,
+		shortfallPulls: gap.full - available,
+		shortfallGems: gemsForFull - gems,
+		chargeIfMissed: currentCharge + available * perPull
+	};
+
+	if (gap.half !== null) {
+		const gemsForHalf = gemsNeeded(gap.half);
+		if (gems >= gemsForHalf) {
+			return {
+				kind: 'half_reachable',
+				pullsToHalf: gap.half,
+				probability: chargeProbAtLeastOne(targetRate, currentCharge, available, rule),
+				...common
+			};
+		}
+		return {
+			kind: 'short',
+			probability:
+				available > 0 ? chargeProbAtLeastOne(targetRate, currentCharge, available, rule) : null,
+			halfShortfallGems: gemsForHalf - gems,
+			...common
+		};
+	}
+	return {
+		kind: 'short',
+		probability:
+			available > 0 ? chargeProbAtLeastOne(targetRate, currentCharge, available, rule) : null,
+		...common
+	};
+}
+
 // ---------------------------------------------------------------------------
 // 화면이 쓰는 묶음 함수
 // ---------------------------------------------------------------------------
@@ -371,7 +638,7 @@ export interface PickupEvaluationInput {
 	targetRate: number;
 	pity:
 		| Omit<PointPityInput, 'availablePulls' | 'costPerPull'>
-		| Omit<ChargePityInput, 'availablePulls' | 'costPerPull'>;
+		| (Omit<ChargePityInput, 'availablePulls' | 'costPerPull'> & { halfPickupChance: number });
 	/** 곡선 점 간격. 기본 1 */
 	curveStep?: number;
 }
@@ -392,36 +659,66 @@ export interface PickupEvaluation {
 
 /** 기획서 3-2의 출력 항목을 한 번에 만든다. */
 export function evaluatePickup(input: PickupEvaluationInput): PickupEvaluation {
-	const budget = pullBudget(input.budget);
 	const costPerPull = input.budget.costPerPull;
+	const p = input.targetRate;
+	const step = input.curveStep ?? 1;
 
-	const pity =
-		input.pity.system === 'point_exchange'
-			? evaluatePity({ ...input.pity, availablePulls: budget.total, costPerPull })
-			: evaluatePity({ ...input.pity, availablePulls: budget.total, costPerPull });
+	if (input.pity.system === 'point_exchange') {
+		const budget = pullBudget(input.budget);
+		const pity = evaluatePity({ ...input.pity, availablePulls: budget.total, costPerPull });
+		return {
+			budget,
+			pity,
+			verdict: pointVerdict({
+				gems: input.budget.gems,
+				ticketPulls: budget.fromTickets,
+				costPerPull,
+				availablePulls: budget.total,
+				pullsToPity: pity.pullsToPity,
+				targetRate: p
+			}),
+			probability: probAtLeastOne(p, budget.total),
+			expectedPulls: expectedPulls(p, pity.pullsToPity),
+			expectedPullsUncapped: expectedPulls(p),
+			curve: probabilityCurve(p, Math.max(budget.total, pity.pullsToPity), step)
+		};
+	}
 
-	const pityCap = pity.system === 'point_exchange' ? pity.pullsToPity : pity.full.pullsTo;
-
-	const verdict: Verdict =
-		pity.system === 'point_exchange'
-			? pointVerdict({
-					gems: input.budget.gems,
-					ticketPulls: budget.fromTickets,
-					costPerPull,
-					availablePulls: budget.total,
-					pullsToPity: pity.pullsToPity,
-					targetRate: input.targetRate
-				})
-			: { kind: 'unsupported' };
+	// 스택(차지) 방식
+	const c = input.pity;
+	const rule: ChargeRule = {
+		half: c.halfThreshold,
+		halfPickupChance: c.halfPickupChance,
+		full: c.fullThreshold,
+		perPull: c.chargePerPull
+	};
+	const base = pullBudget(input.budget);
+	const total = pullsWithMileage(base.total, c.mileage);
+	const budget: PullBudget = { ...base, fromMileage: total - base.total, total };
+	const pity = evaluatePity({ ...c, availablePulls: total, costPerPull });
 
 	return {
 		budget,
-		verdict,
-		probability: probAtLeastOne(input.targetRate, budget.total),
-		expectedPulls: expectedPulls(input.targetRate, pityCap),
-		expectedPullsUncapped: expectedPulls(input.targetRate),
 		pity,
-		curve: probabilityCurve(input.targetRate, Math.max(budget.total, pityCap), input.curveStep ?? 1)
+		verdict: chargeVerdict({
+			gems: input.budget.gems,
+			ticketPulls: base.fromTickets,
+			costPerPull,
+			currentCharge: c.currentCharge,
+			rule,
+			targetRate: p,
+			mileage: c.mileage
+		}),
+		probability: chargeProbAtLeastOne(p, c.currentCharge, total, rule),
+		expectedPulls: chargeExpectedPulls(p, c.currentCharge, rule),
+		expectedPullsUncapped: expectedPulls(p),
+		curve: chargeProbabilityCurve(
+			p,
+			c.currentCharge,
+			Math.max(total, pity.full.pullsTo),
+			rule,
+			step
+		)
 	};
 }
 

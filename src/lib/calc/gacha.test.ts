@@ -1,8 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
+	chargeExpectedPulls,
+	chargeProbAtLeastOne,
+	chargeProbabilityCurve,
+	chargeVerdict,
 	evaluatePickup,
 	evaluatePity,
 	expectedPulls,
+	gemPullsToReach,
+	mileageTicketsEarned,
+	pullsWithMileage,
+	type ChargeRule,
+	type MileageInput,
 	perUnitRate,
 	pointVerdict,
 	probAtLeastOne,
@@ -20,6 +29,15 @@ import {
 const PICKUP_RATE = perUnitRate(0.7, 1); // 픽업 모집 ★3 픽업 그룹 0.7%, 풀 1명
 const PITY = 200;
 const COST = 120;
+
+// 스택 방식 (한국 2026-11-10~, 공지 2026-10-08): 반천장 100(픽업 50%), 천장 200, 마일리지 티켓 8장
+const RULE: ChargeRule = { half: 100, halfPickupChance: 0.5, full: 200 };
+const TICKET_AT = [70, 130, 150, 170, 270, 330, 350, 370];
+const mileage = (current = 0): MileageInput => ({
+	current,
+	ticketAt: TICKET_AT,
+	pullsPerTicket: 10
+});
 
 describe('perUnitRate', () => {
 	it('그룹 확률을 풀 크기로 나눈다', () => {
@@ -110,6 +128,7 @@ describe('pullBudget', () => {
 		expect(pullBudget({ gems: 24000, costPerPull: COST })).toEqual({
 			fromGems: 200,
 			fromTickets: 0,
+			fromMileage: 0,
 			total: 200,
 			leftoverGems: 0
 		});
@@ -318,12 +337,182 @@ describe('evaluatePickup — verdict 연결', () => {
 		expect(r.verdict).toMatchObject({ kind: 'short', shortfallPulls: 50, shortfallGems: 6000 });
 	});
 
-	it('차지 방식은 아직 판정하지 않는다', () => {
+	it('스택 방식이면 chargeVerdict로 판정하고 마일리지 티켓을 연차에 더한다', () => {
 		const r = evaluatePickup({
-			budget: { gems: 24000, costPerPull: COST },
+			budget: { gems: 19200, costPerPull: COST },
 			targetRate: PICKUP_RATE,
-			pity: { system: 'charge', currentCharge: 0, halfThreshold: 100, fullThreshold: 200 }
+			pity: {
+				system: 'charge',
+				currentCharge: 0,
+				halfThreshold: 100,
+				halfPickupChance: 0.5,
+				fullThreshold: 200,
+				mileage: { current: 0, ticketAt: TICKET_AT, pullsPerTicket: 10 }
+			}
 		});
-		expect(r.verdict).toEqual({ kind: 'unsupported' });
+		expect(r.budget).toMatchObject({ fromGems: 160, fromMileage: 40, total: 200 });
+		expect(r.verdict).toMatchObject({ kind: 'guaranteed', leftoverGemsAtPity: 0 });
+		expect(r.probability).toBe(1);
+		expect(r.expectedPulls).toBeCloseTo(90.07, 2);
+		// 곡선은 반천장(100연)에서 뛰고 천장(200연)에서 1이 된다
+		const at = (n: number) => r.curve.find((pt) => pt.pulls === n)!.probability;
+		expect(at(100) - at(99)).toBeGreaterThan(0.2);
+		expect(at(200)).toBe(1);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// 스택 방식 (한국 2026-11-10~, 공지 2026-10-08)
+// ---------------------------------------------------------------------------
+
+describe('chargeProbAtLeastOne — 반천장·천장', () => {
+	it('반천장 직전까지는 독립 시행과 같다', () => {
+		expect(chargeProbAtLeastOne(PICKUP_RATE, 0, 99, RULE)).toBeCloseTo(
+			probAtLeastOne(PICKUP_RATE, 99),
+			12
+		);
+	});
+
+	it('스택 0에서 100연 안에 약 75.06% — 옛 방식 200연(약 75.46%)과 비슷하다', () => {
+		expect(chargeProbAtLeastOne(PICKUP_RATE, 0, 100, RULE)).toBeCloseTo(0.750572, 6);
+		expect(probAtLeastOne(PICKUP_RATE, 200)).toBeCloseTo(0.754614, 6);
+	});
+
+	it('천장 연차에 1, 그 앞 연차는 1 미만', () => {
+		expect(chargeProbAtLeastOne(PICKUP_RATE, 0, 200, RULE)).toBe(1);
+		expect(chargeProbAtLeastOne(PICKUP_RATE, 0, 199, RULE)).toBeCloseTo(0.875571, 6);
+	});
+
+	it('반천장을 지난 스택(이월)은 천장만 남는다', () => {
+		// 스택 120: 80연에 천장, 79연은 반천장 없이 독립 시행
+		expect(chargeProbAtLeastOne(PICKUP_RATE, 120, 80, RULE)).toBe(1);
+		expect(chargeProbAtLeastOne(PICKUP_RATE, 120, 79, RULE)).toBeCloseTo(0.425896, 6);
+	});
+
+	it('스택이 천장 이상이거나 음수면 던진다', () => {
+		expect(() => chargeProbAtLeastOne(PICKUP_RATE, 200, 1, RULE)).toThrow();
+		expect(() => chargeProbAtLeastOne(PICKUP_RATE, -1, 1, RULE)).toThrow();
+	});
+
+	it('기대 연차: 스택 0 ≈ 90.07, 스택 100 ≈ 72.09', () => {
+		expect(chargeExpectedPulls(PICKUP_RATE, 0, RULE)).toBeCloseTo(90.07, 2);
+		expect(chargeExpectedPulls(PICKUP_RATE, 100, RULE)).toBeCloseTo(72.09, 2);
+	});
+
+	it('곡선은 step이 커도 계단 앞뒤 점을 넣는다', () => {
+		const xs = chargeProbabilityCurve(PICKUP_RATE, 0, 200, RULE, 25).map((p) => p.pulls);
+		for (const n of [99, 100, 199, 200]) expect(xs).toContain(n);
+	});
+});
+
+describe('모집 마일리지 — 10회 모집 티켓', () => {
+	it('지금 마일리지 초과 ~ 모집 후 이하의 기준만 센다', () => {
+		expect(mileageTicketsEarned(mileage(0), 70)).toBe(1);
+		expect(mileageTicketsEarned(mileage(70), 60)).toBe(1); // 130만 (70은 이미 받음)
+		expect(mileageTicketsEarned(mileage(0), 69)).toBe(0);
+	});
+
+	it('천장 비용: 스택 0 → 19,200 / 100 → 10,800 / 150 → 6,000', () => {
+		expect(gemPullsToReach(200, 0, mileage()).gemPulls * COST).toBe(19200);
+		expect(gemPullsToReach(100, 0, mileage()).gemPulls * COST).toBe(10800);
+		expect(gemPullsToReach(50, 0, mileage()).gemPulls * COST).toBe(6000);
+	});
+
+	it('한 기간 안에서는 시작 마일리지가 60·100·200이어도 19,200', () => {
+		for (const start of [60, 100, 200]) {
+			expect(gemPullsToReach(200, 0, mileage(start)).gemPulls * COST).toBe(19200);
+		}
+	});
+
+	it('마일리지가 없으면 그대로 200연', () => {
+		expect(gemPullsToReach(200, 0).gemPulls).toBe(200);
+	});
+
+	it('보유 티켓을 먼저 쓴다', () => {
+		expect(gemPullsToReach(200, 10, mileage()).gemPulls).toBe(150);
+	});
+
+	it('받은 티켓으로 뽑아도 마일리지가 쌓인다', () => {
+		expect(pullsWithMileage(160, mileage())).toBe(200);
+		expect(pullsWithMileage(70, mileage())).toBe(80); // 70에서 받은 티켓으로 10연 더
+		expect(pullsWithMileage(0, mileage())).toBe(0);
+	});
+});
+
+describe('chargeVerdict — 결과 카드 분기', () => {
+	const base = { ticketPulls: 0, costPerPull: COST, rule: RULE, targetRate: PICKUP_RATE };
+
+	it('천장까지 닿으면 guaranteed — 천장 전 확률은 199연까지', () => {
+		const v = chargeVerdict({ ...base, gems: 19200, currentCharge: 0, mileage: mileage() });
+		expect(v).toMatchObject({ kind: 'guaranteed', pullsToPity: 200, leftoverGemsAtPity: 0 });
+		if (v.kind === 'guaranteed') expect(v.probabilityBeforePity).toBeCloseTo(0.875571, 6);
+	});
+
+	it('반천장까지만 닿으면 half_reachable — 남은 스택은 이월', () => {
+		const v = chargeVerdict({ ...base, gems: 10800, currentCharge: 0, mileage: mileage() });
+		expect(v).toMatchObject({
+			kind: 'half_reachable',
+			pullsToHalf: 100,
+			pullsToPity: 200,
+			shortfallPulls: 100,
+			shortfallGems: 8400,
+			chargeIfMissed: 100
+		});
+		if (v.kind === 'half_reachable') expect(v.probability).toBeCloseTo(0.750572, 6);
+	});
+
+	it('반천장에도 못 닿으면 short — 반천장 부족분도 함께', () => {
+		const v = chargeVerdict({ ...base, gems: 6000, currentCharge: 0, mileage: mileage() });
+		expect(v).toMatchObject({
+			kind: 'short',
+			shortfallPulls: 150,
+			shortfallGems: 13200,
+			halfShortfallGems: 4800,
+			chargeIfMissed: 50
+		});
+		if (v.kind === 'short') expect(v.probability).toBeCloseTo(0.296179, 6);
+	});
+
+	it('보유분이 0이면 확률은 null', () => {
+		const v = chargeVerdict({ ...base, gems: 0, currentCharge: 0, mileage: mileage() });
+		expect(v).toMatchObject({ kind: 'short', probability: null, shortfallGems: 19200 });
+	});
+
+	it('반천장을 지난 스택에는 반천장 부족분이 없다', () => {
+		const v = chargeVerdict({ ...base, gems: 0, currentCharge: 120 });
+		expect(v.kind).toBe('short');
+		if (v.kind === 'short') expect(v.halfShortfallGems).toBeUndefined();
+	});
+
+	it('이월된 스택 150이면 6,000으로 확정 (50연, 티켓 없음)', () => {
+		const v = chargeVerdict({ ...base, gems: 6000, currentCharge: 150, mileage: mileage() });
+		expect(v).toMatchObject({ kind: 'guaranteed', pullsToPity: 50, leftoverGemsAtPity: 0 });
+	});
+
+	it('확정 판정과 총 연차가 어긋나지 않는다 (청휘석·티켓·스택·마일리지 전수)', () => {
+		for (const charge of [0, 30, 99, 100, 150, 199]) {
+			for (const start of [0, 65, 160, 380]) {
+				for (const ticketPulls of [0, 10, 25]) {
+					for (let gems = 0; gems <= 26000; gems += 600) {
+						const m = mileage(start);
+						const v = chargeVerdict({
+							...base,
+							gems,
+							ticketPulls,
+							currentCharge: charge,
+							mileage: m
+						});
+						const available = pullsWithMileage(Math.floor(gems / COST) + ticketPulls, m);
+						const reaches = available >= RULE.full - charge;
+						expect(v.kind === 'guaranteed', `c${charge} m${start} t${ticketPulls} g${gems}`).toBe(
+							reaches
+						);
+						if (v.kind === 'short' || v.kind === 'half_reachable') {
+							expect(v.shortfallPulls).toBeGreaterThan(0);
+						}
+					}
+				}
+			}
+		}
 	});
 });
