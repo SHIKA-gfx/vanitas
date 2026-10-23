@@ -29,7 +29,7 @@
 	const signed = (n: number) => (n < 0 ? `-${formatInt(-n)}` : formatInt(n));
 </script>
 
-<Panel marks>
+<Panel marks class="font-num">
 	{#if result.kind === 'invalid'}
 		<p class="text-lg font-bold text-ink">{invalidMessage(result.field)}</p>
 	{:else}

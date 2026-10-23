@@ -39,7 +39,7 @@
 	};
 </script>
 
-<Panel marks>
+<Panel marks class="font-num">
 	<div class="mb-1 flex items-center gap-2 text-sm text-navy">
 		<span>{bannerName}</span>
 		{#if result.ok && !result.verified}

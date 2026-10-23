@@ -242,7 +242,7 @@
 							class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 text-sm text-navy hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-strong"
 						>
 							<span>{m.pity_mileage_toggle()}</span>
-							<span class="flex items-center gap-2 tabular-nums">
+							<span class="flex items-center gap-2 font-num tabular-nums">
 								{#if res.mileage > 0}<span class="text-ink">{formatInt(res.mileage)}</span>{/if}
 								<span aria-hidden="true" class="transition-transform group-open:rotate-180">▾</span>
 							</span>

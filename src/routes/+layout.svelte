@@ -33,6 +33,17 @@
 	<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
 	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 	<link rel="manifest" href="/site.webmanifest" />
+	<!--
+		숫자 글꼴 Oxanium (2026-10-23, layout.css). 모바일 계산기 화면에서는 숫자에만 쓰여 늦게 발견된다
+		→ 미리 받아 숫자만 뒤늦게 바뀌어 보이지 않게. 약 8KB
+	-->
+	<link
+		rel="preload"
+		href="/fonts/Oxanium.woff2"
+		as="font"
+		type="font/woff2"
+		crossorigin="anonymous"
+	/>
 	<meta name="theme-color" content="#1288f8" />
 	<!--
 		사용 통계 Umami (이벤트 목록: src/lib/analytics.ts). 개발 서버에서는 불러오지 않고,

@@ -76,7 +76,7 @@
 
 <svg
 	viewBox="0 0 {W} {H}"
-	class="w-full touch-pan-y outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-strong"
+	class="w-full touch-pan-y font-num outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-strong"
 	role="slider"
 	tabindex="0"
 	aria-valuemin={0}

@@ -74,7 +74,7 @@
 		oninput={onInput}
 		onfocus={() => (focused = true)}
 		onblur={() => (focused = false)}
-		class="field {error ? 'field-error' : ''}"
+		class="field font-num {error ? 'field-error' : ''}"
 	/>
 	{#if error}
 		<p id="{id}-error" class="mt-2 text-xs font-bold text-blocked">{error}</p>

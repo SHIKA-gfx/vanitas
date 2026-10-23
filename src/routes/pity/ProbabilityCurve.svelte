@@ -53,7 +53,7 @@
 		cs.map((c) => `${x(c.pulls)},${y(c.probability)}`).join(' ');
 </script>
 
-<svg viewBox="0 0 {W} {H}" class="w-full" role="img" aria-label={m.pity_curve_title()}>
+<svg viewBox="0 0 {W} {H}" class="w-full font-num" role="img" aria-label={m.pity_curve_title()}>
 	{#if short}
 		<rect
 			x={x(availablePulls)}

@@ -32,7 +32,13 @@
 		{ name: 'secured', hex: '#0a6fd6', role: '확보' },
 		{ name: 'shortfall', hex: '#feaa13', role: '부족 — 면 전용' },
 		{ name: 'shortfall-strong', hex: '#9e6501', role: '부족 — 글자' },
-		{ name: 'blocked', hex: '#891928', role: '불가, 입력 오류' }
+		{ name: 'blocked', hex: '#891928', role: '불가, 입력 오류' },
+		// 공간 문법 (2026-10-23, 디자인 문서 5-19)
+		{ name: 'screen-top', hex: '#aee2ff', role: '화면 바탕 위 (글자는 ink·navy만)' },
+		{ name: 'screen-mid', hex: '#e5f6ff', role: '화면 바탕 가운데' },
+		{ name: 'screen-low', hex: '#c4e9ff', role: '화면 바탕 아래 (바닥 쪽)' },
+		{ name: 'blush', hex: '#ffbcdc', role: '분홍 기운 — 배경 장식 전용' },
+		{ name: 'slot', hex: '#eaf7ff', role: '판에 파인 입력칸' }
 	];
 
 	// 의미 색 — 게임 상성표의 색 (2026-09-29 확정, layout.css 토큰). 색만으로 구분하지 않고 항상 글자와 함께 쓴다
@@ -94,6 +100,14 @@
 	const body =
 		'천장까지 청휘석 3,480개가 부족해요. 지금 보유분으로 획득할 확률은 75.5%예요. AP는 6분에 1씩, 하루 240까지 자연 회복돼요.';
 	const numbers = ['1,111', '8,888', '24,000', '3,120', '119'];
+
+	// 높이 단계 (2026-10-23, 5-19). e0은 그림자 없이 반투명 판 + 흰 테두리
+	const elevations = [
+		{ name: 'e0', cls: 'bg-surface/62 border border-white', role: '안내 띠' },
+		{ name: 'e1', cls: 'bg-surface/92 shadow-e1', role: '입력판·목록·탭바·아이콘 칩' },
+		{ name: 'e2', cls: 'bg-surface shadow-e2', role: '결과판' },
+		{ name: 'e3', cls: 'bg-navy text-white shadow-e3', role: '알림' }
+	];
 
 	// ---------------------------------------------------------------- 입력칸 (실제 부품)
 
@@ -492,5 +506,49 @@
 				></span>채도 40% #a3c5d8</span
 			>
 		</div>
+	</section>
+
+	<!-- 10. 공간 문법 값 (A단계) -->
+	<section class="flex flex-col gap-3">
+		<h2 class="text-xl font-bold">10. 공간 문법 — 높이 단계와 숫자 글꼴 (5-18·5-19)</h2>
+		<p class="text-sm text-navy">
+			화면 바탕 그라데이션 위에 얹어 본다. 배경 층(격자·삼각형·바닥)은 B단계에서 붙는다.
+		</p>
+		<div
+			class="grid gap-6 rounded p-8 md:grid-cols-4"
+			style="background: radial-gradient(60% 60% at 0% 100%, color-mix(in srgb, var(--color-blush) 55%, transparent), transparent), linear-gradient(180deg, var(--color-screen-top), var(--color-screen-mid) 55%, var(--color-screen-low))"
+		>
+			{#each elevations as e (e.name)}
+				<div class="flex h-28 flex-col justify-end rounded-xl p-4 {e.cls}">
+					<p class="font-num text-lg font-bold">{e.name}</p>
+					<p class="text-xs">{e.role}</p>
+				</div>
+			{/each}
+		</div>
+		<h3 class="mt-2 font-bold">숫자 글꼴 — 경기천년제목 대 Oxanium (font-num)</h3>
+		<div class="overflow-x-auto">
+			<table class="text-left">
+				<tbody>
+					<tr>
+						<th class="pr-4 text-xs font-medium text-navy">경기천년제목</th>
+						{#each numbers as n (n)}
+							<td class="px-3 text-xl font-bold tabular-nums">{n}</td>
+						{/each}
+					</tr>
+					<tr>
+						<th class="pr-4 text-xs font-medium text-navy">Oxanium</th>
+						{#each numbers as n (n)}
+							<td class="px-3 font-num text-xl font-bold tabular-nums">{n}</td>
+						{/each}
+					</tr>
+				</tbody>
+			</table>
+		</div>
+		<p class="font-num text-[1.375rem] leading-snug font-bold">
+			천장까지 청휘석 1,200개 부족해요 — 반천장(60연)까지는 닿아요. 확률 82.6%
+		</p>
+		<p class="text-xs text-navy">
+			판정 문장 전체에 font-num을 걸면 숫자·괄호·%만 Oxanium, 한글은 경기천년제목으로 넘어간다.
+		</p>
 	</section>
 </main>
