@@ -8,6 +8,9 @@
 
 	눈금과 격자 (디자인 문서 5-12, 2026-09-30): 세로 0·25·50·75·100%, 가로 50연 간격 + 끝(천장).
 	격자는 옅게(navy/15) — 읽기를 돕는 선이라 데이터층에 둬도 장식이 아니다.
+
+	모집 스택 (2026-10-23): 반천장(halfAt)에서 곡선이 한 번 뛴다. 그 자리에 옅은 점선과 "반천장" 글자를 둔다.
+	곡선 자체의 계단은 계산이 만든 점(반천장-1, 반천장)이 그린다 — 여기서 따로 그리지 않는다.
 -->
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
@@ -18,9 +21,11 @@
 		curve: CurvePoint[];
 		pullsToPity: number;
 		availablePulls: number;
+		/** 반천장까지의 연차 (스택 방식, 반천장이 아직 앞에 있을 때만) */
+		halfAt?: number;
 	}
 
-	let { curve, pullsToPity, availablePulls }: Props = $props();
+	let { curve, pullsToPity, availablePulls, halfAt }: Props = $props();
 
 	const W = 320;
 	const H = 180;
@@ -38,7 +43,8 @@
 	const Y_TICKS = [0, 0.25, 0.5, 0.75, 1];
 	const X_STEP = 50;
 	/** 끝 눈금(천장)과 너무 가까운 중간 눈금은 글자만 뺀다 (선은 그린다) */
-	const LABEL_GAP = 28;
+	// 끝 눈금은 오른쪽 정렬("170연")이라 글자 폭만큼 왼쪽으로 뻗는다 → 28에서 42로 (2026-10-23, 150·170연이 겹쳤다)
+	const LABEL_GAP = 42;
 	const xTicks = $derived(
 		Array.from({ length: Math.floor((pullsToPity - 1) / X_STEP) }, (_, i) => (i + 1) * X_STEP)
 	);
@@ -67,6 +73,20 @@
 	{/each}
 	<line x1={pad.l} y1={pad.t} x2={pad.l} y2={y(0)} class="stroke-navy/40" />
 	<line x1={pad.l} y1={y(0)} x2={W - pad.r} y2={y(0)} class="stroke-navy/40" />
+
+	{#if halfAt !== undefined && halfAt < pullsToPity}
+		<line
+			x1={x(halfAt)}
+			y1={pad.t}
+			x2={x(halfAt)}
+			y2={y(0)}
+			class="stroke-navy/40"
+			stroke-dasharray="2 3"
+		/>
+		<text x={x(halfAt) + 4} y={y(0) - 6} text-anchor="start" class="fill-navy text-[11px]">
+			{m.pity_curve_half()}
+		</text>
+	{/if}
 
 	<polyline points={toPoints(owned)} fill="none" class="stroke-brand" stroke-width="2" />
 	{#if short}

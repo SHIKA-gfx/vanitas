@@ -137,6 +137,8 @@ describe('모집 스택 전환 (2026-11-10)', () => {
 			asOf: AS_OF
 		});
 		expect(r.ok && r.evaluation.verdict).toMatchObject({ kind: 'short', shortfallGems: 24000 });
+		// 남은 티켓이 없으니 마일리지 가정에 기대지 않는다
+		expect(r.ok && r.mileageAssumed).toBe(false);
 	});
 
 	it('범위를 넘는 스택은 천장 직전으로 자른다 (계산이 던지지 않게)', () => {
