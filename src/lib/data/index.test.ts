@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	getGameConfig,
 	getPerUnitRate,
+	getNextPitySystem,
 	getPityRule,
 	getPitySystem,
 	getPoolEntry,
@@ -63,6 +64,15 @@ describe('천장 설정', () => {
 		expect(getPitySystem('2026-11-09').system).toBe('point_exchange');
 		expect(getPitySystem('2026-11-10').system).toBe('charge');
 		expect(getPitySystem('2027-01-01').system).toBe('charge');
+	});
+
+	it('다음 전환: 전날까지는 2026-11-10 스택, 당일부터는 없음', () => {
+		expect(getNextPitySystem('2026-10-23')).toMatchObject({
+			system: 'charge',
+			effectiveFrom: '2026-11-10'
+		});
+		expect(getNextPitySystem('2026-11-09')?.effectiveFrom).toBe('2026-11-10');
+		expect(getNextPitySystem('2026-11-10')).toBeNull();
 	});
 
 	it('서비스 개시 전 날짜는 규칙이 없다', () => {

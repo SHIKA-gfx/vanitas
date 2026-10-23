@@ -17,7 +17,7 @@ import { page } from '$app/state';
 import { replaceState } from '$app/navigation';
 import { resolve } from '$app/paths';
 import type { Pathname } from '$app/types';
-import { getApConfig, listBannerTypes } from '$lib/data';
+import { getApConfig, getGameConfig, listBannerTypes } from '$lib/data';
 import {
 	emptySaveFile,
 	isInt,
@@ -104,6 +104,8 @@ export class SavedStore {
 			singleTickets: r.singleTickets,
 			tenPullTickets: r.tenPullTickets,
 			pointsByPool: $state.snapshot(r.pointsByPool),
+			stackByType: $state.snapshot(r.stackByType),
+			mileage: r.mileage,
 			apPurchasesPerDay: this.#user.habits.apPurchasesPerDay
 		};
 	}
@@ -116,6 +118,8 @@ export class SavedStore {
 		r.singleTickets = v.singleTickets;
 		r.tenPullTickets = v.tenPullTickets;
 		r.pointsByPool = v.pointsByPool;
+		r.stackByType = v.stackByType;
+		r.mileage = v.mileage;
 		this.#user.habits.apPurchasesPerDay = v.apPurchasesPerDay;
 	}
 
@@ -200,6 +204,8 @@ export interface UserFlat {
 	singleTickets: number;
 	tenPullTickets: number;
 	pointsByPool: Record<string, number>;
+	stackByType: Record<string, number>;
+	mileage: number;
 	apPurchasesPerDay: number;
 }
 
@@ -209,6 +215,9 @@ const USER_SHARE_FIELDS: ShareField<keyof UserFlat>[] = [
 	{ key: 'singleTickets', param: 't1', kind: 'int' },
 	{ key: 'tenPullTickets', param: 't10', kind: 'int' },
 	{ key: 'pointsByPool', param: 'pt', kind: 'map-int' },
+	// 모집 스택 (2026-10-23 추가). 기존 이름은 바꾸지 않고 새 이름만 더한다
+	{ key: 'stackByType', param: 'st', kind: 'map-int' },
+	{ key: 'mileage', param: 'ml', kind: 'int' },
 	{ key: 'apPurchasesPerDay', param: 'buy', kind: 'int' }
 ];
 
@@ -217,6 +226,8 @@ const USER_DEFAULTS: UserFlat = {
 	singleTickets: 0,
 	tenPullTickets: 0,
 	pointsByPool: {},
+	stackByType: {},
+	mileage: 0,
 	apPurchasesPerDay: 0
 };
 
@@ -226,14 +237,19 @@ function sanitizeUser(raw: unknown): UserFlat {
 		...new Set(listBannerTypes(false).flatMap((b) => (b.pointPool ? [b.pointPool] : [])))
 	];
 	const nonNegative = isInt(0);
+	const charge = getGameConfig().chargeSystem;
+	const stackTypes = charge.chargeTypes.map((c) => c.id);
+	const stackRange = isInt(0, charge.hardPity.count - 1);
 	const checks = {
 		gems: nonNegative,
 		singleTickets: nonNegative,
 		tenPullTickets: nonNegative,
 		pointsByPool: isRecordOf(pools, (_, v) => nonNegative(v)),
+		stackByType: isRecordOf(stackTypes, (_, v) => stackRange(v)),
+		mileage: nonNegative,
 		apPurchasesPerDay: isInt(0, getApConfig().purchase.maxPurchasesPerDay)
 	};
-	return sanitize(raw, { ...USER_DEFAULTS, pointsByPool: {} }, checks);
+	return sanitize(raw, { ...USER_DEFAULTS, pointsByPool: {}, stackByType: {} }, checks);
 }
 
 /** 최상위 레이아웃에서 한 번 부른다. 공유 값을 저장소와 이어 준다 */

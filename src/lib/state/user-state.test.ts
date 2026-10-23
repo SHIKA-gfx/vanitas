@@ -8,7 +8,9 @@ describe('createUserState', () => {
 			gems: 0,
 			singleTickets: 0,
 			tenPullTickets: 0,
-			pointsByPool: {}
+			pointsByPool: {},
+			stackByType: {},
+			mileage: 0
 		});
 		expect(s.habits).toEqual({ apPurchasesPerDay: 0 });
 	});

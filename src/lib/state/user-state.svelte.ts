@@ -21,6 +21,13 @@ export interface UserState {
 		tenPullTickets: number;
 		/** 모집 포인트. 풀마다 따로 쌓인다 (PointPool.id → 값) */
 		pointsByPool: Record<string, number>;
+		/**
+		 * 모집 스택 (2026-11-10~). 종류마다 따로 쌓인다 (ChargeType.id → 0 ~ 천장-1).
+		 * 모집 스택과 특별 스택은 공유되지 않는다
+		 */
+		stackByType: Record<string, number>;
+		/** 이번 모집 기간의 모집 마일리지. 기간이 끝나면 사라진다 */
+		mileage: number;
 	};
 	/** 플레이 습관 — 레벨업 계산기, 청휘석 수급 계산기 */
 	habits: {
@@ -34,7 +41,14 @@ const KEY = Symbol('user-state');
 export function createUserState(): UserState {
 	// $state는 변수 선언이나 클래스 필드에만 쓸 수 있어서 한 번 담아서 돌려준다
 	const state: UserState = $state({
-		resources: { gems: 0, singleTickets: 0, tenPullTickets: 0, pointsByPool: {} },
+		resources: {
+			gems: 0,
+			singleTickets: 0,
+			tenPullTickets: 0,
+			pointsByPool: {},
+			stackByType: {},
+			mileage: 0
+		},
 		habits: { apPurchasesPerDay: 0 }
 	});
 	return state;

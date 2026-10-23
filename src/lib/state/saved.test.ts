@@ -30,6 +30,33 @@ describe('SavedStore', () => {
 		expect(user.habits.apPurchasesPerDay).toBe(6);
 	});
 
+	it('모집 스택은 종류별 0~199, 모르는 종류나 천장 이상이면 기본값으로', () => {
+		fakeStorage({
+			version: 1,
+			sections: { user: { stackByType: { normal: 120, limited: 30 }, mileage: 140 } }
+		});
+		const user = createUserState();
+		new SavedStore(user).restoreUser();
+		expect(user.resources.stackByType).toEqual({ normal: 120, limited: 30 });
+		expect(user.resources.mileage).toBe(140);
+
+		for (const bad of [{ normal: 200 }, { unknown: 10 }, { normal: -1 }]) {
+			fakeStorage({ version: 1, sections: { user: { stackByType: bad } } });
+			const u = createUserState();
+			new SavedStore(u).restoreUser();
+			expect(u.resources.stackByType).toEqual({});
+		}
+	});
+
+	it('스택이 생기기 전의 저장값(v1)도 그대로 읽는다', () => {
+		fakeStorage({ version: 1, sections: { user: { gems: 100, pointsByPool: { recruit: 50 } } } });
+		const user = createUserState();
+		new SavedStore(user).restoreUser();
+		expect(user.resources.pointsByPool).toEqual({ recruit: 50 });
+		expect(user.resources.stackByType).toEqual({});
+		expect(user.resources.mileage).toBe(0);
+	});
+
 	it('불러오기 전에는 쓰지 않는다 → 처음 연 화면이 저장값을 기본값으로 덮지 않는다', () => {
 		const map = fakeStorage({ version: 1, sections: { user: { gems: 500 } } });
 		const store = new SavedStore(createUserState());

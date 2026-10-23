@@ -18,7 +18,13 @@ import {
 	type ServerId
 } from '$lib/data';
 import type { BannerType, RateGroup } from '$lib/data/types';
-import { evaluatePickup, type PickupEvaluationInput, type PickupEvaluation } from './gacha';
+import {
+	evaluatePickup,
+	mileageTicketsEarned,
+	type MileageInput,
+	type PickupEvaluationInput,
+	type PickupEvaluation
+} from './gacha';
 
 /** 마일리지 보상인 "10회 모집 티켓" 1장의 연차 (이름 그대로 10) */
 const TEN_PULL_TICKET_PULLS = 10;
@@ -125,23 +131,29 @@ export function evaluateBanner(query: GachaQuery): GachaResult {
 		const cs = config.chargeSystem;
 		// 모집 마일리지는 일반·특별·페스가 공유한다. 그 밖의 배너는 티켓을 받지 않는다
 		const usesMileage = cs.mileage.sharedAcross.includes(query.bannerId);
-		mileageAssumed = usesMileage && cs.mileage.firstTimeScope === 'unconfirmed';
+		// 스택은 천장 미만만 존재한다. 입력칸이 범위를 막지만 계산이 던지지 않도록 한 번 더 자른다
+		const currentCharge = Math.min(Math.max(0, query.currentPoints), cs.hardPity.count - 1);
+		const mileage: MileageInput | undefined = usesMileage
+			? {
+					current: query.mileage ?? 0,
+					ticketAt: cs.mileage.tenPullTicketAt,
+					pullsPerTicket: TEN_PULL_TICKET_PULLS,
+					perPull: cs.mileage.perPull
+				}
+			: undefined;
+		// 가정에 기대는 것은 천장까지 가는 동안 받을 티켓이 남아 있을 때뿐이다 (마일리지 380이면 남은 티켓 없음)
+		mileageAssumed =
+			mileage !== undefined &&
+			cs.mileage.firstTimeScope === 'unconfirmed' &&
+			mileageTicketsEarned(mileage, cs.hardPity.count - currentCharge) > 0;
 		pity = {
 			system: 'charge',
-			// 스택은 천장 미만만 존재한다. 입력칸이 범위를 막지만 계산이 던지지 않도록 한 번 더 자른다
-			currentCharge: Math.min(Math.max(0, query.currentPoints), cs.hardPity.count - 1),
+			currentCharge,
 			halfThreshold: cs.softPity.count,
 			halfPickupChance: cs.softPity.pickupChance,
 			fullThreshold: cs.hardPity.count,
 			chargePerPull: cs.perPull,
-			mileage: usesMileage
-				? {
-						current: query.mileage ?? 0,
-						ticketAt: cs.mileage.tenPullTicketAt,
-						pullsPerTicket: TEN_PULL_TICKET_PULLS,
-						perPull: cs.mileage.perPull
-					}
-				: undefined
+			mileage
 		};
 	}
 

@@ -18,6 +18,7 @@ export type AnalyticsEvent =
 	| 'calc-used'
 	| 'help-open'
 	| 'pity-banner'
+	| 'pity-view'
 	| 'levelup-mode'
 	| 'income-view'
 	| 'chart-cursor'
