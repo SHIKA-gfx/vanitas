@@ -404,7 +404,8 @@ export interface ScheduledEvent {
 }
 
 export interface ScheduleFile {
-	meta: Meta;
+	/** recruitsVerifiedAt: 픽업 미래시(recruits)를 마지막으로 확인한 날. 레이드·이벤트와 따로 갱신한다 */
+	meta: Meta & { recruitsVerifiedAt?: string };
 	cadence: Record<RaidKind, { intervalDays: number; durationDays: number }>;
 	raids: RaidSeason[];
 	events: ScheduledEvent[];

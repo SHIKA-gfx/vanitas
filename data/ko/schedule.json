@@ -5,6 +5,7 @@
     "description": "한국 서버 콘텐츠 일정. 청휘석 수급 계산기의 레이드·이벤트 수급 시점과, 이후 플래너의 픽업 일정이 쓴다.",
     "server": "ko",
     "verifiedAt": "2026-09-26",
+    "recruitsVerifiedAt": "2026-10-24",
     "sources": ["26", "27", "28", "29", "31", "32"],
     "notes": [
       "start / end는 게임 날짜(YYYY-MM-DD). end는 종료일로, 시즌 길이 = end - start (일).",

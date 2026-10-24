@@ -274,6 +274,10 @@ def check_recruits():
 
     # 픽업 기간
     rows = sched.get("recruits", [])
+    try:
+        datetime.date.fromisoformat(sched["meta"].get("recruitsVerifiedAt", ""))
+    except ValueError:
+        err("schedule: meta.recruitsVerifiedAt 형식 오류 (YYYY-MM-DD) — 플래너가 '일정 확인일'로 보여준다")
     seen, used, prev = set(), set(), None
     single = []
     for r in rows:
