@@ -7,6 +7,7 @@
 	import './layout.css';
 	import AppNav from '$lib/components/AppNav.svelte';
 	import VanitasSymbol from '$lib/components/VanitasSymbol.svelte';
+	import ShittimBackground from '$lib/components/ShittimBackground.svelte';
 	import SharedViewBar from '$lib/components/SharedViewBar.svelte';
 	import BackupImportBar from '$lib/components/BackupImportBar.svelte';
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
@@ -44,7 +45,11 @@
 		type="font/woff2"
 		crossorigin="anonymous"
 	/>
-	<meta name="theme-color" content="#1288f8" />
+	<!--
+		브라우저 주소창 색 = 화면 바탕 맨 위 screen-top (2026-10-23). 주소창과 화면 위쪽의 경계를 없애
+		"기계 화면 한 대"로 보이게. site.webmanifest의 theme_color도 같은 값
+	-->
+	<meta name="theme-color" content="#aee2ff" />
 	<!--
 		사용 통계 Umami (이벤트 목록: src/lib/analytics.ts). 개발 서버에서는 불러오지 않고,
 		data-domains로 vanitas.live에서 온 방문만 센다 (미리보기 배포·로컬 빌드는 세지 않는다).
@@ -61,8 +66,12 @@
 	{/if}
 </svelte:head>
 
-<!-- 배경층: 계산기 화면은 사선 (디자인 문서 5-2). 홈은 6단계에서 삼각형 타일로 덮는다 -->
-<div class="min-h-screen bg-diagonal lg:flex">
+<!--
+	배경층: 모든 화면이 같은 싯딤의 상자 배경 (디자인 문서 5-19). 화면에 고정되고 판만 그 위로 스크롤된다.
+	isolate로 이 틀 안에 쌓임 맥락을 만들어, 배경(-z-10)이 body 뒤로 빠지지 않고 내용 바로 뒤에 놓이게 한다
+-->
+<div class="relative isolate min-h-screen lg:flex">
+	<ShittimBackground />
 	<AppNav />
 	<!-- 모바일은 하단 탭바(56px) + 홈 인디케이터 영역만큼 아래를 비워, 곡선 아랫부분이 가려지지 않게 한다 -->
 	<div class="relative min-w-0 flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:pb-0">

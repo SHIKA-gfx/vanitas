@@ -15,7 +15,7 @@
 	import Badge from '$lib/components/Badge.svelte';
 	import DateField from '$lib/components/DateField.svelte';
 	import NavIcon, { type NavIconName } from '$lib/icons/NavIcon.svelte';
-	import TriangleBackground from '$lib/components/TriangleBackground.svelte';
+	import ShittimBackground from '$lib/components/ShittimBackground.svelte';
 
 	// ---------------------------------------------------------------- 색
 
@@ -470,41 +470,31 @@
 
 	<!-- 8. 배경층 -->
 	<section class="flex flex-col gap-3">
-		<h2 class="text-xl font-bold">8. 배경층 — 계산기는 사선, 홈은 삼각형 타일</h2>
-		<p class="text-sm text-navy">위에 패널을 얹어, 데이터층을 방해하지 않는지 함께 본다.</p>
-		<div class="grid gap-4 md:grid-cols-2">
-			<div
-				class="relative flex h-64 items-center justify-center overflow-hidden rounded border border-navy/15 bg-diagonal"
-			>
-				<div class="relative w-3/4 rounded-sm border border-navy/15 bg-surface p-4 text-sm">
-					<p class="font-bold">사선 — 계산기 화면 (bg-diagonal)</p>
-					<p>천장까지 청휘석 3,480개 부족해요</p>
-				</div>
+		<h2 class="text-xl font-bold">8. 배경층 — 싯딤의 상자 (5-19, 모든 화면 공통)</h2>
+		<p class="text-sm text-navy">
+			바탕·격자·삼각형·바닥 네 층. 실제 화면에서는 화면에 고정되고, 여기서는 상자 안에 그린다. 위에
+			지금의 패널과 높이 단계 e1 판을 함께 얹어 데이터층을 방해하지 않는지 본다.
+		</p>
+		<div
+			class="relative isolate flex h-[28rem] items-center justify-center gap-6 overflow-hidden rounded p-6"
+		>
+			<ShittimBackground position="absolute" />
+			<div class="w-64 rounded-xl border border-navy/10 bg-surface p-4 text-sm shadow-panel">
+				<p class="font-bold">지금의 패널</p>
+				<p class="font-num">천장까지 청휘석 1,200개 부족해요</p>
 			</div>
-			<div
-				class="relative flex h-64 items-center justify-center overflow-hidden rounded border border-navy/15 bg-wash"
-			>
-				<TriangleBackground muted="var(--color-sky-muted)" />
-				<div class="relative w-3/4 rounded-sm border border-navy/15 bg-surface p-4 text-sm">
-					{#each ['-top-1.5 -left-1.5', '-top-1.5 -right-1.5', '-bottom-1.5 -left-1.5', '-bottom-1.5 -right-1.5'] as pos (pos)}
-						<span
-							class="absolute {pos} text-xs leading-none font-bold text-brand"
-							aria-hidden="true">+</span
-						>
-					{/each}
-					<p class="font-bold">삼각형 타일 — 홈 화면</p>
-					<p>천장까지 청휘석 3,480개 부족해요</p>
-				</div>
+			<div class="w-64 rounded-xl border border-white bg-surface/92 p-4 text-sm shadow-e1">
+				<p class="font-bold">e1 판 (C단계)</p>
+				<p class="font-num">천장까지 청휘석 1,200개 부족해요</p>
 			</div>
 		</div>
-		<div class="flex gap-4 text-xs text-navy">
-			<span class="flex items-center gap-1"
-				><span class="inline-block size-4 rounded" style="background: #7cd0ff"></span>sky #7cd0ff</span
-			>
-			<span class="flex items-center gap-1"
-				><span class="inline-block size-4 rounded" style="background: var(--color-sky-muted)"
-				></span>채도 40% #a3c5d8</span
-			>
+		<div class="flex flex-wrap gap-4 text-xs text-navy">
+			{#each ['sky', 'sky-muted', 'blush', 'screen-top', 'screen-mid', 'screen-low'] as name (name)}
+				<span class="flex items-center gap-1"
+					><span class="inline-block size-4 rounded" style="background: var(--color-{name})"
+					></span>{name}</span
+				>
+			{/each}
 		</div>
 	</section>
 
@@ -512,7 +502,7 @@
 	<section class="flex flex-col gap-3">
 		<h2 class="text-xl font-bold">10. 공간 문법 — 높이 단계와 숫자 글꼴 (5-18·5-19)</h2>
 		<p class="text-sm text-navy">
-			화면 바탕 그라데이션 위에 얹어 본다. 배경 층(격자·삼각형·바닥)은 B단계에서 붙는다.
+			화면 바탕 그라데이션만 깔고 얹어 본다. 배경 네 층을 모두 깐 모습은 8절.
 		</p>
 		<div
 			class="grid gap-6 rounded p-8 md:grid-cols-4"

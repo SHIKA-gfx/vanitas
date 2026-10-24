@@ -2,7 +2,7 @@
 	/ko — 홈 (디자인 문서 5-9).
 	- 데스크톱(md 이상): 가운데 원 + 곡선으로 파인 네 타일 (HomeFrame)
 	- 모바일: 맨 위 원(심볼) + 워드마크 띠, 그 아래 타일 1열
-	배경은 삼각형 타일 — 홈에만 쓰는 "대담함의 한 곳" (5-2). 계산기 화면은 사선.
+	배경은 레이아웃이 까는 싯딤의 상자 배경 (5-19, 모든 화면 공통). 홈의 "대담함의 한 곳"은 가운데 원.
 	타일 목록은 내비게이션과 같은 src/lib/nav.ts를 쓴다 (순서·준비 상태·아이콘이 늘 같다).
 -->
 <script lang="ts">
@@ -14,7 +14,6 @@
 	import { sections } from '$lib/nav';
 	import NavIcon from '$lib/icons/NavIcon.svelte';
 	import VanitasSymbol from '$lib/components/VanitasSymbol.svelte';
-	import TriangleBackground from '$lib/components/TriangleBackground.svelte';
 	import HomeFrame from './HomeFrame.svelte';
 	import BackupButton from '$lib/components/BackupButton.svelte';
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
@@ -24,15 +23,13 @@
 
 <Seo title={m.meta_home_title()} description={m.meta_home_description()} />
 
-<!-- 모바일은 레이아웃이 하단 탭바 높이만큼 아래를 비워 두는데, 그 자리까지 홈 배경이 덮도록 아래로 늘인다 -->
+<!--
+	모바일은 레이아웃이 하단 탭바 높이만큼 아래를 비워 두는데, 홈은 그 자리까지 늘여 맨 아래 묶음(백업·푸터)을
+	탭바 바로 위에 붙인다 (예전에는 홈 전용 배경이 그 자리까지 덮도록 늘였다)
+-->
 <main
 	class="relative -mb-[calc(3.5rem+env(safe-area-inset-bottom))] min-h-screen overflow-hidden pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:mb-0 lg:pb-0"
 >
-	<!-- 배경층: 레이아웃의 사선을 덮는다 -->
-	<div class="absolute inset-0 bg-wash" aria-hidden="true">
-		<TriangleBackground />
-	</div>
-
 	<!-- 데스크톱은 화면 높이 안에서 위아래 가운데. 모바일은 위에서부터 (하단 탭바가 있어서) -->
 	<div
 		class="relative mx-auto flex max-w-4xl flex-col gap-6 px-4 pt-10 pb-36 md:min-h-screen md:justify-center lg:py-10"

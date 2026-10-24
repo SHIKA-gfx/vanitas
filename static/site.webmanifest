@@ -4,8 +4,8 @@
 	"lang": "ko",
 	"start_url": "/ko",
 	"display": "standalone",
-	"theme_color": "#1288f8",
-	"background_color": "#f2f9ff",
+	"theme_color": "#aee2ff",
+	"background_color": "#e5f6ff",
 	"icons": [
 		{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
 		{ "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
