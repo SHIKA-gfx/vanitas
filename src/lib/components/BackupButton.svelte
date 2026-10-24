@@ -7,6 +7,8 @@
 	계산기 화면 안에는 두지 않는다 — 결과 공유의 "링크 복사"와 헷갈리지 않게.
 	설명은 늘 보이지 않게 하고(홈은 간결하게), 버튼 오른쪽 위의 "?"로 펼친다 — 입력칸 도움말과 같은 방식.
 	복사 알림은 넓은 화면에서 화면 한가운데에 띄운다 (목록 맨 아래에서 누르면 화면 아래 가운데는 너무 멀다).
+	기울인 버튼 (2026-10-23, 5-19): 누르면 무언가 바뀌는 조작은 60° 기울인다. 모서리는 둔각 3·예각 8px, 글자는 반대로 기울여 세운다.
+	기울이면 위아래 가장자리가 좌우로 12px쯤 밀려나 목록 안에서는 좌우 여백(mx-3)이 그 자리가 된다
 -->
 <script lang="ts">
 	import { onDestroy } from 'svelte';
@@ -57,25 +59,27 @@
 	<button
 		type="button"
 		onclick={copy}
-		class="inline-flex items-center justify-center gap-2 rounded-lg border border-navy/15 bg-surface px-4 text-sm text-navy transition-colors hover:border-navy/35 hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-strong {variant ===
+		class="inline-flex -skew-x-30 items-center justify-center rounded-[3px_8px] border border-navy/25 bg-surface/70 px-5 text-sm font-bold text-navy shadow-[inset_0_1px_0_#fff] transition-colors hover:border-navy/45 hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-strong {variant ===
 		'nav'
 			? 'min-h-10 w-full'
-			: 'min-h-11 shadow-panel'}"
+			: 'mx-3 min-h-11 shadow-e1'}"
 	>
-		<svg
-			class="size-4"
-			viewBox="0 0 16 16"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="1.75"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			aria-hidden="true"
-		>
-			<path d="M3 10.5v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2" />
-			<path d="M8 2.5v8M5 7.5l3 3 3-3" />
-		</svg>
-		{m.backup_create()}
+		<span class="inline-flex skew-x-30 items-center gap-2">
+			<svg
+				class="size-4"
+				viewBox="0 0 16 16"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.75"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<path d="M3 10.5v2a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-2" />
+				<path d="M8 2.5v8M5 7.5l3 3 3-3" />
+			</svg>
+			{m.backup_create()}
+		</span>
 	</button>
 
 	<!-- 버튼 오른쪽 위 모서리에 걸친 "?" -->
@@ -90,7 +94,7 @@
 	<p
 		id="{id}-help"
 		hidden={!helpOpen}
-		class="absolute bottom-full z-20 mb-3 rounded-lg border border-navy/10 bg-surface p-3 text-left text-xs leading-relaxed text-navy shadow-panel {variant ===
+		class="absolute bottom-full z-20 mb-3 rounded-lg border border-white bg-surface p-3 text-left text-xs leading-relaxed text-navy shadow-e1 {variant ===
 		'nav'
 			? 'right-0 left-0'
 			: 'left-1/2 w-64 -translate-x-1/2'}"

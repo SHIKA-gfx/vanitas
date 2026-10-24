@@ -32,6 +32,7 @@
 	import { persistSection } from '$lib/state/saved.svelte';
 	import { isOneOf } from '$lib/state/persist';
 	import ResetButton from '$lib/components/ResetButton.svelte';
+	import PageTitle from '$lib/components/PageTitle.svelte';
 	import ShareButton from '$lib/components/ShareButton.svelte';
 	import { track } from '$lib/analytics';
 	import PityResult from './PityResult.svelte';
@@ -144,11 +145,10 @@
 <Seo title={`${m.pity_page_title()} | ${m.app_title()}`} description={m.meta_pity_description()} />
 
 <main class="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6 md:grid md:grid-cols-2 md:gap-6">
-	<!-- 제목 줄: 제목 + 입력 초기화 (모바일은 오른쪽 끝에 홈 로고가 있어 초기화는 아이콘만) -->
-	<div class="flex items-center gap-2 md:col-span-2">
-		<h1 class="text-[1.75rem] font-bold text-ink">{m.pity_page_title()}</h1>
-		<ResetButton onreset={saved.reset} />
-	</div>
+	<!-- 제목 줄: 아이콘 칩 + 제목 + 입력 초기화 (PageTitle, 5-19). 모바일은 오른쪽 끝에 홈 로고가 있어 초기화는 아이콘만 -->
+	<PageTitle title={m.pity_page_title()} icon="pity" class="md:col-span-2">
+		{#snippet actions()}<ResetButton onreset={saved.reset} />{/snippet}
+	</PageTitle>
 
 	<!-- 판 사이 24px: 아래 판의 제목 탭이 위로 14px 솟는다 (Panel.svelte) -->
 	<div class="flex flex-col gap-6 md:col-start-2 md:row-start-2">

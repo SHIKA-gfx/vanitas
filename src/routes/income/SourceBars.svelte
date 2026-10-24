@@ -31,7 +31,7 @@
 							>{m.income_bars_estimated()}</span
 						>{/if}
 				</span>
-				<span class="font-num text-navy tabular-nums">{formatInt(s.amount)}</span>
+				<span class="font-num whitespace-nowrap text-navy tabular-nums">{formatInt(s.amount)}</span>
 			</div>
 			<div class="mt-1.5 h-2 rounded-full bg-wash" aria-hidden="true">
 				<div class="h-2 rounded-full bg-brand" style="width: {(s.amount / max) * 100}%"></div>
@@ -47,7 +47,7 @@
 						>{m.income_bars_estimated()}</span
 					>{/if}
 			</span>
-			<span class="font-num text-navy tabular-nums"
+			<span class="font-num whitespace-nowrap text-navy tabular-nums"
 				>{m.unit_tickets({ count: formatInt(s.amount) })}</span
 			>
 		</li>

@@ -3,6 +3,8 @@
 	다른 계산기와 함께 쓰는 값(보유 청휘석 등)은 건드리지 않는다.
 	실수로 눌렀을 때 만회할 수 있도록, 아래에 6초 동안 "되돌리기" 알림을 띄운다 (2026-10-02).
 	모바일은 제목 줄 오른쪽에 홈 로고가 있어 아이콘만, 넓은 화면은 글자까지 보여준다.
+	기울인 버튼 (2026-10-23, 5-19): 누르면 무언가 바뀌는 조작은 60° 기울인다. 모서리는 둔각 3·예각 8px, 글자는 반대로 기울여 세운다.
+	보조 버튼이라 반투명 흰 면 + 연한 테두리. 배경 위에 놓이므로 글자는 navy
 -->
 <script lang="ts">
 	import { onDestroy } from 'svelte';
@@ -43,22 +45,24 @@
 	type="button"
 	onclick={reset}
 	aria-label={m.common_reset()}
-	class="inline-flex size-9 shrink-0 items-center justify-center gap-1.5 rounded-lg text-navy transition-colors hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-strong md:w-auto md:px-3"
+	class="mx-1.5 inline-flex h-9 w-11 shrink-0 -skew-x-30 items-center justify-center rounded-[3px_8px] border border-navy/25 bg-surface/60 text-navy shadow-[inset_0_1px_0_#fff] transition-colors hover:border-navy/45 hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-strong md:w-auto md:px-4"
 >
-	<svg
-		class="size-4"
-		viewBox="0 0 16 16"
-		fill="none"
-		stroke="currentColor"
-		stroke-width="1.75"
-		stroke-linecap="round"
-		stroke-linejoin="round"
-		aria-hidden="true"
-	>
-		<path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9" />
-		<path d="M2.5 2.5v3h3" />
-	</svg>
-	<span class="hidden text-sm md:inline">{m.common_reset()}</span>
+	<span class="inline-flex skew-x-30 items-center gap-1.5">
+		<svg
+			class="size-4"
+			viewBox="0 0 16 16"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.75"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+		>
+			<path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9" />
+			<path d="M2.5 2.5v3h3" />
+		</svg>
+		<span class="hidden text-sm md:inline">{m.common_reset()}</span>
+	</span>
 </button>
 
 {#if undo}

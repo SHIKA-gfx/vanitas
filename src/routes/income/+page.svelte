@@ -15,6 +15,7 @@
 	import { persistSection } from '$lib/state/saved.svelte';
 	import { isFutureDate, isInt, isOneOf, isRecordOf, isSubsetOf } from '$lib/state/persist';
 	import ResetButton from '$lib/components/ResetButton.svelte';
+	import PageTitle from '$lib/components/PageTitle.svelte';
 	import ShareButton from '$lib/components/ShareButton.svelte';
 	import { track } from '$lib/analytics';
 	import Panel from '$lib/components/Panel.svelte';
@@ -223,11 +224,10 @@
 <main
 	class="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6 md:grid md:grid-cols-2 md:gap-6 xl:max-w-7xl xl:grid-cols-3"
 >
-	<!-- 제목 줄: 제목 + 입력 초기화 (모바일은 오른쪽 끝에 홈 로고가 있어 초기화는 아이콘만) -->
-	<div class="flex items-center gap-2 md:col-span-2 xl:col-span-3">
-		<h1 class="text-[1.75rem] font-bold text-ink">{m.income_page_title()}</h1>
-		<ResetButton onreset={saved.reset} />
-	</div>
+	<!-- 제목 줄: 아이콘 칩 + 제목 + 입력 초기화 (PageTitle, 5-19). 모바일은 오른쪽 끝에 홈 로고가 있어 초기화는 아이콘만 -->
+	<PageTitle title={m.income_page_title()} icon="gem" class="md:col-span-2 xl:col-span-3">
+		{#snippet actions()}<ResetButton onreset={saved.reset} />{/snippet}
+	</PageTitle>
 
 	<!-- 결과 열 -->
 	<div class="contents xl:col-start-3 xl:row-start-2 xl:flex xl:flex-col xl:gap-6">
