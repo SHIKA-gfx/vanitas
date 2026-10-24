@@ -259,6 +259,15 @@ def check_recruits():
             err(f"{tag} koNameStatus는 official | provisional")
         if not st["name"].get("ko"):
             err(f"{tag} 한국어 이름 없음")
+        # 괄호 표기: 한국어는 반각 "이름(의상)", 일본어는 전각 "名前（衣装）". 섞이면 화면에서 어긋나 보인다
+        ko, ja = st["name"].get("ko") or "", st["name"].get("ja") or ""
+        if any(c in ko for c in "（）") or " (" in ko:
+            err(f"{tag} 한국어 이름은 반각 괄호, 앞 공백 없이: '{ko}'")
+        if any(c in ja for c in "()") or " （" in ja:
+            err(f"{tag} 일본어 이름은 전각 괄호, 앞 공백 없이: '{ja}'")
+        for name in (ko, ja):
+            if name.count("(") + name.count("（") != name.count(")") + name.count("）"):
+                err(f"{tag} 괄호 짝이 맞지 않음: '{name}'")
     no_ja = [st["id"] for st in studs if st["koNameStatus"] == "provisional" and not st["name"].get("ja")]
     if no_ja:
         warn(f"students: 가칭 학생 {len(no_ja)}명에 일본 공식 이름 없음 (화면에 함께 적어야 함): {', '.join(no_ja)}")
