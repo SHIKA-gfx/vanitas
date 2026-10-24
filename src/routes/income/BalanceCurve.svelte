@@ -10,6 +10,8 @@
 	import { addDays } from '$lib/game-date';
 	import { ChartCursor } from '$lib/chart-cursor.svelte';
 	import ChartCursorMark from '$lib/components/ChartCursor.svelte';
+	import { CurveMorph, type Pt } from '$lib/curve-morph.svelte';
+	import { isClientArrival, reducedMotion } from '$lib/motion';
 
 	interface Props {
 		records: IncomeDay[];
@@ -69,9 +71,10 @@
 		})}. ${m.chart_hint()}`
 	);
 
-	const path = $derived(
-		sampled.map((r) => `${x(r.day).toFixed(1)},${y(r.balance).toFixed(1)}`).join(' ')
-	);
+	// 움직임 (2026-10-23, 8-2 F2): 값이 바뀌면 곡선이 새 모양으로 옮겨 가고(curve-morph.svelte.ts),
+	// 다른 화면에서 옮겨 와 나타날 때는 왼쪽부터 그려진다. 눈금 글자·0 기준선은 바로 바뀐다
+	const line = new CurveMorph(() => sampled.map((r): Pt => [x(r.day), y(r.balance)]));
+	const drawIn = isClientArrival() && !reducedMotion();
 </script>
 
 <svg
@@ -135,14 +138,16 @@
 		/>
 	{/if}
 
-	<polyline
-		points={path}
-		fill="none"
-		stroke-width="2"
-		stroke-linejoin="round"
-		stroke-linecap="round"
-		class="stroke-brand"
-	/>
+	<g class={drawIn ? 'curve-draw' : undefined}>
+		<polyline
+			points={line.points}
+			fill="none"
+			stroke-width="2"
+			stroke-linejoin="round"
+			stroke-linecap="round"
+			class="stroke-brand"
+		/>
+	</g>
 
 	{#if cursorPoint && cursorLines}
 		<ChartCursorMark

@@ -12,7 +12,9 @@ export const MOTION = {
 	/** 입력이 멈췄다고 보고 결과판이 한 번 반응하기까지 기다리는 시간 */
 	settle: 180,
 	/** 화면이 바뀐 뒤 결과판이 자리 잡는 때 (layout.css "화면 전환"의 vt-result 시작) */
-	arrival: 180
+	arrival: 180,
+	/** 곡선이 새 모양으로 옮겨 가는 시간 (curve-morph.svelte.ts) */
+	curve: 360
 } as const;
 
 export const reducedMotion = (): boolean => prefersReducedMotion.current;

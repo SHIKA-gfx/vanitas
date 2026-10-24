@@ -11,11 +11,17 @@
 
 	모집 스택 (2026-10-23): 반천장(halfAt)에서 곡선이 한 번 뛴다. 그 자리에 옅은 점선과 "반천장" 글자를 둔다.
 	곡선 자체의 계단은 계산이 만든 점(반천장-1, 반천장)이 그린다 — 여기서 따로 그리지 않는다.
+
+	움직임 (2026-10-23, 8-2 F2): 값이 바뀌면 곡선이 새 모양으로 옮겨 간다 (curve-morph.svelte.ts).
+	천장의 수직선은 곡선 끝에 이어 붙여 함께 옮기고, 보유 연차 표시선·음영도 같은 박자로 옮긴다.
+	반천장 점선·눈금 글자는 바로 바뀐다. 다른 화면에서 옮겨 와 나타날 때는 곡선이 왼쪽부터 그려진다
 -->
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
 	import type { CurvePoint } from '$lib/calc/gacha';
 	import { formatInt } from '$lib/format';
+	import { CurveMorph, ValueMorph, type Pt } from '$lib/curve-morph.svelte';
+	import { isClientArrival, reducedMotion } from '$lib/motion';
 
 	interface Props {
 		curve: CurvePoint[];
@@ -49,16 +55,28 @@
 		Array.from({ length: Math.floor((pullsToPity - 1) / X_STEP) }, (_, i) => (i + 1) * X_STEP)
 	);
 
-	const toPoints = (cs: CurvePoint[]) =>
-		cs.map((c) => `${x(c.pulls)},${y(c.probability)}`).join(' ');
+	const toPts = (cs: CurvePoint[]): Pt[] => cs.map((c) => [x(c.pulls), y(c.probability)]);
+	/** 천장에서 100%로 뛰는 수직선: 마지막 선(보유분을 넘으면 점선 쪽) 끝에 이어 붙인다 */
+	const pityRise = $derived<Pt[]>([
+		[x(pullsToPity), y(atPity)],
+		[x(pullsToPity), y(1)]
+	]);
+	const ownedLine = $derived<Pt[]>(short ? toPts(owned) : [...toPts(owned), ...pityRise]);
+	const beyondLine = $derived<Pt[]>(short ? [...toPts(beyond), ...pityRise] : []);
+
+	const ownedMorph = new CurveMorph(() => ownedLine);
+	const beyondMorph = new CurveMorph(() => beyondLine);
+	const budgetX = new ValueMorph(() => x(availablePulls));
+	/** 다른 화면에서 옮겨 와 나타날 때만 곡선이 그려진다 (처음 들어온 화면은 서버가 그린 그대로) */
+	const drawIn = isClientArrival() && !reducedMotion();
 </script>
 
 <svg viewBox="0 0 {W} {H}" class="w-full font-num" role="img" aria-label={m.pity_curve_title()}>
 	{#if short}
 		<rect
-			x={x(availablePulls)}
+			x={budgetX.current}
 			y={pad.t}
-			width={x(pullsToPity) - x(availablePulls)}
+			width={Math.max(0, x(pullsToPity) - budgetX.current)}
 			height={H - pad.t - pad.b}
 			class="fill-navy/5"
 		/>
@@ -88,29 +106,22 @@
 		</text>
 	{/if}
 
-	<polyline points={toPoints(owned)} fill="none" class="stroke-brand" stroke-width="2" />
-	{#if short}
-		<polyline
-			points={toPoints(beyond)}
-			fill="none"
-			class="stroke-brand"
-			stroke-width="2"
-			stroke-dasharray="4 3"
-		/>
-	{/if}
-	<line
-		x1={x(pullsToPity)}
-		y1={y(atPity)}
-		x2={x(pullsToPity)}
-		y2={y(1)}
-		class="stroke-brand"
-		stroke-width="2"
-		stroke-dasharray={short ? '4 3' : undefined}
-	/>
+	<g class={drawIn ? 'curve-draw' : undefined}>
+		<polyline points={ownedMorph.points} fill="none" class="stroke-brand" stroke-width="2" />
+		{#if short}
+			<polyline
+				points={beyondMorph.points}
+				fill="none"
+				class="stroke-brand"
+				stroke-width="2"
+				stroke-dasharray="4 3"
+			/>
+		{/if}
+	</g>
 
 	{#if short && availablePulls > 0}
-		<line x1={x(availablePulls)} y1={pad.t} x2={x(availablePulls)} y2={y(0)} class="stroke-ink" />
-		<text x={x(availablePulls) - 4} y={pad.t + 10} text-anchor="end" class="fill-ink text-[11px]">
+		<line x1={budgetX.current} y1={pad.t} x2={budgetX.current} y2={y(0)} class="stroke-ink" />
+		<text x={budgetX.current - 4} y={pad.t + 10} text-anchor="end" class="fill-ink text-[11px]">
 			{m.pity_curve_budget({ count: formatInt(availablePulls) })}
 		</text>
 	{/if}

@@ -371,7 +371,27 @@
 		transform: none;
 	}
 }
+/*
+ * 곡선이 그려짐 (2026-10-23, 8-2 F2): 다른 화면에서 옮겨 와 그래프가 나타날 때 왼쪽부터 600ms에 걸쳐 드러난다.
+ * 점선(보유분을 넘는 구간)도 함께 드러나도록 선 길이 대신 잘라내기(clip-path)를 넓힌다.
+ * 결과판이 자리 잡은 뒤(180ms)에 시작한다. 잘라내기는 다시 그리기가 들지만 그래프 하나 크기라 짧게 한 번만
+ */
+.curve-draw {
+	animation: curve-draw 600ms cubic-bezier(0.4, 0, 0.2, 1) 180ms both;
+}
+@keyframes curve-draw {
+	from {
+		clip-path: inset(0 100% 0 0);
+	}
+	to {
+		clip-path: inset(0 0 0 0);
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
+	.curve-draw {
+		animation: none;
+	}
 	.plate-scan {
 		animation: none;
 		opacity: 0;
