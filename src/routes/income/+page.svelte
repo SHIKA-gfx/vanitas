@@ -13,7 +13,12 @@
 	import { formatInt } from '$lib/format';
 	import { getUserState } from '$lib/state/user-state.svelte';
 	import { persistSection } from '$lib/state/saved.svelte';
-	import { isFutureDate, isInt, isOneOf, isRecordOf, isSubsetOf } from '$lib/state/persist';
+	import {
+		INCOME_SECTION,
+		SUBSCRIPTION_MAX_COUNT,
+		incomeChecks,
+		incomeDefaults
+	} from '$lib/state/income-settings';
 	import ResetButton from '$lib/components/ResetButton.svelte';
 	import PageTitle from '$lib/components/PageTitle.svelte';
 	import ShareButton from '$lib/components/ShareButton.svelte';
@@ -52,7 +57,6 @@
 		label: p.label
 	}));
 
-	const SUBSCRIPTION_MAX_COUNT = 6;
 	const subscriptionOptions = (durationDays: number) => [
 		{ value: '0', label: m.income_subscription_none() },
 		...Array.from({ length: SUBSCRIPTION_MAX_COUNT }, (_, i) => ({
@@ -84,19 +88,8 @@
 	// ---------------------------------------------------------------- 입력 상태
 
 	// 기본값. 초기화와 저장값 검사에서도 쓴다
-	const defaults = () => ({
-		endDate: addDays(today, 90),
-		preset: presets[0]?.id ?? 'full',
-		// 프리셋을 고르면 포함 목록이 그 프리셋으로 바뀌고, 그 뒤 체크로 고칠 수 있다
-		included: presetIncluded(presets[0]?.id ?? 'full'),
-		tacticalDaily: tactical?.amount ?? 0,
-		raidTier: raidRank?.tiers?.[0]?.id ?? '',
-		participation: data.eventParticipation[0]?.id ?? '',
-		subscriptions: Object.fromEntries(data.subscriptions.map((p) => [p.id, '0'])) as Record<
-			string,
-			string
-		>
-	});
+	// 기본값·검사는 플래너와 함께 쓴다 (income-settings.ts)
+	const defaults = () => incomeDefaults(today);
 	const start = defaults();
 
 	let endDate = $state(start.endDate);
@@ -108,13 +101,8 @@
 	let subscriptions = $state(start.subscriptions);
 
 	// 브라우저 저장 (2026-10-02). 칸마다 검사해서 맞지 않는 칸(지나간 날짜 등)만 기본값으로
-	const SUBSCRIPTION_VALUES = [
-		'0',
-		...Array.from({ length: SUBSCRIPTION_MAX_COUNT }, (_, i) => String(i + 1)),
-		'continuous'
-	];
 	const saved = persistSection(
-		'income',
+		INCOME_SECTION,
 		() => ({
 			endDate,
 			preset,
@@ -134,18 +122,7 @@
 			subscriptions = v.subscriptions;
 		},
 		defaults,
-		{
-			endDate: isFutureDate(today),
-			preset: isOneOf(presets.map((p) => p.id)),
-			included: isSubsetOf(toggleable.map((s) => s.id)),
-			tacticalDaily: isInt(0),
-			raidTier: isOneOf((raidRank?.tiers ?? []).map((t) => t.id)),
-			participation: isOneOf(data.eventParticipation.map((p) => p.id)),
-			subscriptions: isRecordOf(
-				data.subscriptions.map((p) => p.id),
-				(_, v) => isOneOf(SUBSCRIPTION_VALUES)(v)
-			)
-		},
+		incomeChecks(today),
 		// 공유 링크: 기본값과 다른 칸만 짧은 이름으로 (예: ?d=2026-12-31&tier=gold&sub=monthly-pass.continuous&g=3000)
 		{
 			fields: [
