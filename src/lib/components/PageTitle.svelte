@@ -6,7 +6,7 @@
 	  380px보다 좁은 화면은 제목 22px — 가장 긴 제목("청휘석 수급 계산기")이 360px에서 칩·초기화·홈 원과 한 줄에 들어가도록
 	  (24px이면 두 줄로 꺾이고 초기화 버튼이 홈 원 옆으로 밀려났다)
 	- 배경 위에 바로 놓이므로 글자는 ink만 (5-19 대비 규칙: 배경 위 brand-strong은 4.5:1 미달)
-	- 모바일·태블릿은 오른쪽 위에 홈 링크 원(44px, +layout.svelte)이 떠 있어 그만큼 오른쪽을 비운다
+	- 오른쪽 위에 홈 링크 원(모바일 44px, 넓은 화면 48px — +layout.svelte)이 떠 있어 그만큼 오른쪽을 비운다
 -->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
@@ -25,7 +25,7 @@
 	let { title, icon, actions, class: className = '' }: Props = $props();
 </script>
 
-<div class="flex min-h-11 items-center gap-2 pr-12 lg:pr-0 {className}">
+<div class="flex min-h-11 items-center gap-2 pr-12 lg:pr-14 {className}">
 	<span
 		class="flex size-10 shrink-0 items-center justify-center rounded-full border border-white bg-surface/94 shadow-e1 md:size-12"
 	>
