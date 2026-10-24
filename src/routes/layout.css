@@ -255,3 +255,103 @@
 		cursor: pointer;
 	}
 }
+
+/*
+ * 화면 전환 (2026-10-23, 디자인 문서 5-18·5-19, 8-2 E). 켜고 끄는 조건과 방향은 +layout.svelte의 onNavigate.
+ * 원칙 6: 움직임은 상태 변화에만 — 여기서는 "화면이 이어졌다"를 알린다. 전체가 420ms 안에 끝난다.
+ *
+ *   이름                     무엇                          움직임
+ *   root                     화면 바탕(그라데이션)         없음 — 바뀌지 않는다
+ *   vt-bg-tri/-floor/-lattice 배경 층                      층마다 다른 거리로 밀렸다 돌아온다 (24 > 12 > 6px)
+ *   vt-page                  내용 묶음(판들)               이전 판은 가라앉고(0~160ms), 새 판은 떠오른다(120~380ms)
+ *   vt-result-*              결과판                        새 결과판이 60ms 늦게 자리 잡는다. 계산기마다 이름이 달라 서로 짝짓지 않는다
+ *   vt-icon-*                홈 타일 아이콘 ↔ 제목 옆 칩    날아가 이어진다 (비율이 같은 것만 짝짓는다 — 카드끼리는 눌려 보였다)
+ *   vt-orb                   모바일 홈 원 ↔ 홈 링크 원     줄어들며 이어진다
+ *   vt-rail / vt-tabbar      왼쪽 목록 / 탭바              그대로 남는다
+ *   vt-rail-mark / vt-tab-mark 현재 위치 막대               새 항목으로 미끄러진다
+ *
+ * 같은 이름이 화면에 둘 있으면 브라우저가 전환을 건너뛴다 → 이름은 화면마다 하나씩만 보이게 붙인다
+ * (홈의 모바일 목록과 데스크톱 프레임은 한쪽이 늘 display:none이라 겹치지 않는다).
+ */
+:root {
+	--vt-dir: 1;
+}
+
+::view-transition-group(*) {
+	animation-duration: 340ms;
+	animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation: none;
+}
+
+/* 내용 묶음: 높이가 달라도 판이 늘었다 줄었다 하지 않게, 묶음 자체는 움직이지 않고 그림만 바꾼다 */
+::view-transition-group(vt-page),
+::view-transition-group(vt-result-pity),
+::view-transition-group(vt-result-levelup),
+::view-transition-group(vt-result-income) {
+	animation: none;
+}
+::view-transition-old(vt-page),
+::view-transition-old(vt-result-pity),
+::view-transition-old(vt-result-levelup),
+::view-transition-old(vt-result-income) {
+	animation: vt-sink 160ms cubic-bezier(0.4, 0, 1, 1) both;
+	transform-origin: 50% 0;
+}
+::view-transition-new(vt-page) {
+	animation: vt-rise 260ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms both;
+}
+::view-transition-new(vt-result-pity),
+::view-transition-new(vt-result-levelup),
+::view-transition-new(vt-result-income) {
+	animation: vt-rise 240ms cubic-bezier(0.2, 0.8, 0.2, 1) 180ms both;
+}
+
+/* 배경 층: 같은 그림이 그대로 남으므로 그림 한 쌍을 통째로 밀었다 돌려놓는다 */
+::view-transition-group(vt-bg-tri),
+::view-transition-group(vt-bg-floor),
+::view-transition-group(vt-bg-lattice) {
+	animation: none;
+}
+::view-transition-image-pair(vt-bg-tri) {
+	animation: vt-nudge-tri 420ms cubic-bezier(0.3, 0, 0.2, 1);
+}
+::view-transition-image-pair(vt-bg-floor) {
+	/* 옆으로 밀면 가장자리가 비어 보이므로 조금 키워 덮는다 */
+	transform-origin: 50% 100%;
+	animation: vt-nudge-floor 420ms cubic-bezier(0.3, 0, 0.2, 1);
+}
+::view-transition-image-pair(vt-bg-lattice) {
+	animation: vt-nudge-lattice 420ms cubic-bezier(0.3, 0, 0.2, 1);
+}
+
+@keyframes vt-sink {
+	to {
+		opacity: 0;
+		transform: translateY(6px) scale(0.985);
+	}
+}
+@keyframes vt-rise {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+}
+@keyframes vt-nudge-tri {
+	50% {
+		transform: translateX(calc(var(--vt-dir) * -24px));
+	}
+}
+@keyframes vt-nudge-floor {
+	50% {
+		transform: translateX(calc(var(--vt-dir) * -12px)) scale(1.03);
+	}
+}
+@keyframes vt-nudge-lattice {
+	50% {
+		transform: translateX(calc(var(--vt-dir) * -6px));
+	}
+}

@@ -188,11 +188,17 @@
 			style="{slot.box}; width: {textW}; height: {textH}; padding: {pad}"
 			aria-hidden="true"
 		>
-			<NavIcon
-				name={section.icon}
-				size={28}
-				class={section.ready ? 'text-brand-strong' : 'text-navy/60'}
-			/>
+			<!-- 화면 전환 때 계산기 제목 옆 아이콘 칩과 짝지어진다 (vt-icon-*, layout.css "화면 전환") -->
+			<span
+				class="flex"
+				style:view-transition-name={section.ready ? `vt-icon-${section.icon}` : undefined}
+			>
+				<NavIcon
+					name={section.icon}
+					size={28}
+					class={section.ready ? 'text-brand-strong' : 'text-navy/60'}
+				/>
+			</span>
 			<span class="text-xl font-bold {section.ready ? 'text-ink' : 'text-navy/60'}">
 				{section.label()}
 			</span>

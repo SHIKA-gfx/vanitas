@@ -19,6 +19,11 @@
 	}
 	let { position = 'fixed' }: Props = $props();
 	const positionClass = $derived(position === 'fixed' ? 'fixed' : 'absolute');
+	/**
+	 * 화면 전환 때 층마다 따로 밀리도록 이름을 붙인다 (8-2 E, layout.css "화면 전환").
+	 * 스타일 타일처럼 상자 안에 하나 더 그릴 때는 이름이 겹치지 않게 뺀다
+	 */
+	const named = $derived(position === 'fixed');
 
 	/** 삼각형 격자: 한 변 96, 높이 96·√3/2. 모바일은 묶음 전체를 2/3로 줄인다 (CSS --k) */
 	const SIDE = 96;
@@ -120,22 +125,30 @@
 	class="pointer-events-none inset-0 -z-10 overflow-hidden [contain:strict] forced-colors:hidden {positionClass}"
 >
 	<div class="layer-screen absolute inset-0"></div>
-	<div class="layer-lattice absolute inset-0"></div>
+	<div
+		class="layer-lattice absolute inset-0"
+		style:view-transition-name={named ? 'vt-bg-lattice' : undefined}
+	></div>
 
-	{#each CLUSTERS as c (c.key)}
-		<svg
-			class="cluster absolute {c.place}"
-			style:--w="{c.width}px"
-			style:--h="{c.height}px"
-			viewBox="0 0 {c.width} {c.height}"
-		>
-			{#each c.cells as cell, i (i)}
-				<polygon points={points(cell)} fill={FILL[cell[2]]} fill-opacity={cell[3]} />
-			{/each}
-		</svg>
-	{/each}
+	<div class="absolute inset-0" style:view-transition-name={named ? 'vt-bg-tri' : undefined}>
+		{#each CLUSTERS as c (c.key)}
+			<svg
+				class="cluster absolute {c.place}"
+				style:--w="{c.width}px"
+				style:--h="{c.height}px"
+				viewBox="0 0 {c.width} {c.height}"
+			>
+				{#each c.cells as cell, i (i)}
+					<polygon points={points(cell)} fill={FILL[cell[2]]} fill-opacity={cell[3]} />
+				{/each}
+			</svg>
+		{/each}
+	</div>
 
-	<div class="floor absolute inset-x-0 bottom-0">
+	<div
+		class="floor absolute inset-x-0 bottom-0"
+		style:view-transition-name={named ? 'vt-bg-floor' : undefined}
+	>
 		<div class="plane"></div>
 		<div class="horizon"></div>
 	</div>
@@ -214,7 +227,12 @@
 		}
 	}
 
-	/* 4 바닥: 위쪽(지평선)이 먼 쪽. 평면을 60° 눕히고, 먼 쪽 1/4은 마스크로 지운다 */
+	/*
+	 * 4 바닥: 위쪽(지평선)이 먼 쪽. 평면을 60° 눕히고, 먼 쪽 1/4은 마스크로 지운다.
+	 * 평면 길이는 "가까운 끝이 눈(perspective)을 넘지 않게" 정한다: 길이 × sin60° < perspective.
+	 * 넘으면 그 부분이 눈 뒤로 넘어가 투영이 끝없이 커지고, 화면 전환이 이 층을 찍지 못해 4초 멈췄다
+	 * (2026-10-23 E단계). 모바일 260px(가까운 끝 225 < 380), 넓은 화면 420px(364 < 560) — 둘 다 상자를 넉넉히 채운다
+	 */
 	.floor {
 		height: 190px;
 		perspective: 380px;
@@ -230,7 +248,7 @@
 		top: 0;
 		left: -60%;
 		width: 220%;
-		height: 700px;
+		height: 260px;
 		transform-origin: 50% 0%;
 		transform: rotateX(60deg);
 		background-image:
@@ -256,7 +274,7 @@
 		.plane {
 			left: -50%;
 			width: 200%;
-			height: 1000px;
+			height: 420px;
 			background-size: 72px 72px;
 			-webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 24%);
 			mask-image: linear-gradient(180deg, transparent 0%, #000 24%);

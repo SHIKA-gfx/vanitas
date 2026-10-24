@@ -42,7 +42,9 @@
 		<!-- 모바일: 원이 놓이는 띠의 높이를 타일과 맞춘다 (디자인 이슈) -->
 		<div class="flex flex-col gap-3 md:hidden">
 			<div class="flex min-h-24 items-center gap-4 px-1">
-				<div class="flex size-20 shrink-0 items-center justify-center rounded-full orb">
+				<div
+					class="flex size-20 shrink-0 items-center justify-center rounded-full orb [view-transition-name:vt-orb]"
+				>
 					<VanitasSymbol class="w-11 text-white" />
 				</div>
 				<div>
@@ -60,7 +62,9 @@
 								href={href(section.path)}
 								class="flex min-h-24 items-center gap-4 rounded-xl border border-navy/60 bg-surface p-4 hover:bg-wash focus-visible:outline-2 focus-visible:outline-brand-strong"
 							>
-								<NavIcon name={section.icon} size={28} class="shrink-0 text-brand-strong" />
+								<span class="flex shrink-0" style:view-transition-name="vt-icon-{section.icon}">
+									<NavIcon name={section.icon} size={28} class="text-brand-strong" />
+								</span>
 								<span class="flex flex-col gap-0.5">
 									<span class="font-bold text-ink">{section.label()}</span>
 									<span class="text-sm text-navy">{section.description()}</span>

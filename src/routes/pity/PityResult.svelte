@@ -50,7 +50,7 @@
 	);
 </script>
 
-<Panel marks elevation="e2" {tone} class="font-num">
+<Panel marks elevation="e2" {tone} class="font-num [view-transition-name:vt-result-pity]">
 	<div class="mb-1 flex items-center gap-2 text-sm text-navy">
 		<span>{bannerName}</span>
 		{#if result.ok && !result.verified}

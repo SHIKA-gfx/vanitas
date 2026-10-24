@@ -28,10 +28,18 @@
 	const isTypingField = (el: EventTarget | null) =>
 		el instanceof HTMLElement && el.matches(TYPING_FIELDS);
 
+	/*
+	 * 초점 이벤트는 Svelte가 화면을 바꾸는 도중에도 동기로 불린다 — 화면을 옮길 때 초점이 있던 링크가 DOM에서
+	 * 빠지면 그 자리에서 focusout이 난다. 그 안에서 $state를 쓰면 state_unsafe_mutation 오류가 나고, 화면 전환
+	 * (onNavigate)이 끝나지 않아 4초 동안 멈춘다 (2026-10-23 E단계에서 발견, 그 전에도 오류는 났다).
+	 * → 값만 먼저 읽고, 쓰기는 다음 마이크로태스크로 미룬다
+	 */
+	const setTyping = (next: boolean) => queueMicrotask(() => (typing = next));
+
 	$effect(() => {
-		const onFocusIn = (e: FocusEvent) => (typing = isTypingField(e.target));
+		const onFocusIn = (e: FocusEvent) => setTyping(isTypingField(e.target));
 		// 다른 입력칸으로 바로 옮겨갈 때 탭바가 깜빡이지 않도록 relatedTarget을 본다
-		const onFocusOut = (e: FocusEvent) => (typing = isTypingField(e.relatedTarget));
+		const onFocusOut = (e: FocusEvent) => setTyping(isTypingField(e.relatedTarget));
 		document.addEventListener('focusin', onFocusIn);
 		document.addEventListener('focusout', onFocusOut);
 		return () => {
@@ -43,7 +51,9 @@
 
 <!-- 데스크톱: 좌측 세로 목록. 바깥 aside는 자리만 잡고, 안쪽이 떠 있는 판 -->
 <aside class="sticky top-0 hidden h-screen w-64 shrink-0 p-4 lg:block">
-	<div class="flex h-full flex-col rounded-xl border border-white bg-surface/92 shadow-e1">
+	<div
+		class="flex h-full flex-col rounded-xl border border-white bg-surface/92 shadow-e1 [view-transition-name:vt-rail]"
+	>
 		<a
 			href={href('/')}
 			class="block px-5 py-6 font-display text-[1.375rem] font-bold tracking-wide text-ink"
@@ -62,7 +72,7 @@
 								{#if isCurrent(item.path)}
 									<span
 										aria-hidden="true"
-										class="absolute top-1/2 left-0 h-5 w-1 -translate-y-1/2 -skew-x-30 rounded-[1px_2px] bg-brand-strong"
+										class="absolute top-1/2 left-0 h-5 w-1 -translate-y-1/2 -skew-x-30 rounded-[1px_2px] bg-brand-strong [view-transition-name:vt-rail-mark]"
 									></span>
 								{/if}
 								<NavIcon
@@ -123,7 +133,7 @@
 <nav
 	aria-label={m.nav_label()}
 	hidden={typing}
-	class="fixed inset-x-2.5 bottom-[max(0.625rem,env(safe-area-inset-bottom))] z-10 rounded-2xl border border-white bg-surface shadow-e1 lg:hidden"
+	class="fixed inset-x-2.5 bottom-[max(0.625rem,env(safe-area-inset-bottom))] z-10 rounded-2xl border border-white bg-surface shadow-e1 [view-transition-name:vt-tabbar] lg:hidden"
 >
 	<ul class="flex h-14">
 		{#each items as item (item.path)}
@@ -137,7 +147,7 @@
 						{#if isCurrent(item.path)}
 							<span
 								aria-hidden="true"
-								class="absolute top-0 left-1/2 h-1 w-6.5 -translate-x-1/2 -skew-x-30 rounded-[1px_2px] bg-brand-strong"
+								class="absolute top-0 left-1/2 h-1 w-6.5 -translate-x-1/2 -skew-x-30 rounded-[1px_2px] bg-brand-strong [view-transition-name:vt-tab-mark]"
 							></span>
 						{/if}
 						<NavIcon
