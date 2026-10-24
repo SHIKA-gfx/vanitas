@@ -235,6 +235,115 @@ def check_pity_rules():
         warn("game-config: 전환 시 남은 모집 포인트 처리 미확인 (기간 종료 변환으로 가정)")
 
 
+# ---------------------------------------------------------------- 픽업 미래시 (플래너, docs/005)
+def check_recruits():
+    sched = load("ko/schedule.json")
+    studs = load("ko/students.json")["students"]
+    bt = load("ko/banner-types.json")
+    src = load("sources.json")["sources"]
+    banners = {b["id"]: b for b in bt["bannerTypes"]}
+    first_stack = next(r["effectiveFrom"] for r in load("ko/game-config.json")["pitySystem"]["schedule"]
+                       if r["system"] == "charge")
+
+    # 학생
+    ids, game_ids = set(), set()
+    for st in studs:
+        tag = f"students: {st.get('id')}"
+        if st["id"] in ids:
+            err(f"{tag} id 중복")
+        if st["gameId"] in game_ids:
+            err(f"{tag} gameId {st['gameId']} 중복")
+        ids.add(st["id"])
+        game_ids.add(st["gameId"])
+        if st.get("koNameStatus") not in {"official", "provisional"}:
+            err(f"{tag} koNameStatus는 official | provisional")
+        if not st["name"].get("ko"):
+            err(f"{tag} 한국어 이름 없음")
+        # 괄호 표기: 한국어는 반각 "이름(의상)", 일본어는 전각 "名前（衣装）". 섞이면 화면에서 어긋나 보인다
+        ko, ja = st["name"].get("ko") or "", st["name"].get("ja") or ""
+        if any(c in ko for c in "（）") or " (" in ko:
+            err(f"{tag} 한국어 이름은 반각 괄호, 앞 공백 없이: '{ko}'")
+        if any(c in ja for c in "()") or " （" in ja:
+            err(f"{tag} 일본어 이름은 전각 괄호, 앞 공백 없이: '{ja}'")
+        for name in (ko, ja):
+            if name.count("(") + name.count("（") != name.count(")") + name.count("）"):
+                err(f"{tag} 괄호 짝이 맞지 않음: '{name}'")
+    no_ja = [st["id"] for st in studs if st["koNameStatus"] == "provisional" and not st["name"].get("ja")]
+    if no_ja:
+        warn(f"students: 가칭 학생 {len(no_ja)}명에 일본 공식 이름 없음 (화면에 함께 적어야 함): {', '.join(no_ja)}")
+
+    # 픽업 기간
+    rows = sched.get("recruits", [])
+    seen, used, prev = set(), set(), None
+    single = []
+    for r in rows:
+        tag = f"recruits: {r.get('id')}"
+        if r["id"] in seen:
+            err(f"{tag} id 중복")
+        seen.add(r["id"])
+        try:
+            start = datetime.date.fromisoformat(r["start"])
+            end = datetime.date.fromisoformat(r["end"])
+        except (KeyError, ValueError):
+            err(f"{tag} 날짜 형식 오류")
+            continue
+        if not r["id"].startswith(r["start"]):
+            err(f"{tag} id는 시작일로 시작해야 함 ({r['start']})")
+        if end <= start:
+            err(f"{tag} end가 start보다 늦지 않음")
+        if prev and start < prev:
+            err(f"{tag} 시작일 오름차순이 아님")
+        prev = start
+        if r["start"] < first_stack:
+            err(f"{tag} 모집 스택 전환({first_stack}) 이전 기간 — 플래너는 스택 방식만 다룬다")
+        status = r.get("status")
+        tiers = [src.get(x, {}).get("tier") for x in r.get("sources", [])]
+        if None in tiers:
+            err(f"{tag} sources.json에 없는 출처")
+        if status == "announced" and "official" not in tiers:
+            err(f"{tag} 공지된 기간인데 공식 출처가 없음")
+        elif status == "estimated":
+            if not r.get("sources"):
+                err(f"{tag} 추정 기간인데 출처가 없음")
+            elif len(r["sources"]) < 2:
+                single.append(r["id"])
+        elif status not in {"announced", "estimated"}:
+            err(f"{tag} status는 announced | estimated")
+        if not r.get("banners"):
+            err(f"{tag} 배너가 없음")
+        for b in r.get("banners", []):
+            bt_ = banners.get(b["type"])
+            if not bt_:
+                err(f"{tag} 배너 종류 '{b['type']}'가 banner-types에 없음")
+            elif not bt_["availableInKo"]:
+                err(f"{tag} 배너 종류 '{b['type']}'는 한국 미운영")
+            if not b.get("students"):
+                err(f"{tag} 픽업 학생이 없는 배너")
+            for sid in b.get("students", []):
+                if sid not in ids:
+                    err(f"{tag} 학생 '{sid}'가 students.json에 없음")
+                used.add(sid)
+        if r.get("freePulls") is not None and r["freePulls"] <= 0:
+            err(f"{tag} freePulls는 양수")
+    # 공지 뒤에 추정이 오는 것은 괜찮지만, 추정 뒤에 공지가 오면 순서가 틀린 것
+    seen_est = False
+    for r in rows:
+        if r["status"] == "estimated":
+            seen_est = True
+        elif seen_est:
+            err(f"recruits: {r['id']} 추정 기간 뒤에 공지된 기간이 있음")
+    orphan = sorted(ids - used)
+    if orphan:
+        warn(f"students: 어느 픽업에도 없는 학생 {len(orphan)}명: {', '.join(orphan)}")
+    if single:
+        warn(f"recruits: 출처가 하나뿐인 추정 기간 {len(single)}건 (교차 확인 전): {', '.join(single)}")
+    n_ann = sum(1 for r in rows if r["status"] == "announced")
+    span = f"{rows[0]['start']} ~ {rows[-1]['end']}" if rows else "-"
+    print(f"  recruits: {len(rows)}기간 ({span}) / 공지 {n_ann}·추정 {len(rows) - n_ann} / "
+          f"배너 {sum(len(r['banners']) for r in rows)}개 / 학생 {len(ids)}명 (가칭 "
+          f"{sum(1 for st in studs if st['koNameStatus'] == 'provisional')})")
+
+
 # ---------------------------------------------------------------- 풀 크기 대조
 def check_pool_sizes():
     bt = load("ko/banner-types.json")
@@ -298,7 +407,7 @@ def check_sources():
     src = load("sources.json")["sources"]    
     for rel in ["shared/level-table.json", "shared/cafe-ranks.json",
                 "ko/game-config.json", "ko/banner-types.json", "ko/ap-config.json",
-                "ko/income-sources.json", "ko/schedule.json"]:
+                "ko/income-sources.json", "ko/schedule.json", "ko/students.json"]:
         d = load(rel)
         for sid in d["meta"].get("sources", []):
             if sid.isdigit() and sid not in src:
@@ -578,6 +687,7 @@ def main():
     check_cafe()
     check_banners(strict)
     check_pity_rules()
+    check_recruits()
     check_pool_sizes()
     check_ap()
     check_income_sources(strict)

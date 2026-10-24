@@ -5,14 +5,17 @@
     "description": "한국 서버 콘텐츠 일정. 청휘석 수급 계산기의 레이드·이벤트 수급 시점과, 이후 플래너의 픽업 일정이 쓴다.",
     "server": "ko",
     "verifiedAt": "2026-09-26",
-    "sources": ["26", "27", "28", "29"],
+    "sources": ["26", "27", "28", "29", "31", "32"],
     "notes": [
       "start / end는 게임 날짜(YYYY-MM-DD). end는 종료일로, 시즌 길이 = end - start (일).",
       "status: announced = 공지·진행된 일정, estimated = 일본 서버 기준 추정(몰루로그 미래시·이벤트 목록).",
       "목록이 끝난 뒤의 레이드는 cadence로 이어 붙이고 추정으로 표시한다. 이벤트는 목록 밖을 추정하지 않는다.",
       "2026년 5~7월에 총력전·대결전이 함께 한 번씩 빠진 구간(56일)이 있다. 평균 주기가 아니라 일정표를 쓰는 이유.",
       "대결전 #29 종료일은 원자료에 '25.04.28'로 적혀 있었으나 26.04.28의 오기로 보고 고쳤다.",
-      "강철대륙 공략전(2026-05-26 시작)은 종료일이 확인되지 않아 events에서 뺐다."
+      "강철대륙 공략전(2026-05-26 시작)은 종료일이 확인되지 않아 events에서 뺐다.",
+      "recruits[]: 모집 스택 시대(2026-11-10~)의 픽업 기간. 플래너가 쓴다 (docs/005). 한 기간에 배너가 여럿이고, 배너마다 픽업 학생과 종류(banner-types id)를 적는다.",
+      "recruits의 end는 몰루로그가 모집 기간을 밝히지 않은 경우 시작일 + 7일로 둔다 — 한섭 픽업은 미래시 단축으로 1주 운영 (출처 32). 플래너 판정에는 시작일이 중요하다.",
+      "출처가 하나뿐인 추정 행은 validate.py가 경고한다. 두 출처의 날짜가 다르면 note에 적는다."
     ]
   },
   "cadence": {
@@ -71,5 +74,100 @@
     { "name": "DIVE into OCEAN!",                            "kind": "new",   "start": "2026-12-15", "end": "2026-12-29", "status": "estimated" },
     { "name": "여름 하늘의 프로미스",                        "kind": "rerun", "start": "2026-12-29", "end": "2027-01-12", "status": "estimated" },
     { "name": "It's our Engine!",                            "kind": "new",   "start": "2027-01-12", "end": "2027-01-26", "status": "estimated" }
+  ],
+  "recruits": [
+    {
+      "id": "2026-11-10-serenade-permanent", "start": "2026-11-10", "end": "2026-11-17", "status": "estimated", "event": "빛으로 나아가는 그녀들의 소야곡 (상설화)",
+      "banners": [
+        {"type": "pickup_limited", "students": ["makoto"]},
+        {"type": "pickup_limited", "students": ["ako_dress"]},
+        {"type": "pickup_normal", "students": ["satsuki"]},
+        {"type": "pickup_normal", "students": ["chiaki"]},
+        {"type": "pickup_normal", "students": ["kanna_swimsuit"]}
+      ],
+      "sources": ["31", "32"],
+      "note": "이벤트 상설화와 함께 복각 픽업. 아카라이브 평가글(32)은 같은 픽업을 1주 이른 11/03~11/10으로 본다."
+    },
+    {
+      "id": "2026-11-17-pandemonium-cruise", "start": "2026-11-17", "end": "2026-11-24", "status": "estimated", "event": "출항! 만마선", "freePulls": 100,
+      "banners": [
+        {"type": "pickup_limited", "students": ["makoto_swimsuit"]},
+        {"type": "pickup_limited", "students": ["satsuki_swimsuit"]}
+      ],
+      "sources": ["31", "32"],
+      "note": "모집 기간 11/17~11/24는 몰루로그가 밝힌 값. 100회 무료 모집이 스택·마일리지에 쌓이는지는 미확인. 아카라이브(32)는 1주 이른 11/10~11/17."
+    },
+    {
+      "id": "2026-11-24-fes-5-5th", "start": "2026-11-24", "end": "2026-12-01", "status": "estimated",
+      "banners": [
+        {"type": "fes", "students": ["ibuki_swimsuit"]},
+        {"type": "fes", "students": ["iroha_swimsuit"]},
+        {"type": "pickup_limited", "students": ["neru_uniform"]},
+        {"type": "pickup_limited", "students": ["rio"]}
+      ],
+      "sources": ["31", "32"],
+      "note": "일본 5.5주년 페스(일본 2026-08-05~08-12, 아카라이브 비교표). 페스 신규 2명 + 한정 복각 2명이 같은 기간. 아카라이브(32)는 1주 이른 11/17~11/24."
+    },
+    {
+      "id": "2026-12-01-pandemic-hazard-rerun", "start": "2026-12-01", "end": "2026-12-08", "status": "estimated", "event": "팬데믹 해저드",
+      "banners": [
+        {"type": "pickup_normal", "students": ["sena_casual"]},
+        {"type": "pickup_normal", "students": ["juri_parttime"]},
+        {"type": "pickup_normal", "students": ["nagusa"]},
+        {"type": "pickup_normal", "students": ["niya"]}
+      ],
+      "sources": ["31"]
+    },
+    {
+      "id": "2026-12-15-dive-into-ocean", "start": "2026-12-15", "end": "2026-12-22", "status": "estimated", "event": "DIVE into OCEAN!",
+      "banners": [
+        {"type": "pickup_normal", "students": ["kokoro"]},
+        {"type": "pickup_normal", "students": ["kotone"]}
+      ],
+      "sources": ["31"]
+    },
+    {
+      "id": "2026-12-29-natsuzora-rerun", "start": "2026-12-29", "end": "2027-01-05", "status": "estimated", "event": "여름 하늘의 프로미스",
+      "banners": [
+        {"type": "pickup_normal", "students": ["kasumi_swimsuit"]},
+        {"type": "pickup_limited", "students": ["seia_swimsuit"]},
+        {"type": "pickup_limited", "students": ["hasumi_swimsuit"]},
+        {"type": "pickup_normal", "students": ["moe_swimsuit"]},
+        {"type": "pickup_normal", "students": ["fubuki_swimsuit"]}
+      ],
+      "sources": ["31"],
+      "note": "복각 이벤트지만 카스미(수영복)는 신규."
+    },
+    {
+      "id": "2027-01-12-its-our-engine", "start": "2027-01-12", "end": "2027-01-19", "status": "estimated", "event": "It's our Engine!",
+      "banners": [
+        {"type": "pickup_normal", "students": ["anna"]},
+        {"type": "pickup_normal", "students": ["erina"]}
+      ],
+      "sources": ["31"]
+    },
+    {
+      "id": "2027-01-26-occult-club-rerun", "start": "2027-01-26", "end": "2027-02-02", "status": "estimated", "event": "우리는 오컬트 연구회! (복각)",
+      "banners": [
+        {"type": "pickup_normal", "students": ["tsumugi"]},
+        {"type": "pickup_normal", "students": ["eri"]},
+        {"type": "pickup_normal", "students": ["kanoe"]},
+        {"type": "pickup_normal", "students": ["miyako_swimsuit"]},
+        {"type": "pickup_normal", "students": ["saki_swimsuit"]}
+      ],
+      "sources": ["31"],
+      "note": "복각 이벤트지만 츠무기는 신규."
+    },
+    {
+      "id": "2027-02-09-gekkamusai-permanent", "start": "2027-02-09", "end": "2027-02-16", "status": "estimated", "event": "월화몽소 (상설화)",
+      "banners": [
+        {"type": "pickup_normal", "students": ["tomoe_qipao"]},
+        {"type": "pickup_normal", "students": ["marina_qipao"]},
+        {"type": "pickup_normal", "students": ["kanna"]},
+        {"type": "pickup_normal", "students": ["noa"]}
+      ],
+      "sources": ["31"],
+      "note": "이벤트 상설화와 함께 복각 픽업."
+    }
   ]
 }

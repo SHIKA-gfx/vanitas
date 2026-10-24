@@ -1,0 +1,317 @@
+{
+  "$schema": "../_schema/students.schema.json",
+  "meta": {
+    "id": "students",
+    "server": "ko",
+    "description": "픽업 플래너가 고를 수 있는 학생. 미래시(recruits)에 나오는 학생만 담는다 — 전체 도감이 아니다. 텍스트만, 이미지 없음.",
+    "verifiedAt": "2026-10-24",
+    "sources": [
+      "31"
+    ],
+    "notes": [
+      "id는 VANITAS 안의 이름(영문 슬러그). gameId는 게임 내부 학생 번호로, 몰루로그 학생 이미지 주소에서 옮겼다 — 서버가 달라도 같은 학생을 가리킨다.",
+      "name.ko: 한국 공식 표기. 한국 미출시라 공식 표기가 없으면 커뮤니티에서 주로 쓰는 이름을 넣고 koNameStatus를 provisional로 둔다 → 화면에 '가칭' + 일본 공식 이름 (2026-10-24 결정).",
+      "의상 학생은 한국 공식 표기 방식 '이름(의상)'으로 쓴다. 몰루로그는 괄호 없이 붙여 쓴다(마코토수영복).",
+      "name.ja: 일본 공식 표기. null은 아직 옮기지 않은 것 — 검토 때 일본 공식 공지로 채운다."
+    ]
+  },
+  "students": [
+    {
+      "id": "makoto",
+      "gameId": 20033,
+      "name": {
+        "ko": "마코토",
+        "ja": "マコト"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "ako_dress",
+      "gameId": 10087,
+      "name": {
+        "ko": "아코(드레스)",
+        "ja": "アコ（ドレス）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "satsuki",
+      "gameId": 20040,
+      "name": {
+        "ko": "사츠키",
+        "ja": "サツキ"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "chiaki",
+      "gameId": 10107,
+      "name": {
+        "ko": "치아키",
+        "ja": "チアキ"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "kanna_swimsuit",
+      "gameId": 10096,
+      "name": {
+        "ko": "칸나(수영복)",
+        "ja": "カンナ（水着）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "makoto_swimsuit",
+      "gameId": 10146,
+      "name": {
+        "ko": "마코토(수영복)",
+        "ja": "マコト（水着）"
+      },
+      "koNameStatus": "provisional"
+    },
+    {
+      "id": "satsuki_swimsuit",
+      "gameId": 10147,
+      "name": {
+        "ko": "사츠키(수영복)",
+        "ja": "サツキ（水着）"
+      },
+      "koNameStatus": "provisional"
+    },
+    {
+      "id": "ibuki_swimsuit",
+      "gameId": 20060,
+      "name": {
+        "ko": "이부키(수영복)",
+        "ja": "イブキ（水着）"
+      },
+      "koNameStatus": "provisional"
+    },
+    {
+      "id": "iroha_swimsuit",
+      "gameId": 10148,
+      "name": {
+        "ko": "이로하(수영복)",
+        "ja": "イロハ（水着）"
+      },
+      "koNameStatus": "provisional"
+    },
+    {
+      "id": "neru_uniform",
+      "gameId": 10111,
+      "name": {
+        "ko": "네루(교복)",
+        "ja": "ネル（制服）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "rio",
+      "gameId": 20041,
+      "name": {
+        "ko": "리오",
+        "ja": "リオ"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "sena_casual",
+      "gameId": 10113,
+      "name": {
+        "ko": "세나(사복)",
+        "ja": "セナ（私服）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "juri_parttime",
+      "gameId": 10114,
+      "name": {
+        "ko": "주리(아르바이트)",
+        "ja": "ジュリ（アルバイト）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "nagusa",
+      "gameId": 10119,
+      "name": {
+        "ko": "나구사",
+        "ja": "ナグサ"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "niya",
+      "gameId": 20046,
+      "name": {
+        "ko": "니야",
+        "ja": "ニヤ"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "kokoro",
+      "gameId": 10149,
+      "name": {
+        "ko": "코코로",
+        "ja": "ココロ"
+      },
+      "koNameStatus": "provisional"
+    },
+    {
+      "id": "kotone",
+      "gameId": 10150,
+      "name": {
+        "ko": "코토네",
+        "ja": "コトネ"
+      },
+      "koNameStatus": "provisional"
+    },
+    {
+      "id": "kasumi_swimsuit",
+      "gameId": 20061,
+      "name": {
+        "ko": "카스미(수영복)",
+        "ja": "カスミ（水着）"
+      },
+      "koNameStatus": "provisional"
+    },
+    {
+      "id": "seia_swimsuit",
+      "gameId": 10123,
+      "name": {
+        "ko": "세이아(수영복)",
+        "ja": "セイア（水着）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "hasumi_swimsuit",
+      "gameId": 10124,
+      "name": {
+        "ko": "하스미(수영복)",
+        "ja": "ハスミ（水着）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "moe_swimsuit",
+      "gameId": 10097,
+      "name": {
+        "ko": "모에(수영복)",
+        "ja": "モエ（水着）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "fubuki_swimsuit",
+      "gameId": 20037,
+      "name": {
+        "ko": "후부키(수영복)",
+        "ja": "フブキ（水着）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "anna",
+      "gameId": 10151,
+      "name": {
+        "ko": "안나",
+        "ja": "アンナ"
+      },
+      "koNameStatus": "provisional"
+    },
+    {
+      "id": "erina",
+      "gameId": 20062,
+      "name": {
+        "ko": "에리나",
+        "ja": "エリナ"
+      },
+      "koNameStatus": "provisional"
+    },
+    {
+      "id": "tsumugi",
+      "gameId": 10152,
+      "name": {
+        "ko": "츠무기",
+        "ja": "ツムギ"
+      },
+      "koNameStatus": "provisional"
+    },
+    {
+      "id": "eri",
+      "gameId": 10125,
+      "name": {
+        "ko": "에리",
+        "ja": "エリ"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "kanoe",
+      "gameId": 10126,
+      "name": {
+        "ko": "카노에",
+        "ja": "カノエ"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "miyako_swimsuit",
+      "gameId": 10071,
+      "name": {
+        "ko": "미야코(수영복)",
+        "ja": "ミヤコ（水着）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "saki_swimsuit",
+      "gameId": 10072,
+      "name": {
+        "ko": "사키(수영복)",
+        "ja": "サキ（水着）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "tomoe_qipao",
+      "gameId": 20038,
+      "name": {
+        "ko": "토모에(치파오)",
+        "ja": "トモエ（チーパオ）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "marina_qipao",
+      "gameId": 10103,
+      "name": {
+        "ko": "마리나(치파오)",
+        "ja": "マリナ（チーパオ）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "kanna",
+      "gameId": 20023,
+      "name": {
+        "ko": "칸나",
+        "ja": "カンナ"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "noa",
+      "gameId": 10052,
+      "name": {
+        "ko": "노아",
+        "ja": "ノア"
+      },
+      "koNameStatus": "official"
+    }
+  ]
+}
