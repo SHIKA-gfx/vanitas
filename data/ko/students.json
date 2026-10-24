@@ -30,7 +30,7 @@
       "gameId": 10087,
       "name": {
         "ko": "아코(드레스)",
-        "ja": "アコ (ドレス）"
+        "ja": "アコ（ドレス）"
       },
       "koNameStatus": "official"
     },
@@ -57,7 +57,7 @@
       "gameId": 10096,
       "name": {
         "ko": "칸나(수영복)",
-        "ja": "カンナ (水着）"
+        "ja": "カンナ（水着）"
       },
       "koNameStatus": "official"
     },
@@ -66,7 +66,7 @@
       "gameId": 10146,
       "name": {
         "ko": "마코토(수영복)",
-        "ja": "マコト (水着）"
+        "ja": "マコト（水着）"
       },
       "koNameStatus": "provisional"
     },
@@ -103,6 +103,7 @@
       "name": {
         "ko": "네루(교복)",
         "ja": "ネル（制服）"
+      },
       "koNameStatus": "official"
     },
     {
