@@ -74,7 +74,7 @@
 	 * 공간 문법 (2026-10-23, 디자인 문서 5-19). 값만 여기 두고, 쓰는 곳은 B(배경)·C(부품) 단계에서 붙인다.
 	 *   screen-top / mid / low  화면 바탕 세로 그라데이션. 위(sky 62%) → 가운데(sky 20%, 판이 놓이는 곳)
 	 *                           → 아래 바닥 쪽(sky 46%). 배경 위에 바로 놓이는 글자는 ink·navy만 —
-	 *                           screen-top 위 brand-strong은 3.8:1로 미달 (ink 10.2, navy 7.45)
+	 *                           brand-strong은 어디서든 4.5:1 미달 (screen-top 3.55 ~ screen-mid 4.45; ink 10.2+, navy 7.45+)
 	 *   blush                   왼쪽 아래 분홍 기운. 배경 장식 전용 — 글자·아이콘·테두리·의미 표시 금지
 	 *   slot                    판에 파인 입력칸의 바탕 (sky 16%)
 	 * 판은 따로 토큰을 두지 않는다: bg-surface/92 (블러 없음)
@@ -163,6 +163,10 @@
 		line-height: 1.6;
 		color: var(--color-ink);
 		/*
+		 * 화면을 위아래로 당겼을 때(오버스크롤) 비치는 바탕. 배경 부품(ShittimBackground)과 이어지는 색 (2026-10-23)
+		 */
+		background-color: var(--color-screen-mid);
+		/*
 		 * 한국어는 단어(어절) 단위로 줄을 바꾼다 (2026-10-01, 360px 점검).
 		 * 기본값은 글자 단위라 "계산해 / 요", "입장 보 / 상"처럼 마지막 글자만 넘어가거나 단어가 잘렸다.
 		 * 칸보다 긴 단어(긴 숫자·영문)는 넘치지 않도록 그때만 글자 단위로 끊는다.
@@ -173,18 +177,10 @@
 }
 
 /*
- * 배경층 무늬 (2026-09-29). 장식은 배경층까지 — 패널 안(데이터층)에는 쓰지 않는다.
- *   bg-diagonal  계산기 화면: wash 위 sky 30% 사선
- *   홈 화면은 삼각형 타일 (TriangleBackground 부품, CSS가 아니라 SVG)
+ * 배경층 무늬는 부품 하나로 옮겼다: src/lib/components/ShittimBackground.svelte (2026-10-23, 5-19).
+ * 예전의 계산기 사선(bg-diagonal)과 홈 삼각형 타일(TriangleBackground)은 이 배경으로 합쳤다.
+ * 장식은 배경층까지 — 패널 안(데이터층)에는 쓰지 않는다.
  */
-@utility bg-diagonal {
-	background-color: var(--color-wash);
-	background-image: repeating-linear-gradient(
-		135deg,
-		color-mix(in srgb, var(--color-sky) 30%, transparent) 0 1px,
-		transparent 1px 12px
-	);
-}
 
 /*
  * 입력칸 공통 모양 (2026-10-01, 디자인 문서 5-8). NumberField·SelectField·DateField가 쓴다.
