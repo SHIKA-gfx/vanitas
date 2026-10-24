@@ -120,13 +120,17 @@
 	<!-- vt-page: 화면 전환 때 이 묶음이 가라앉았다 떠오른다 (layout.css "화면 전환") -->
 	<div class="relative min-w-0 flex-1 pb-(--tabbar-space) [view-transition-name:vt-page] lg:pb-0">
 		{#if !isHome}
-			<!-- 페이지 제목과 같은 줄 오른쪽. 넓은 화면은 왼쪽 목록 맨 위의 VANITAS가 홈 링크 -->
+			<!--
+				페이지 제목과 같은 줄 오른쪽의 홈 링크 원. 모바일·태블릿은 탭바에 홈이 없어서 (2026-10-01),
+				넓은 화면도 같은 자리에 둔다 (2026-10-24 — 왼쪽 목록의 VANITAS 글자만으로는 홈으로 가는 길이 잘 보이지 않았다).
+				넓은 화면은 제목 칩(48px)과 크기·높이를 맞춘다
+			-->
 			<a
 				href={homeHref}
 				aria-label={m.nav_home()}
-				class="absolute top-5 right-4 z-10 flex size-11 items-center justify-center rounded-full orb [view-transition-name:vt-orb] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-strong lg:hidden"
+				class="absolute top-5 right-4 z-10 flex size-11 items-center justify-center rounded-full orb [view-transition-name:vt-orb] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-strong lg:top-6 lg:size-12"
 			>
-				<VanitasSymbol class="w-6 text-white" />
+				<VanitasSymbol class="w-6 text-white lg:w-7" />
 			</a>
 		{/if}
 		{@render children()}
