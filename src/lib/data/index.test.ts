@@ -7,7 +7,9 @@ import {
 	getPitySystem,
 	getPoolEntry,
 	getRateGroups,
-	listBannerTypes
+	getStudent,
+	listBannerTypes,
+	listRecruits
 } from './index';
 
 describe('확률 그룹', () => {
@@ -122,5 +124,34 @@ describe('getPityRule', () => {
 		for (const id of getGameConfig().chargeSystem.unconfirmedBanners) {
 			expect(getPityRule(id, AFTER), id).toMatchObject({ kind: 'none', reason: 'rule_unconfirmed' });
 		}
+	});
+});
+describe('픽업 미래시 (플래너)', () => {
+	it('모든 픽업 기간은 모집 스택 전환 이후이고 시작일 오름차순이다', () => {
+		const rows = listRecruits();
+		expect(rows.length).toBeGreaterThan(0);
+		for (const r of rows) expect(getPitySystem(r.start).system).toBe('charge');
+		const starts = rows.map((r) => r.start);
+		expect(starts).toEqual([...starts].sort());
+	});
+
+	it('from 이후에 끝나는 기간만 고른다', () => {
+		const all = listRecruits();
+		const later = listRecruits({ from: all[0].end });
+		expect(later.length).toBe(all.length - 1);
+	});
+
+	it('배너의 학생은 모두 찾을 수 있고, 배너 종류로 스택이 정해진다', () => {
+		for (const r of listRecruits()) {
+			for (const b of r.banners) {
+				for (const id of b.students) expect(getStudent(id).id).toBe(id);
+				expect(getPityRule(b.type, r.start).kind, `${r.id} ${b.type}`).toBe('charge');
+			}
+		}
+	});
+
+	it('가칭 학생은 koNameStatus로 구분한다', () => {
+		expect(getStudent('makoto_swimsuit').koNameStatus).toBe('provisional');
+		expect(getStudent('rio').koNameStatus).toBe('official');
 	});
 });

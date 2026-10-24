@@ -408,4 +408,44 @@ export interface ScheduleFile {
 	cadence: Record<RaidKind, { intervalDays: number; durationDays: number }>;
 	raids: RaidSeason[];
 	events: ScheduledEvent[];
+	/** 모집 스택 시대(2026-11-10~)의 픽업 기간. 픽업 플래너가 쓴다 (docs/005) */
+	recruits: RecruitPeriod[];
+}
+
+/** 한 픽업 기간. 같은 기간에 배너가 여럿 열린다 */
+export interface RecruitPeriod {
+	/** 'YYYY-MM-DD-슬러그' — 공유 링크·저장값이 가리키는 이름이라 바꾸지 않는다 */
+	id: string;
+	start: string;
+	end: string;
+	status: 'announced' | 'estimated';
+	/** 함께 열리는 이벤트 이름 (표시용) */
+	event?: string;
+	/** 무료 모집 횟수 (스택·마일리지에 쌓이는지는 미확인) */
+	freePulls?: number;
+	banners: RecruitBanner[];
+	sources: string[];
+	note?: string;
+}
+
+export interface RecruitBanner {
+	/** banner-types.json id. 스택 종류·픽뚫 여부는 여기서 파생한다 (저장하지 않는다) */
+	type: string;
+	/** students.json id */
+	students: string[];
+}
+
+/** 플래너가 고를 수 있는 학생. 미래시에 나오는 학생만 */
+export interface Student {
+	id: string;
+	/** 게임 내부 학생 번호 */
+	gameId: number;
+	name: { ko: string; ja: string | null };
+	/** provisional: 한국 미출시라 공식 표기가 없어 커뮤니티 이름을 쓴 것 → 화면에 '가칭' */
+	koNameStatus: 'official' | 'provisional';
+}
+
+export interface StudentsFile {
+	meta: Meta;
+	students: Student[];
 }

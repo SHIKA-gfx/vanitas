@@ -8,6 +8,7 @@ import poolSizesJson from '../../../data/ko/pool-sizes.json';
 import apConfigJson from '../../../data/ko/ap-config.json';
 import incomeSourcesJson from '../../../data/ko/income-sources.json';
 import scheduleJson from '../../../data/ko/schedule.json';
+import studentsJson from '../../../data/ko/students.json';
 import levelTableJson from '../../../data/shared/level-table.json';
 import cafeRanksJson from '../../../data/shared/cafe-ranks.json';
 import { addDays } from '$lib/game-date';
@@ -31,7 +32,10 @@ import type {
 	RateGroup,
 	RateVariant,
 	ScheduledEvent,
-	ScheduleFile
+	RecruitPeriod,
+	ScheduleFile,
+	Student,
+	StudentsFile
 } from './types';
 
 /** 게임 데이터의 서버 구분. 로케일(UI 언어)과는 별개 축이다. */
@@ -50,6 +54,7 @@ const datasets = {
 		ap: apConfigJson as ApConfig,
 		income: incomeSourcesJson as unknown as IncomeSourcesFile,
 		schedule: scheduleJson as unknown as ScheduleFile,
+		students: studentsJson as unknown as StudentsFile,
 		levels: levelTable,
 		cafe: cafeRanks
 	}
@@ -243,6 +248,22 @@ export function listIncomePresets(server: ServerId = 'ko'): (IncomePreset & { id
 
 export function getSchedule(server: ServerId = 'ko'): ScheduleFile {
 	return dataset(server).schedule;
+}
+
+// ---------------------------------------------------------------- 픽업 미래시 (플래너)
+
+/**
+ * 픽업 기간 목록 (시작일 오름차순). from을 주면 그날 이후에 끝나는 기간만 — 이미 끝난 픽업은 계획 대상이 아니다.
+ */
+export function listRecruits(options: { from?: string; server?: ServerId } = {}): RecruitPeriod[] {
+	const rows = getSchedule(options.server ?? 'ko').recruits;
+	return options.from ? rows.filter((r) => r.end > options.from!) : rows;
+}
+
+export function getStudent(id: string, server: ServerId = 'ko'): Student {
+	const found = dataset(server).students.students.find((s) => s.id === id);
+	if (!found) throw new Error(`알 수 없는 학생: ${id}`);
+	return found;
 }
 
 /**
