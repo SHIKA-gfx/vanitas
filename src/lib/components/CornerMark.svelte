@@ -5,13 +5,22 @@
 	모양 (2026-10-01): 굵은 십자, 16px · 선 4.5px · brand.
 	가는 십자·원·마름모·모서리 선 시안을 스타일 타일에서 비교한 뒤, 두께만 키운 이 모양으로 정했다.
 	표식 중심이 패널 모서리에 오도록 놓고, 오른쪽·아래 모서리는 거울처럼 뒤집는다.
+	색은 결과판의 판정 색을 따른다 (2026-10-23, 5-18): 부족이면 shortfall, 그 밖에는 brand. 장식이라 글자 대비 기준은 없다
 -->
 <script lang="ts" module>
 	export type Corner = 'tl' | 'tr' | 'bl' | 'br';
 </script>
 
 <script lang="ts">
-	let { corner }: { corner: Corner } = $props();
+	import type { PanelTone } from './Panel.svelte';
+
+	let { corner, tone = 'neutral' }: { corner: Corner; tone?: PanelTone } = $props();
+
+	const COLOR: Record<PanelTone, string> = {
+		neutral: 'text-brand',
+		secured: 'text-brand',
+		shortfall: 'text-shortfall'
+	};
 
 	/** 표식 중심(9,9)이 패널 모서리에 오도록 9px 바깥에 놓는다 */
 	const POSITION: Record<Corner, string> = {
@@ -23,7 +32,7 @@
 </script>
 
 <svg
-	class="pointer-events-none absolute size-[18px] text-brand {POSITION[corner]}"
+	class="pointer-events-none absolute size-[18px] {COLOR[tone]} {POSITION[corner]}"
 	viewBox="0 0 18 18"
 	fill="none"
 	stroke="currentColor"

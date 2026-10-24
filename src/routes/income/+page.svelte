@@ -221,7 +221,7 @@
 	  (열마다 따로 쌓지 않고 행을 공유하면, 옆 열이 긴 만큼 패널 사이가 벌어진다)
 -->
 <main
-	class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 md:grid md:grid-cols-2 md:gap-6 xl:max-w-7xl xl:grid-cols-3"
+	class="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6 md:grid md:grid-cols-2 md:gap-6 xl:max-w-7xl xl:grid-cols-3"
 >
 	<!-- 제목 줄: 제목 + 입력 초기화 (모바일은 오른쪽 끝에 홈 로고가 있어 초기화는 아이콘만) -->
 	<div class="flex items-center gap-2 md:col-span-2 xl:col-span-3">

@@ -14,7 +14,7 @@
 	} from '$lib/calc/levelup-adapter';
 	import { getApConfig } from '$lib/data';
 	import { formatDate, formatInt } from '$lib/format';
-	import Panel from '$lib/components/Panel.svelte';
+	import Panel, { type PanelTone } from '$lib/components/Panel.svelte';
 	import Metric from '$lib/components/Metric.svelte';
 
 	interface Props {
@@ -41,6 +41,9 @@
 			? summarizeRecords(result.records)
 			: null
 	);
+
+	// 결과판의 판정 색 (2026-10-23 결정, 5-18): "N년 안에는 닿기 어려워요"만 부족, 나머지는 판정이 아니라 색 없음
+	const tone: PanelTone = $derived(result.kind === 'beyond_horizon' ? 'shortfall' : 'neutral');
 </script>
 
 {#snippet metrics(cost: LevelUpCost)}
@@ -66,11 +69,13 @@
 	</div>
 {/snippet}
 
-<Panel marks class="font-num">
+<Panel marks elevation="e2" {tone} class="font-num">
 	{#if result.kind === 'invalid'}
 		<p class="text-lg font-bold text-ink">{invalidMessage(result.field)}</p>
 	{:else if result.kind === 'at_cap'}
-		<p class="text-[1.375rem] leading-snug font-bold text-ink">{m.levelup_verdict_at_cap()}</p>
+		<p class="text-[1.375rem] leading-snug font-bold text-ink md:text-2xl">
+			{m.levelup_verdict_at_cap()}
+		</p>
 		{#if result.mastery}
 			<p class="mt-1 text-sm text-navy tabular-nums">
 				{m.levelup_cap_mastery({
@@ -83,20 +88,20 @@
 			<p class="mt-1 text-sm text-navy">{m.levelup_cap_hint_date_mode()}</p>
 		{/if}
 	{:else if result.kind === 'already'}
-		<p class="text-[1.375rem] leading-snug font-bold text-ink">
+		<p class="text-[1.375rem] leading-snug font-bold text-ink md:text-2xl">
 			{m.levelup_verdict_already({ level: String(target) })}
 		</p>
 	{:else if result.kind === 'beyond_horizon'}
-		<p class="text-[1.375rem] leading-snug font-bold text-ink">
+		<p class="text-[1.375rem] leading-snug font-bold text-ink md:text-2xl">
 			{m.levelup_verdict_beyond({ years: formatInt(HORIZON_DAYS / 365) })}
 		</p>
 	{:else if result.kind === 'reached'}
 		{#if result.days === 0}
-			<p class="text-[1.375rem] leading-snug font-bold text-ink">
+			<p class="text-[1.375rem] leading-snug font-bold text-ink md:text-2xl">
 				{m.levelup_verdict_reached_today({ level: String(target) })}
 			</p>
 		{:else}
-			<p class="text-[1.375rem] leading-snug font-bold text-ink">
+			<p class="text-[1.375rem] leading-snug font-bold text-ink md:text-2xl">
 				{m.levelup_verdict_reached({
 					level: String(target),
 					days: m.unit_days({ count: formatInt(result.days) })
@@ -108,7 +113,7 @@
 			{@render metrics(result.cost)}
 		{/if}
 	{:else}
-		<p class="text-[1.375rem] leading-snug font-bold text-ink">
+		<p class="text-[1.375rem] leading-snug font-bold text-ink md:text-2xl">
 			{m.levelup_verdict_projected({
 				date: formatDate(result.date),
 				level: String(result.state.level)

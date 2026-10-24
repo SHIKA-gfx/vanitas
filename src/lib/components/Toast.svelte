@@ -1,6 +1,7 @@
 <!--
 	화면에 뜨는 알림 (2026-10-02). role="status"라 화면 낭독기가 내용을 읽어준다.
 	초기화의 "되돌리기", 링크 복사 완료, 공유 링크 보기 띠, 백업 안내가 같은 모양을 쓴다.
+	높이 단계 e3 — 화면에서 가장 높이 뜨는 navy 판 (2026-10-23, 5-19)
 
 	- 문서 맨 끝(body)으로 옮겨서 띄운다 (portal). 어느 부품 안에서 띄워도 화면 맨 위 층에 뜬다
 	- 글(children)과 버튼(actions)을 나눠 받는다. 버튼은 늘 오른쪽 — 글이 길어 줄이 바뀌면
@@ -34,7 +35,7 @@
 >
 	<div
 		role="status"
-		class="pointer-events-auto flex w-full max-w-xl flex-wrap items-end gap-x-4 gap-y-2 rounded-lg bg-navy px-4 py-3 text-sm leading-relaxed text-white shadow-panel sm:w-auto {place ===
+		class="pointer-events-auto flex w-full max-w-xl flex-wrap items-end gap-x-4 gap-y-2 rounded-xl bg-navy px-4 py-3 text-sm leading-relaxed text-white shadow-e3 sm:w-auto {place ===
 		'center'
 			? 'lg:max-w-md lg:px-6 lg:py-5'
 			: ''}"

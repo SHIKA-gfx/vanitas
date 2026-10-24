@@ -143,17 +143,19 @@
 
 <Seo title={`${m.pity_page_title()} | ${m.app_title()}`} description={m.meta_pity_description()} />
 
-<main class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 md:grid md:grid-cols-2 md:gap-6">
+<main class="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6 md:grid md:grid-cols-2 md:gap-6">
 	<!-- 제목 줄: 제목 + 입력 초기화 (모바일은 오른쪽 끝에 홈 로고가 있어 초기화는 아이콘만) -->
 	<div class="flex items-center gap-2 md:col-span-2">
 		<h1 class="text-[1.75rem] font-bold text-ink">{m.pity_page_title()}</h1>
 		<ResetButton onreset={saved.reset} />
 	</div>
 
-	<div class="flex flex-col gap-3 md:col-start-2 md:row-start-2">
+	<!-- 판 사이 24px: 아래 판의 제목 탭이 위로 14px 솟는다 (Panel.svelte) -->
+	<div class="flex flex-col gap-6 md:col-start-2 md:row-start-2">
 		<!-- 모집 개편 안내 띠: 안내와 계산 기준 선택을 한자리에 (2026-10-23 결정) -->
 		{#if nextSystem}
-			<div class="flex flex-col gap-3 rounded-lg bg-wash px-4 py-3">
+			<!-- 높이 e0: 판보다 한 단계 낮은 얇은 판 (5-19) -->
+			<div class="flex flex-col gap-3 rounded-xl border border-white bg-surface/62 px-4 py-3">
 				<p class="text-sm leading-relaxed text-ink">
 					{m.pity_switch_notice({ date: formatDate(nextSystem.effectiveFrom) })}
 				</p>
@@ -193,7 +195,7 @@
 
 	<!-- 두 열의 바닥을 맞춘다: 입력 패널을 오른쪽 열(결과 + 그래프) 높이까지 늘인다 -->
 	<div class="md:col-start-1 md:row-span-2 md:row-start-2 md:flex md:flex-col">
-		<Panel class="md:flex-1">
+		<Panel title={m.pity_section_inputs()} class="md:flex-1">
 			<div class="flex flex-col gap-4">
 				<SelectField
 					label={m.pity_input_banner()}
