@@ -208,10 +208,18 @@
 					}
 					options={bannerOptions}
 				/>
-				<NumberField label={m.pity_input_gems()} bind:value={res.gems} />
+				<NumberField label={m.pity_input_gems()} unit={m.field_unit_gems()} bind:value={res.gems} />
 				<div class="grid grid-cols-2 gap-4">
-					<NumberField label={m.pity_input_single_tickets()} bind:value={res.singleTickets} />
-					<NumberField label={m.pity_input_ten_tickets()} bind:value={res.tenPullTickets} />
+					<NumberField
+						label={m.pity_input_single_tickets()}
+						unit={m.field_unit_tickets()}
+						bind:value={res.singleTickets}
+					/>
+					<NumberField
+						label={m.pity_input_ten_tickets()}
+						unit={m.field_unit_tickets()}
+						bind:value={res.tenPullTickets}
+					/>
 				</div>
 				{#if pool}
 					<NumberField

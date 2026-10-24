@@ -215,32 +215,41 @@
 }
 
 /*
- * 입력칸 공통 모양 (2026-10-01, 디자인 문서 5-8). NumberField·SelectField·DateField가 쓴다.
- *   기본: 옅은 바탕(wash) + 연한 테두리, 높이 44px, 모서리 8px
- *   초점: 흰 바탕 + brand-strong 테두리 + 옅은 빛 번짐
- *   오류: blocked 테두리 + 옅은 빛 번짐 (초점이 와도 오류 색 유지)
- * 칸의 경계는 연하지만, 라벨이 늘 위에 붙어 있고 바탕색이 패널과 달라 칸이 구분된다.
+ * 입력칸 공통 모양 — 판에 파인 홈 (2026-10-23, 디자인 문서 5-19). NumberField·SelectField·DateField가 쓴다.
+ *   기본: slot 바탕 + 안쪽 그림자(위는 어둡게, 아래는 밝게) + 연한 테두리, 높이 48px, 모서리 8px
+ *   초점: 흰 바탕으로 "떠오르고" brand-strong 테두리 + 하늘빛 번짐. 입력 중엔 쉼표 없음 (5-8)
+ *   오류: blocked 테두리 + 옅은 번짐 (초점이 와도 오류 색 유지)
+ * 그림자는 전환하지 않는다 (5-19: 그림자 애니메이션은 매 프레임 다시 그린다) — 테두리·바탕만 짧게 바뀐다.
+ * 초점 표시는 투명 outline을 함께 둔다: 고대비(강제 색상) 모드는 그림자를 지우지만 outline은 시스템 색으로 그린다.
+ * 이전(2026-10-01~): wash 바탕 + 연한 테두리, 44px
  */
 @utility field {
-	@apply h-11 w-full rounded-lg border bg-wash px-3.5 text-ink transition-[border-color,box-shadow,background-color] outline-none;
-	border-color: color-mix(in srgb, var(--color-navy) 18%, transparent);
+	@apply h-12 w-full rounded-lg border bg-slot px-3.5 text-ink transition-[border-color,background-color];
+	border-color: color-mix(in srgb, var(--color-navy) 12%, transparent);
+	box-shadow:
+		inset 0 2px 3px rgb(42 66 91 / 0.1),
+		inset 0 -1px 0 rgb(255 255 255);
+	outline: 2px solid transparent;
+	outline-offset: 2px;
 	&:hover {
-		border-color: color-mix(in srgb, var(--color-navy) 35%, transparent);
+		border-color: color-mix(in srgb, var(--color-navy) 30%, transparent);
 	}
 	&:focus {
 		border-color: var(--color-brand-strong);
 		background-color: var(--color-surface);
-		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand) 18%, transparent);
+		box-shadow:
+			0 0 0 3px color-mix(in srgb, var(--color-brand) 18%, transparent),
+			0 0 20px rgb(0 214 250 / 0.45);
 	}
 }
 @utility field-error {
 	border-color: var(--color-blocked);
 	background-color: var(--color-surface);
-	box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-blocked) 12%, transparent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-blocked) 12%, transparent);
 	&:hover,
 	&:focus {
 		border-color: var(--color-blocked);
-		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-blocked) 18%, transparent);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-blocked) 18%, transparent);
 	}
 }
 
