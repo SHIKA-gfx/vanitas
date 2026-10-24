@@ -24,11 +24,11 @@
 <Seo title={m.meta_home_title()} description={m.meta_home_description()} />
 
 <!--
-	모바일은 레이아웃이 하단 탭바 높이만큼 아래를 비워 두는데, 홈은 그 자리까지 늘여 맨 아래 묶음(백업·푸터)을
-	탭바 바로 위에 붙인다 (예전에는 홈 전용 배경이 그 자리까지 덮도록 늘였다)
+	모바일은 레이아웃이 띄운 탭바 높이(--tabbar-space)만큼 아래를 비워 두는데, 홈은 그 자리까지 늘여
+	맨 아래 묶음(백업·푸터)을 탭바 바로 위에 붙인다 (예전에는 홈 전용 배경이 그 자리까지 덮도록 늘였다)
 -->
 <main
-	class="relative -mb-[calc(3.5rem+env(safe-area-inset-bottom))] min-h-screen overflow-hidden pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:mb-0 lg:pb-0"
+	class="relative -mb-(--tabbar-space) min-h-screen overflow-hidden pb-(--tabbar-space) lg:mb-0 lg:pb-0"
 >
 	<!-- 데스크톱은 화면 높이 안에서 위아래 가운데. 모바일은 위에서부터 (하단 탭바가 있어서) -->
 	<div
@@ -42,7 +42,7 @@
 		<!-- 모바일: 원이 놓이는 띠의 높이를 타일과 맞춘다 (디자인 이슈) -->
 		<div class="flex flex-col gap-3 md:hidden">
 			<div class="flex min-h-24 items-center gap-4 px-1">
-				<div class="flex size-20 shrink-0 items-center justify-center rounded-full bg-brand">
+				<div class="flex size-20 shrink-0 items-center justify-center rounded-full orb">
 					<VanitasSymbol class="w-11 text-white" />
 				</div>
 				<div>
@@ -97,7 +97,7 @@
 		목록 아래 여백(pb-36)으로 타일과 겹치지 않게 자리를 비워 둔다.
 	-->
 	<div
-		class="absolute inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] flex flex-col items-center gap-3 px-4 lg:bottom-5"
+		class="absolute inset-x-0 bottom-[calc(var(--tabbar-space)+0.5rem)] flex flex-col items-center gap-3 px-4 lg:bottom-5"
 	>
 		<div class="lg:hidden">
 			<BackupButton variant="block" />
