@@ -13,7 +13,7 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import type { GachaFailure, GachaResult } from '$lib/calc/gacha-adapter';
 	import { formatInt, formatPercent, formatRate } from '$lib/format';
-	import Panel from '$lib/components/Panel.svelte';
+	import Panel, { type PanelTone } from '$lib/components/Panel.svelte';
 	import Metric from '$lib/components/Metric.svelte';
 	import Callout from '$lib/components/Callout.svelte';
 	import Badge from '$lib/components/Badge.svelte';
@@ -37,9 +37,20 @@
 		unknown_pool_size: m.pity_fail_unknown_pool_size,
 		rule_unconfirmed: m.pity_fail_rule_unconfirmed
 	};
+
+	// 결과판의 판정 색 (2026-10-23 결정, 디자인 문서 5-18): 교환 가능·확정은 확보, 부족·반천장까지는 부족,
+	// 계산할 수 없음(천장 없음 등)은 색 없음
+	const tone: PanelTone = $derived(
+		!result.ok
+			? 'neutral'
+			: result.evaluation.verdict.kind === 'exchange_now' ||
+				  result.evaluation.verdict.kind === 'guaranteed'
+				? 'secured'
+				: 'shortfall'
+	);
 </script>
 
-<Panel marks class="font-num">
+<Panel marks elevation="e2" {tone} class="font-num">
 	<div class="mb-1 flex items-center gap-2 text-sm text-navy">
 		<span>{bannerName}</span>
 		{#if result.ok && !result.verified}
@@ -54,13 +65,15 @@
 
 		<!-- 판정 배지: 의미 색 + 글자 (색만으로 구분하지 않는다, 디자인 문서 2-4) -->
 		{#if v.kind === 'exchange_now'}
-			<p class="flex flex-wrap items-center gap-2 text-[1.375rem] leading-snug font-bold text-ink">
+			<p
+				class="flex flex-wrap items-center gap-2 text-[1.375rem] leading-snug font-bold text-ink md:text-2xl"
+			>
 				<Badge tone="secured">{m.pity_badge_secured()}</Badge>
 				{m.pity_verdict_exchange_now()}
 			</p>
 		{:else if v.kind === 'guaranteed'}
 			<p
-				class="mb-3 flex flex-wrap items-center gap-2 text-[1.375rem] leading-snug font-bold text-ink"
+				class="mb-3 flex flex-wrap items-center gap-2 text-[1.375rem] leading-snug font-bold text-ink md:text-2xl"
 			>
 				<Badge tone="secured">{m.pity_badge_secured()}</Badge>
 				{m.pity_verdict_guaranteed()}
@@ -79,7 +92,7 @@
 		{:else}
 			<!-- short / half_reachable: 헤드라인은 천장까지 부족분 -->
 			<p
-				class="mb-3 flex flex-wrap items-center gap-2 text-[1.375rem] leading-snug font-bold text-ink"
+				class="mb-3 flex flex-wrap items-center gap-2 text-[1.375rem] leading-snug font-bold text-ink md:text-2xl"
 			>
 				<Badge tone="shortfall">{m.pity_badge_short()}</Badge>
 				{m.pity_verdict_short({ gems: formatInt(v.shortfallGems) })}

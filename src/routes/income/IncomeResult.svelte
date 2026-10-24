@@ -7,7 +7,7 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import type { IncomeField, IncomeOutcome } from '$lib/calc/income-adapter';
 	import { formatDate, formatInt } from '$lib/format';
-	import Panel from '$lib/components/Panel.svelte';
+	import Panel, { type PanelTone } from '$lib/components/Panel.svelte';
 	import Metric from '$lib/components/Metric.svelte';
 	import Callout from '$lib/components/Callout.svelte';
 	import Badge from '$lib/components/Badge.svelte';
@@ -27,14 +27,19 @@
 	}
 
 	const signed = (n: number) => (n < 0 ? `-${formatInt(-n)}` : formatInt(n));
+
+	// 결과판의 판정 색 (2026-10-23 결정, 5-18): 청휘석이 줄거나 잔고가 바닥나면 부족, 모으는 경우는 색 없음
+	const tone: PanelTone = $derived(
+		result.kind !== 'invalid' && (result.net < 0 || result.endBalance < 0) ? 'shortfall' : 'neutral'
+	);
 </script>
 
-<Panel marks class="font-num">
+<Panel marks elevation="e2" {tone} class="font-num">
 	{#if result.kind === 'invalid'}
 		<p class="text-lg font-bold text-ink">{invalidMessage(result.field)}</p>
 	{:else}
 		<div class="flex flex-wrap items-start justify-between gap-2">
-			<p class="text-[1.375rem] leading-snug font-bold text-ink">
+			<p class="text-[1.375rem] leading-snug font-bold text-ink md:text-2xl">
 				{#if result.net >= 0}
 					{m.income_verdict_gain({
 						date: formatDate(result.endDate),
