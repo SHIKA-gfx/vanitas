@@ -34,7 +34,13 @@
 	);
 </script>
 
-<Panel marks elevation="e2" {tone} class="font-num [view-transition-name:vt-result-income]">
+<Panel
+	pulse={result}
+	marks
+	elevation="e2"
+	{tone}
+	class="font-num [view-transition-name:vt-result-income]"
+>
 	{#if result.kind === 'invalid'}
 		<p class="text-lg font-bold text-ink">{invalidMessage(result.field)}</p>
 	{:else}

@@ -14,7 +14,16 @@
 <script lang="ts">
 	import type { PanelTone } from './Panel.svelte';
 
-	let { corner, tone = 'neutral' }: { corner: Corner; tone?: PanelTone } = $props();
+	let {
+		corner,
+		tone = 'neutral',
+		pop = false
+	}: {
+		corner: Corner;
+		tone?: PanelTone;
+		/** 판정이 바뀐 순간 한 번 튄다 (layout.css의 mark-pop). 부모가 다시 그려 재생한다 */
+		pop?: boolean;
+	} = $props();
 
 	const COLOR: Record<PanelTone, string> = {
 		neutral: 'text-brand',
@@ -32,7 +41,9 @@
 </script>
 
 <svg
-	class="pointer-events-none absolute size-[18px] {COLOR[tone]} {POSITION[corner]}"
+	class="pointer-events-none absolute size-[18px] {COLOR[tone]} {POSITION[corner]} {pop
+		? 'mark-pop'
+		: ''}"
 	viewBox="0 0 18 18"
 	fill="none"
 	stroke="currentColor"

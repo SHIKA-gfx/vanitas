@@ -12,6 +12,12 @@
 	- 제목(title)은 판 위쪽 가장자리에 걸친 기울인 탭 (navy 면, 흰 글자 10.35:1). 탭이 판 위로 14px 솟으므로
 	  판 사이 간격은 24px 이상 둔다 (계산기 화면의 gap-6)
 
+	결과판의 반응 (2026-10-23, 8-2 F) — pulse에 결과를 넘기면:
+	- 결과가 바뀌고 입력이 180ms 멈추면 빛줄 하나가 판 위에서 아래로 한 번 훑는다 (280ms, 글자 뒤로 지나간다)
+	- 그때 판정 색(tone)까지 바뀌었으면 모서리 + 표식이 한 번 튄다 (200ms)
+	- 다른 화면에서 옮겨 와 결과판이 나타날 때도 빛줄이 한 번 지나간다. 처음 들어온 화면은 조용히
+	- 줄인 움직임 설정이면 아무것도 하지 않는다. 판 색은 움직임 없이 바로 바뀐다
+
 	모서리 + 표식은 결과 패널에만 (marks). "답이 있는 곳"을 표시하는 장치 (2026-10-01, A안).
 	표식 색은 판정 색을 따른다 (부족이면 주황). 표식 모양은 CornerMark.svelte.
 	판 안에는 진한 선을 두지 않는다 — 구역은 여백과 옅은 바탕으로 나눈다.
@@ -22,7 +28,8 @@
 </script>
 
 <script lang="ts">
-	import type { Snippet } from 'svelte';
+	import { onDestroy, untrack, type Snippet } from 'svelte';
+	import { MOTION, isClientArrival, reducedMotion } from '$lib/motion';
 	import CornerMark, { type Corner } from './CornerMark.svelte';
 
 	interface Props {
@@ -36,6 +43,8 @@
 		tone?: PanelTone;
 		/** 배치용 클래스 (예: 칸 높이에 맞춰 늘이기 xl:flex-1) */
 		class?: string;
+		/** e2 결과판: 결과 값. 바뀌면 빛줄·표식 튐으로 알린다 */
+		pulse?: unknown;
 		children: Snippet;
 	}
 
@@ -45,6 +54,7 @@
 		elevation = 'e1',
 		tone = 'neutral',
 		class: className = '',
+		pulse,
 		children
 	}: Props = $props();
 
@@ -69,13 +79,49 @@
 	const raised = $derived(elevation === 'e2');
 	/** 색을 입힌 판: 안의 숫자 칸(Metric)이 wash 대신 흰색을 쓴다 (옅은 파랑 판과 wash는 1.01~1.08:1) */
 	const tinted = $derived(raised && tone !== 'neutral');
+
+	// 결과판의 반응: 빛줄(scanKey)과 표식 튐(popKey)은 숫자가 바뀔 때마다 다시 그려 재생한다
+	let scanKey = $state(0);
+	let popKey = $state(0);
+	let lastSignal: string | undefined;
+	let lastTone: PanelTone | undefined;
+	let timer: ReturnType<typeof setTimeout> | undefined;
+
+	$effect(() => {
+		if (!raised || pulse === undefined) return;
+		const signal = JSON.stringify(pulse);
+		const nowTone = tone;
+		untrack(() => {
+			if (lastSignal === undefined) {
+				// 처음 나타남: 다른 화면에서 옮겨 왔을 때만 한 번 훑는다
+				lastSignal = signal;
+				lastTone = nowTone;
+				if (isClientArrival() && !reducedMotion()) {
+					timer = setTimeout(() => (scanKey += 1), MOTION.arrival);
+				}
+				return;
+			}
+			if (signal === lastSignal) return;
+			lastSignal = signal;
+			clearTimeout(timer);
+			timer = setTimeout(() => {
+				const toneChanged = nowTone !== lastTone;
+				lastTone = nowTone;
+				if (reducedMotion()) return;
+				scanKey += 1;
+				if (toneChanged) popKey += 1;
+			}, MOTION.settle);
+		});
+	});
+
+	onDestroy(() => clearTimeout(timer));
 </script>
 
 <section
 	data-tinted={tinted || undefined}
-	class="group/plate relative rounded-xl border border-white p-4 md:p-6 {SURFACE[elevation]} {raised
-		? TINT[tone]
-		: ''} {title ? 'pt-8 md:pt-9' : ''} {className}"
+	class="group/plate relative isolate rounded-xl border border-white p-4 md:p-6 {SURFACE[
+		elevation
+	]} {raised ? TINT[tone] : ''} {title ? 'pt-8 md:pt-9' : ''} {className}"
 >
 	{#if raised}
 		<!-- 판정 색 번짐: 판 바로 뒤의 얇은 층. 바깥 그림자라 판 안쪽은 덮지 않는다 -->
@@ -84,10 +130,23 @@
 			class="pointer-events-none absolute -inset-px rounded-xl {GLOW[tone]} forced-colors:hidden"
 		></div>
 	{/if}
+	{#if raised && scanKey > 0}
+		{#key scanKey}
+			<!-- 빛줄: 판 바탕 위, 글자 뒤 (isolate 안의 -z-10) -->
+			<div
+				aria-hidden="true"
+				class="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-xl forced-colors:hidden"
+			>
+				<div class="plate-scan absolute inset-0"></div>
+			</div>
+		{/key}
+	{/if}
 	{#if marks}
-		{#each CORNERS as corner (corner)}
-			<CornerMark {corner} tone={raised ? tone : 'neutral'} />
-		{/each}
+		{#key popKey}
+			{#each CORNERS as corner (corner)}
+				<CornerMark {corner} tone={raised ? tone : 'neutral'} pop={popKey > 0} />
+			{/each}
+		{/key}
 	{/if}
 	{#if title}
 		<h2

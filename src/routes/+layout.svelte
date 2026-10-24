@@ -4,6 +4,9 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { onNavigate } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import { markNavigation } from '$lib/motion';
+	import { installTapBurst } from '$lib/actions/tap-burst';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { sections } from '$lib/nav';
 	import { locales, localizeHref } from '$lib/paraglide/runtime';
@@ -43,12 +46,17 @@
 		return i === -1 ? sections.length : i; // 정보 페이지 등은 목록 뒤
 	}
 
+	// 누름 효과 (8-2 F): 화면 전체에 하나
+	onMount(() => installTapBurst());
+
 	onNavigate((navigation) => {
-		if (!('startViewTransition' in document)) return;
-		if (prefersReducedMotion.current) return;
 		const from = navigation.from?.route.id;
 		const to = navigation.to?.route.id;
 		if (!to || from === to) return;
+		// 옮겨 온 화면의 결과만 "도착" 움직임(숫자 0부터 굴림·빛줄)을 한다 (src/lib/motion.ts)
+		markNavigation();
+		if (!('startViewTransition' in document)) return;
+		if (prefersReducedMotion.current) return;
 
 		// 배경이 밀리는 방향: 목록 순서에서 뒤로 가면 1(왼쪽으로), 앞으로 돌아오면 -1. 뒤로 가기도 같은 규칙
 		const dir = Math.sign(screenIndex(to) - screenIndex(from)) || 1;
