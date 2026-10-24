@@ -67,6 +67,14 @@
 	const ownedMorph = new CurveMorph(() => ownedLine);
 	const beyondMorph = new CurveMorph(() => beyondLine);
 	const budgetX = new ValueMorph(() => x(availablePulls));
+	/*
+	 * "보유 N연" 글자는 표시선 왼쪽에 둔다. 다만 표시선이 세로축에 가까우면(보유 연차가 적으면) 왼쪽 눈금 글자(100% 등)와
+	 * 겹치므로 오른쪽으로 옮긴다 (2026-10-24). 글자 폭은 한글 세 자 + 숫자 자릿수로 어림한다 (11px: 한글 약 11, 숫자 약 6.4).
+	 * 어느 쪽에 둘지는 옮겨 가는 중의 위치가 아니라 최종 위치로 정한다 — 움직이는 동안 좌우로 튀지 않게
+	 */
+	const budgetLabelWidth = $derived(36 + String(availablePulls).length * 6.5);
+	const budgetLabelRight = $derived(x(availablePulls) - pad.l < budgetLabelWidth + 6);
+
 	/** 다른 화면에서 옮겨 와 나타날 때만 곡선이 그려진다 (처음 들어온 화면은 서버가 그린 그대로) */
 	const drawIn = isClientArrival() && !reducedMotion();
 </script>
@@ -121,7 +129,12 @@
 
 	{#if short && availablePulls > 0}
 		<line x1={budgetX.current} y1={pad.t} x2={budgetX.current} y2={y(0)} class="stroke-ink" />
-		<text x={budgetX.current - 4} y={pad.t + 10} text-anchor="end" class="fill-ink text-[11px]">
+		<text
+			x={budgetLabelRight ? budgetX.current + 4 : budgetX.current - 4}
+			y={pad.t + 10}
+			text-anchor={budgetLabelRight ? 'start' : 'end'}
+			class="fill-ink text-[11px]"
+		>
 			{m.pity_curve_budget({ count: formatInt(availablePulls) })}
 		</text>
 	{/if}
