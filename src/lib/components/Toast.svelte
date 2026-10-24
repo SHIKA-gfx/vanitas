@@ -27,7 +27,7 @@
 
 <div
 	use:portal
-	class="pointer-events-none fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+0.75rem)] z-50 flex justify-center px-4 {place ===
+	class="pointer-events-none fixed inset-x-0 bottom-[calc(var(--tabbar-space)+0.25rem)] z-50 flex justify-center px-4 {place ===
 	'center'
 		? 'lg:inset-0 lg:items-center'
 		: 'lg:bottom-6'}"

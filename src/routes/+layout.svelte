@@ -73,14 +73,14 @@
 <div class="relative isolate min-h-screen lg:flex">
 	<ShittimBackground />
 	<AppNav />
-	<!-- 모바일은 하단 탭바(56px) + 홈 인디케이터 영역만큼 아래를 비워, 곡선 아랫부분이 가려지지 않게 한다 -->
-	<div class="relative min-w-0 flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:pb-0">
+	<!-- 모바일은 띄운 탭바가 차지하는 만큼(--tabbar-space) 아래를 비워, 곡선 아랫부분이 가려지지 않게 한다 -->
+	<div class="relative min-w-0 flex-1 pb-(--tabbar-space) lg:pb-0">
 		{#if !isHome}
 			<!-- 페이지 제목과 같은 줄 오른쪽. 넓은 화면은 왼쪽 목록 맨 위의 VANITAS가 홈 링크 -->
 			<a
 				href={homeHref}
 				aria-label={m.nav_home()}
-				class="absolute top-5 right-4 z-10 flex size-11 items-center justify-center rounded-full bg-brand shadow-panel focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-strong lg:hidden"
+				class="absolute top-5 right-4 z-10 flex size-11 items-center justify-center rounded-full orb focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-strong lg:hidden"
 			>
 				<VanitasSymbol class="w-6 text-white" />
 			</a>

@@ -138,6 +138,15 @@
  */
 @layer base {
 	/*
+	 * 띄운 탭바(모바일·태블릿)가 차지하는 아래 높이 (2026-10-23, 5-19).
+	 * 탭바 56px + 아래 간격(10px과 홈 인디케이터 영역 중 큰 쪽) + 내용과의 틈 8px.
+	 * 레이아웃의 아래 여백, 홈 맨 아래 묶음, 알림 위치가 이 값 하나를 쓴다
+	 */
+	:root {
+		--tabbar-space: calc(3.5rem + max(0.625rem, env(safe-area-inset-bottom)) + 0.5rem);
+	}
+
+	/*
 	 * 화면 배율 (2026-09-30). 넓은 화면에서 글자·여백·아이콘이 작아 보여 한 단계씩 키운다.
 	 * Tailwind의 크기는 대부분 rem이라, 기준 글자 크기 하나로 사이트 전체가 비율을 유지한 채 커진다.
 	 * 모바일·태블릿·작은 노트북(1280px 미만)은 그대로. 미디어 쿼리의 rem은 브라우저 기본값(16px)
@@ -181,6 +190,23 @@
  * 예전의 계산기 사선(bg-diagonal)과 홈 삼각형 타일(TriangleBackground)은 이 배경으로 합쳤다.
  * 장식은 배경층까지 — 패널 안(데이터층)에는 쓰지 않는다.
  */
+
+/*
+ * 둥근 물체 재질 — 홈 가운데 원(모바일)·계산기 화면의 홈 링크 원 (2026-10-23, 5-19).
+ * brand 면에 왼쪽 위는 밝게, 아래 안쪽은 어둡게 눌러 공처럼 보이게 하고, 하늘빛이 번진다.
+ * 데스크톱 홈의 원은 SVG라 같은 값을 HomeFrame 안에서 그린다
+ */
+@utility orb {
+	background: radial-gradient(
+		80% 80% at 35% 25%,
+		color-mix(in srgb, var(--color-brand), white 18%) 0%,
+		var(--color-brand) 60%
+	);
+	box-shadow:
+		inset 0 1px 0 rgb(255 255 255 / 0.5),
+		inset 0 -6px 12px rgb(10 111 214 / 0.45),
+		0 0 22px -4px rgb(0 214 250 / 0.6);
+}
 
 /*
  * 입력칸 공통 모양 (2026-10-01, 디자인 문서 5-8). NumberField·SelectField·DateField가 쓴다.

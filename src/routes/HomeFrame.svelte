@@ -9,6 +9,10 @@
 	- 오목한 모서리는 border-radius나 CSS 마스크로는 테두리까지 따라가지 못한다 → SVG path
 	- 타일의 <a>를 SVG 안에 두어, 누르는 영역과 키보드 초점 테두리가 곡선 모양을 그대로 따른다
 	- 글자는 HTML(줄바꿈이 되니까)이고 누르는 건 SVG가 받으므로 pointer-events: none
+
+	떠 있는 물체 (2026-10-23, 디자인 문서 5-19)
+	- 가운데 원: 왼쪽 위가 밝은 방사형 그라데이션 + 하늘빛 번짐 (모바일·홈 링크의 orb 유틸리티와 같은 값)
+	- 프레임 전체 아래 바닥에 타원 그림자(접지 그림자) — 바닥 격자 위에 떠 있는 것처럼 보이게
 -->
 <script lang="ts">
 	import type { Pathname } from '$app/types';
@@ -25,6 +29,7 @@
 	}
 
 	let { sections }: Props = $props();
+	const uid = $props.id();
 
 	// 링크 주소는 이 파일 안에서 resolve()로 만든다. 함수를 속성으로 받으면
 	// ESLint(svelte/no-navigation-without-resolve)가 resolve를 거쳤는지 알 수 없다
@@ -112,7 +117,25 @@
 </script>
 
 <div class="relative w-full" style="aspect-ratio: {GEO.width} / {GEO.height}">
+	<!-- 접지 그림자: 프레임 바로 아래 바닥에 떨어지는 타원 -->
+	<div
+		aria-hidden="true"
+		class="pointer-events-none absolute inset-x-[12%] -bottom-12 h-10 rounded-[50%] bg-[radial-gradient(closest-side,rgb(42_66_91/0.22),transparent)] forced-colors:hidden"
+	></div>
 	<svg viewBox="0 0 {GEO.width} {GEO.height}" class="absolute inset-0 h-full w-full">
+		<defs>
+			<radialGradient id="orb-{uid}" cx="35%" cy="25%" r="80%">
+				<stop offset="0" style="stop-color: color-mix(in srgb, var(--color-brand), white 18%)" />
+				<stop offset="0.6" style="stop-color: var(--color-brand)" />
+				<stop
+					offset="1"
+					style="stop-color: color-mix(in srgb, var(--color-brand), var(--color-brand-strong) 60%)"
+				/>
+			</radialGradient>
+			<filter id="glow-{uid}" x="-50%" y="-50%" width="200%" height="200%">
+				<feGaussianBlur stdDeviation="14" />
+			</filter>
+		</defs>
 		{#each sections.slice(0, 4) as section, i (section.path)}
 			{@const slot = SLOTS[i]}
 			{#if section.ready}
@@ -138,8 +161,23 @@
 				/>
 			{/if}
 		{/each}
-		<!-- 가운데 원: 면(솔리드). 타일은 선 — 면과 선으로 구역을 나눈다 -->
-		<circle {cx} {cy} r={GEO.radius} class="fill-brand" />
+		<!-- 가운데 원: 면(솔리드). 타일은 선 — 면과 선으로 구역을 나눈다. 뒤에 하늘빛 번짐 -->
+		<circle
+			{cx}
+			{cy}
+			r={GEO.radius + 4}
+			fill="var(--color-cyan)"
+			opacity="0.45"
+			filter="url(#glow-{uid})"
+			class="forced-colors:hidden"
+		/>
+		<circle
+			{cx}
+			{cy}
+			r={GEO.radius}
+			fill="url(#orb-{uid})"
+			class="forced-colors:fill-[CanvasText]"
+		/>
 	</svg>
 
 	<!-- 글자층 (누르는 건 SVG가 받는다) -->
