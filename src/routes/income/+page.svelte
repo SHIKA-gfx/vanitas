@@ -274,10 +274,22 @@
 			<div class="order-1 xl:order-none">
 				<Panel title={m.income_section_state()}>
 					<div class="flex flex-col gap-4">
-						<NumberField label={m.pity_input_gems()} bind:value={res.gems} />
+						<NumberField
+							label={m.pity_input_gems()}
+							unit={m.field_unit_gems()}
+							bind:value={res.gems}
+						/>
 						<div class="grid grid-cols-2 gap-4">
-							<NumberField label={m.pity_input_single_tickets()} bind:value={res.singleTickets} />
-							<NumberField label={m.pity_input_ten_tickets()} bind:value={res.tenPullTickets} />
+							<NumberField
+								label={m.pity_input_single_tickets()}
+								unit={m.field_unit_tickets()}
+								bind:value={res.singleTickets}
+							/>
+							<NumberField
+								label={m.pity_input_ten_tickets()}
+								unit={m.field_unit_tickets()}
+								bind:value={res.tenPullTickets}
+							/>
 						</div>
 						<DateField
 							label={m.income_input_end_date()}
@@ -292,6 +304,7 @@
 				<Panel title={m.income_section_spend()} class="xl:flex-1">
 					<NumberField
 						label={m.levelup_input_purchases()}
+						unit={m.field_unit_times()}
 						bind:value={habits.apPurchasesPerDay}
 						max={ap.purchase.maxPurchasesPerDay}
 						help={purchaseHelp}
@@ -331,6 +344,7 @@
 						{#if tactical && included.includes(tactical.id)}
 							<NumberField
 								label={m.income_input_tactical()}
+								unit={m.field_unit_gems()}
 								bind:value={tacticalDaily}
 								help={m.income_help_tactical({
 									min: formatInt(tactical.amountRange?.min ?? 0),

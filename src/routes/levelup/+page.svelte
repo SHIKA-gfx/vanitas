@@ -436,6 +436,7 @@
 
 					<NumberField
 						label={m.levelup_input_purchases()}
+						unit={m.field_unit_times()}
 						bind:value={habits.apPurchasesPerDay}
 						max={ap.purchase.maxPurchasesPerDay}
 						help={purchaseHelp}
