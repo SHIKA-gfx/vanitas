@@ -26,7 +26,7 @@ export const sections: SiteSection[] = [
 		label: m.nav_planner,
 		short: m.nav_planner_short,
 		description: m.home_planner_description,
-		ready: false,
+		ready: true,
 		icon: 'planner'
 	},
 	{

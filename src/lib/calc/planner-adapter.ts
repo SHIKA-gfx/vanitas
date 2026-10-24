@@ -76,6 +76,8 @@ export type PlannerOutcome =
 			scheduleVerifiedAt: string;
 			/** 수급에 추정 수치가 섞여 있다 */
 			incomeEstimated: boolean;
+			/** 하루 평균 순수입 (수급 조건 요약 한 줄) */
+			incomePerDay: number;
 			/** 마일리지 초회 보상이 기간마다 다시 주어진다는 미확인 가정에 기댄다 */
 			mileageAssumed: boolean;
 			/** 무료 모집이 있지만 계산에 넣지 않은 기간 (스택·마일리지 적립 미확인) */
@@ -176,6 +178,7 @@ export function planFromData(query: PlannerQuery): PlannerOutcome {
 		scheduleVerifiedAt:
 			getSchedule(server).meta.recruitsVerifiedAt ?? getSchedule(server).meta.verifiedAt,
 		incomeEstimated: income.estimated,
+		incomePerDay: income.perDay,
 		mileageAssumed: cs.mileage.firstTimeScope === 'unconfirmed' && result.periods.length > 0,
 		freePullsIgnored: recruits.filter((r) => r.freePulls).map((r) => r.id)
 	};

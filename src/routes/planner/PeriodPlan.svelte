@@ -1,0 +1,74 @@
+<!--
+	기간별 계획 — 목표가 있는 기간마다 한 줄: 날짜(추정), 행동(N연 / 넘기기), 그 시점 잔고 (docs/005 6장).
+	가로 차트가 아니라 목록이다 — 380px에 몇 달치 주간 픽업이 들어가지 않는다
+-->
+<script lang="ts">
+	import { m } from '$lib/paraglide/messages.js';
+	import { formatDate, formatInt } from '$lib/format';
+	import Badge from '$lib/components/Badge.svelte';
+	import type { PlannerChoicePeriod, PlannerOutcome } from '$lib/calc/planner-adapter';
+
+	interface Props {
+		outcome: Extract<PlannerOutcome, { kind: 'ok' }>;
+		periods: PlannerChoicePeriod[];
+	}
+
+	let { outcome, periods }: Props = $props();
+
+	const nameOf = (periodId: string, studentId: string) =>
+		periods.find((p) => p.recruit.id === periodId)?.choices.find((c) => c.studentId === studentId)
+			?.student.name.ko ?? studentId;
+
+	// 목표가 하나라도 있는 기간만, 날짜 순
+	const rows = $derived(
+		outcome.recruits
+			.map((recruit) => ({
+				recruit,
+				spend: outcome.result.periods.find((p) => p.periodId === recruit.id),
+				targets: outcome.result.outcomes.filter((o) => o.periodId === recruit.id)
+			}))
+			.filter((r) => r.targets.length > 0)
+	);
+</script>
+
+<ol class="flex flex-col divide-y divide-sky-muted/40 font-num">
+	{#each rows as { recruit, spend, targets } (recruit.id)}
+		<li class="flex flex-col gap-1 py-3 first:pt-0 last:pb-0">
+			<div class="flex flex-wrap items-center gap-2 text-sm">
+				<span class="text-ink">{formatDate(recruit.start)}</span>
+				{#if recruit.status === 'estimated'}<Badge>{m.planner_estimated()}</Badge>{/if}
+				<span class="text-navy">{targets.map((t) => nameOf(recruit.id, t.id)).join(', ')}</span>
+			</div>
+			{#if spend}
+				<p class="font-bold text-ink">
+					{m.planner_period_pull({
+						pulls: formatInt(spend.pulls),
+						gems: formatInt(spend.gemsBefore - spend.gemsAfter)
+					})}
+				</p>
+				{#if spend.ticketPulls > 0 || spend.mileagePulls > 0}
+					<p class="text-xs text-navy">
+						{[
+							spend.ticketPulls > 0
+								? m.planner_period_owned_tickets({ pulls: formatInt(spend.ticketPulls) })
+								: '',
+							spend.mileagePulls > 0
+								? m.planner_period_mileage_tickets({ pulls: formatInt(spend.mileagePulls) })
+								: ''
+						]
+							.filter(Boolean)
+							.join(' · ')}
+					</p>
+				{/if}
+				<p class="text-sm text-navy">
+					{m.planner_period_balance({
+						before: formatInt(spend.gemsBefore),
+						after: formatInt(spend.gemsAfter)
+					})}
+				</p>
+			{:else}
+				<p class="font-bold text-ink">{m.planner_period_skip()}</p>
+			{/if}
+		</li>
+	{/each}
+</ol>

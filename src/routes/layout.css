@@ -291,13 +291,15 @@
 ::view-transition-group(vt-page),
 ::view-transition-group(vt-result-pity),
 ::view-transition-group(vt-result-levelup),
-::view-transition-group(vt-result-income) {
+::view-transition-group(vt-result-income),
+::view-transition-group(vt-result-planner) {
 	animation: none;
 }
 ::view-transition-old(vt-page),
 ::view-transition-old(vt-result-pity),
 ::view-transition-old(vt-result-levelup),
-::view-transition-old(vt-result-income) {
+::view-transition-old(vt-result-income),
+::view-transition-old(vt-result-planner) {
 	animation: vt-sink 160ms cubic-bezier(0.4, 0, 1, 1) both;
 	transform-origin: 50% 0;
 }
@@ -306,7 +308,8 @@
 }
 ::view-transition-new(vt-result-pity),
 ::view-transition-new(vt-result-levelup),
-::view-transition-new(vt-result-income) {
+::view-transition-new(vt-result-income),
+::view-transition-new(vt-result-planner) {
 	animation: vt-rise 240ms cubic-bezier(0.2, 0.8, 0.2, 1) 180ms both;
 }
 
