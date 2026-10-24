@@ -445,7 +445,7 @@
 		<div class="grid gap-4 md:grid-cols-2">
 			{#each latinFonts as f (f.name)}
 				<div
-					class="flex items-center gap-5 rounded-xl border border-navy/10 bg-surface p-5 shadow-panel"
+					class="flex items-center gap-5 rounded-xl border border-white bg-surface/92 p-5 shadow-e1"
 				>
 					<div class="flex size-28 shrink-0 items-center justify-center rounded-full bg-brand">
 						<span
@@ -479,14 +479,13 @@
 			class="relative isolate flex h-[28rem] items-center justify-center gap-6 overflow-hidden rounded p-6"
 		>
 			<ShittimBackground position="absolute" />
-			<div class="w-64 rounded-xl border border-navy/10 bg-surface p-4 text-sm shadow-panel">
-				<p class="font-bold">지금의 패널</p>
-				<p class="font-num">천장까지 청휘석 1,200개 부족해요</p>
-			</div>
-			<div class="w-64 rounded-xl border border-white bg-surface/92 p-4 text-sm shadow-e1">
-				<p class="font-bold">e1 판 (C단계)</p>
-				<p class="font-num">천장까지 청휘석 1,200개 부족해요</p>
-			</div>
+			<Panel title="e1 입력판" class="w-64 text-sm">
+				<p class="font-num">보유 청휘석 16,440개</p>
+			</Panel>
+			<Panel marks elevation="e2" tone="shortfall" class="w-64 font-num text-sm">
+				<p class="font-bold">e2 결과판 (부족)</p>
+				<p>천장까지 청휘석 1,200개 부족해요</p>
+			</Panel>
 		</div>
 		<div class="flex flex-wrap gap-4 text-xs text-navy">
 			{#each ['sky', 'sky-muted', 'blush', 'screen-top', 'screen-mid', 'screen-low'] as name (name)}
