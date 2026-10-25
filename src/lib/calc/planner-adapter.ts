@@ -19,11 +19,16 @@ import {
 import type { ChargeType, RecruitPeriod, Student } from '$lib/data/types';
 import { daysBetween } from '$lib/game-date';
 import { defaultTargetGroup } from './gacha-adapter';
-import { calculateIncome, type IncomeField, type IncomeInput } from './income-adapter';
-import { planPickups, type PlannerResult, type PlannerTarget } from './planner';
+import {
+	calculateIncome,
+	type IncomeField,
+	type IncomeInput,
+	type IncomeOutcome
+} from './income-adapter';
+import { planPickups, type PlanOptions, type PlannerResult, type PlannerTarget } from './planner';
 
 /** 마일리지 보상인 "10회 모집 티켓" 1장의 연차 (gacha-adapter와 같은 값) */
-const TEN_PULL_TICKET_PULLS = 10;
+export const TEN_PULL_TICKET_PULLS = 10;
 
 /** 수급 계산기 입력 중 플래너가 그대로 넘겨받는 부분 */
 export type PlannerIncomeInput = Omit<
@@ -108,7 +113,34 @@ export function listPlannerChoices(today: string, server: ServerId = 'ko'): Plan
 	}));
 }
 
-export function planFromData(query: PlannerQuery): PlannerOutcome {
+/**
+ * 플래너가 쓰는 수급 — 오늘부터 마지막 픽업 기간이 끝나는 날까지. 계획할 픽업이 없으면 null.
+ * 부족분 메우기(planner-fill.ts)가 수급 조건만 바꿔 여러 번 부르므로 따로 둔다
+ */
+export function plannerIncome(query: PlannerQuery): IncomeOutcome | null {
+	const server = query.server ?? 'ko';
+	const recruits = listRecruits({ from: query.today, server });
+	if (recruits.length === 0) return null;
+	return calculateIncome({
+		...query.income,
+		today: query.today,
+		endDate: recruits[recruits.length - 1].end,
+		gems: query.gems,
+		singleTickets: query.singleTickets,
+		tenPullTickets: query.tenPullTickets,
+		server
+	});
+}
+
+export interface PlanFromDataOptions extends PlanOptions {
+	/** 같은 query로 이미 계산한 수급 (plannerIncome). 다시 돌릴 때 수급 계산을 아낀다 */
+	income?: IncomeOutcome;
+}
+
+export function planFromData(
+	query: PlannerQuery,
+	options: PlanFromDataOptions = {}
+): PlannerOutcome {
 	const server = query.server ?? 'ko';
 	const recruits = listRecruits({ from: query.today, server });
 	if (recruits.length === 0) return { kind: 'no_recruits' };
@@ -116,16 +148,8 @@ export function planFromData(query: PlannerQuery): PlannerOutcome {
 	const cs = config.chargeSystem;
 
 	// 1. 수급 — 마지막 기간이 끝나는 날까지
-	const endDate = recruits[recruits.length - 1].end;
-	const income = calculateIncome({
-		...query.income,
-		today: query.today,
-		endDate,
-		gems: query.gems,
-		singleTickets: query.singleTickets,
-		tenPullTickets: query.tenPullTickets,
-		server
-	});
+	const income = options.income ?? plannerIncome(query);
+	if (!income) return { kind: 'no_recruits' };
 	if (income.kind === 'invalid') return { kind: 'invalid_income', field: income.field };
 
 	const ownedTicketPulls = query.singleTickets + query.tenPullTickets * TEN_PULL_TICKET_PULLS;
@@ -150,28 +174,31 @@ export function planFromData(query: PlannerQuery): PlannerOutcome {
 		};
 	});
 
-	const result = planPickups({
-		// 끝난 기간도 넘긴다 — 저장·공유된 목표가 끝난 기간을 가리키면 planner가 period_ended로 알려준다
-		periods: listRecruits({ server }).map((r) => ({
-			id: r.id,
-			startDay: daysBetween(query.today, r.start),
-			endDay: daysBetween(query.today, r.end)
-		})),
-		targets,
-		gemsByDay: income.records.map((r) => r.balance),
-		ticketPullsByDay,
-		stacks: query.stacks,
-		currentMileage: query.mileage,
-		rule: {
-			half: cs.softPity.count,
-			halfPickupChance: cs.softPity.pickupChance,
-			full: cs.hardPity.count,
-			perPull: cs.perPull
+	const result = planPickups(
+		{
+			// 끝난 기간도 넘긴다 — 저장·공유된 목표가 끝난 기간을 가리키면 planner가 period_ended로 알려준다
+			periods: listRecruits({ server }).map((r) => ({
+				id: r.id,
+				startDay: daysBetween(query.today, r.start),
+				endDay: daysBetween(query.today, r.end)
+			})),
+			targets,
+			gemsByDay: income.records.map((r) => r.balance),
+			ticketPullsByDay,
+			stacks: query.stacks,
+			currentMileage: query.mileage,
+			rule: {
+				half: cs.softPity.count,
+				halfPickupChance: cs.softPity.pickupChance,
+				full: cs.hardPity.count,
+				perPull: cs.perPull
+			},
+			mileage: { ticketAt: cs.mileage.tenPullTicketAt, pullsPerTicket: TEN_PULL_TICKET_PULLS },
+			costPerPull: config.recruitCost.single,
+			reserveGems: query.reserveGems
 		},
-		mileage: { ticketAt: cs.mileage.tenPullTicketAt, pullsPerTicket: TEN_PULL_TICKET_PULLS },
-		costPerPull: config.recruitCost.single,
-		reserveGems: query.reserveGems
-	});
+		{ alternatives: options.alternatives }
+	);
 
 	return {
 		kind: 'ok',
