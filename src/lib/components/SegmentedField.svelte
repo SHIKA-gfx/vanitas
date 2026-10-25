@@ -19,14 +19,20 @@
 		label: string;
 		value: string;
 		options: Option[];
+		/** 제목을 화면에서 숨기고 화면 낭독기에만 (화면 안 탭처럼 무엇을 고르는지 자명할 때) */
+		labelHidden?: boolean;
 	}
 
-	let { label, value = $bindable(), options }: Props = $props();
+	let { label, value = $bindable(), options, labelHidden = false }: Props = $props();
 	const name = $props.id();
 </script>
 
 <fieldset>
-	<legend class="mb-2 flex items-center gap-2 text-[0.8125rem] font-medium text-navy">
+	<legend
+		class={labelHidden
+			? 'sr-only'
+			: 'mb-2 flex items-center gap-2 text-[0.8125rem] font-medium text-navy'}
+	>
 		<span aria-hidden="true" class="h-3 w-[3px] shrink-0 -skew-x-30 rounded-[1px_1.5px] bg-brand"
 		></span>
 		{label}
