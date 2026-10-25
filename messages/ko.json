@@ -30,6 +30,8 @@
 	"unit_pulls": "{count}연",
 	"meta_planner_description": "미래시 픽업 일정에서 데려올 학생을 고르면, 지금 청휘석과 앞으로의 수급으로 우선순위대로 몇 명까지 확정으로 데려올 수 있는지 계산해요.",
 	"planner_page_title": "픽업 플래너",
+	"planner_off_pickup_title": "픽업 외 모집 가능",
+	"planner_off_pickup_note": "천장(스택 200)은 픽업 학생만 확정해서, 목표로는 고를 수 없어요.",
 	"planner_section_targets": "목표 학생 수",
 	"planner_section_pick": "예정 픽업",
 	"planner_section_periods": "기간별 계획",
