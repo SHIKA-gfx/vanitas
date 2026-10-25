@@ -2,8 +2,9 @@
 	/ko/planner — 픽업 플래너 (docs/005)
 	질문: 고른 학생들을 지금 재화와 앞으로의 수급으로, 우선순위대로 몇 명까지 확정으로 데려올 수 있나
 
-	모바일: 결과판(요약 + 내 목표) → 기간별 계획 → 예정 픽업(고르기) → 보유 재화 → 잔고 곡선
-	데스크톱: 왼쪽 예정 픽업 + 보유 재화, 오른쪽 결과판 + 기간별 계획 + 잔고 곡선
+	모바일: 결과판(요약 + 내 목표) → 계획(기간별·잔고) → 보유 재화 → 예정 픽업(고르기)  (모바일 탭 구조는 디자인 문서 5-20 P3)
+	데스크톱 (2026-10-25 다시 그림, 디자인 문서 5-20): 왼쪽 보유 재화(접힌 요약) + 예정 픽업(30일 페이지),
+	오른쪽 결과판 + 계획(기간별 계획 | 잔고 곡선 전환). 목표: 1280×800에서 스크롤 없이 재화·고르기·답이 보인다
 
 	결정 (2026-10-24)
 	- 목표는 예정 픽업 목록에서 학생을 눌러 고른다. 새 목표는 우선순위 맨 아래
@@ -12,6 +13,7 @@
 	- 공유 링크에는 보낸 사람의 수급 조건이 실린다 (2026-10-25). 받은 사람이 "이 값으로 저장"하면 수급 계산기 값도 바뀐다
 -->
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
 	import type { Pathname } from '$app/types';
 	import Seo from '$lib/components/Seo.svelte';
@@ -23,6 +25,7 @@
 	import { listPlannerChoices, planFromData } from '$lib/calc/planner-adapter';
 	import Panel from '$lib/components/Panel.svelte';
 	import NumberField from '$lib/components/NumberField.svelte';
+	import SegmentedField from '$lib/components/SegmentedField.svelte';
 	import PageTitle from '$lib/components/PageTitle.svelte';
 	import ResetButton from '$lib/components/ResetButton.svelte';
 	import ShareButton from '$lib/components/ShareButton.svelte';
@@ -120,6 +123,25 @@
 		})
 	);
 
+	/*
+	 * 보유 재화는 한 줄 요약으로 접어 둔다. 처음 쓰는 사람(값이 모두 0)에게는 펼쳐 보여준다.
+	 * 저장값은 persistSection의 onMount에서 먼저 불러오므로, 그 뒤에 판단한다
+	 */
+	let inputsOpen = $state(false);
+	const inputsId = $props.id();
+	const noResources = () =>
+		res.gems === 0 &&
+		res.singleTickets === 0 &&
+		res.tenPullTickets === 0 &&
+		Object.values(res.stackByType).every((v) => !v) &&
+		res.mileage === 0;
+	onMount(() => {
+		if (noResources()) inputsOpen = true;
+	});
+
+	/** 오른쪽 아래 계획 판: 기간별 계획과 잔고 곡선을 한 판에서 바꿔 본다 (높이를 반으로) */
+	let planView = $state<'periods' | 'balance'>('periods');
+
 	function toggle(key: TargetKey) {
 		targets = targets.includes(key) ? targets.filter((k) => k !== key) : [...targets, key];
 	}
@@ -152,104 +174,169 @@
 		</PlannerResult>
 
 		{#if outcome.kind === 'ok' && outcome.result.outcomes.length > 0}
-			<Panel title={m.planner_section_periods()}>
-				<PeriodPlan {outcome} {periods} />
+			<Panel title={m.planner_section_plan()}>
+				<div class="flex flex-col gap-4">
+					{#if outcome.result.periods.length > 0}
+						<SegmentedField
+							label={m.planner_plan_view()}
+							bind:value={planView}
+							options={[
+								{ value: 'periods', label: m.planner_section_periods() },
+								{ value: 'balance', label: m.planner_view_balance() }
+							]}
+						/>
+					{/if}
+					{#if planView === 'balance' && outcome.result.periods.length > 0}
+						<BalanceCurve
+							{today}
+							records={outcome.result.balance.map((balance, day) => ({
+								day,
+								income: 0,
+								spend: 0,
+								tickets: 0,
+								balance
+							}))}
+						/>
+					{:else}
+						<PeriodPlan {outcome} {periods} />
+					{/if}
+				</div>
 			</Panel>
-			{#if outcome.result.periods.length > 0}
-				<Panel title={m.planner_section_balance()}>
-					<BalanceCurve
-						{today}
-						records={outcome.result.balance.map((balance, day) => ({
-							day,
-							income: 0,
-							spend: 0,
-							tickets: 0,
-							balance
-						}))}
-					/>
-				</Panel>
-			{/if}
 		{/if}
 	</div>
 
-	<!-- 왼쪽 열: 고르기와 입력 -->
+	<!-- 왼쪽 열: 보유 재화(접힌 요약) → 예정 픽업(30일 페이지) -->
 	<div class="flex flex-col gap-6 md:col-start-1 md:row-start-2">
-		<Panel title={m.planner_section_pick()}>
-			<PickupPicker {periods} selected={targets} ontoggle={toggle} />
-		</Panel>
-
 		<Panel title={m.planner_section_inputs()}>
-			<div class="flex flex-col gap-4">
-				<NumberField label={m.pity_input_gems()} unit={m.field_unit_gems()} bind:value={res.gems} />
-				<div class="grid grid-cols-2 gap-4">
-					<NumberField
-						label={m.pity_input_single_tickets()}
-						unit={m.field_unit_tickets()}
-						bind:value={res.singleTickets}
-					/>
-					<NumberField
-						label={m.pity_input_ten_tickets()}
-						unit={m.field_unit_tickets()}
-						bind:value={res.tenPullTickets}
-					/>
-				</div>
-				<!-- 스택은 천장·확률 계산기와 같은 공유 값 -->
-				<div class="grid grid-cols-2 gap-4">
+			<!-- 요약 한 줄: 누르면 입력칸이 펼쳐진다. 값을 바꾸는 곳은 그대로 이 판 하나 -->
+			<button
+				type="button"
+				aria-expanded={inputsOpen}
+				aria-controls={inputsId}
+				onclick={() => (inputsOpen = !inputsOpen)}
+				class="-m-1 flex w-[calc(100%+0.5rem)] items-center justify-between gap-3 rounded-lg p-1 text-left focus-visible:outline-2 focus-visible:outline-brand-strong"
+			>
+				<span class="flex flex-wrap gap-1.5 font-num text-sm text-ink">
+					<span class="rounded-md bg-wash px-2 py-1"
+						>{m.planner_inputs_gems({ count: formatInt(res.gems) })}</span
+					>
+					<span class="rounded-md bg-wash px-2 py-1"
+						>{m.planner_inputs_single({ count: formatInt(res.singleTickets) })}</span
+					>
+					<span class="rounded-md bg-wash px-2 py-1"
+						>{m.planner_inputs_ten({ count: formatInt(res.tenPullTickets) })}</span
+					>
 					{#each chargeSystem.chargeTypes as stack (stack.id)}
-						<NumberField
-							label={stack.name}
-							max={stackMax}
-							bind:value={
-								() => res.stackByType[stack.id] ?? 0,
-								(v) => {
-									res.stackByType[stack.id] = v;
-								}
-							}
-						/>
+						<span class="rounded-md bg-wash px-2 py-1"
+							>{stack.name} {formatInt(res.stackByType[stack.id] ?? 0)}</span
+						>
 					{/each}
-				</div>
-				<NumberField
-					label={m.pity_input_mileage()}
-					hint={m.pity_input_mileage_hint()}
-					bind:value={res.mileage}
-				/>
-
-				<!-- 수급 조건 요약: 바꾸는 곳은 수급 계산기 하나 -->
-				<div class="flex flex-wrap items-center justify-between gap-2 text-sm">
-					<span class="font-num text-navy">
-						{m.planner_income_summary({
-							preset: presetLabel,
-							perDay: outcome.kind === 'ok' ? formatInt(outcome.incomePerDay) : '-'
-						})}
-					</span>
-					<a
-						href={resolve(localizeHref('/income') as Pathname)}
-						class="text-ink underline underline-offset-4 hover:text-brand-strong"
-					>
-						{m.planner_income_edit()}
-					</a>
-				</div>
-
-				<details class="group rounded-lg bg-wash/60">
-					<summary
-						class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 text-sm text-navy hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-strong"
-					>
-						<span>{m.planner_reserve_toggle()}</span>
-						<span class="flex items-center gap-2 font-num tabular-nums">
-							{#if reserveGems > 0}<span class="text-ink">{formatInt(reserveGems)}</span>{/if}
-							<span aria-hidden="true" class="transition-transform group-open:rotate-180">▾</span>
-						</span>
-					</summary>
-					<div class="px-3 pb-3">
+					{#if res.mileage > 0}
+						<span class="rounded-md bg-wash px-2 py-1"
+							>{m.planner_inputs_mileage({ count: formatInt(res.mileage) })}</span
+						>
+					{/if}
+					{#if reserveGems > 0}
+						<span class="rounded-md bg-wash px-2 py-1"
+							>{m.planner_inputs_reserve({ count: formatInt(reserveGems) })}</span
+						>
+					{/if}
+				</span>
+				<span class="sr-only"
+					>{inputsOpen ? m.planner_inputs_collapse() : m.planner_inputs_expand()}</span
+				>
+				<svg
+					aria-hidden="true"
+					viewBox="0 0 16 16"
+					class="size-4 shrink-0 text-navy transition-transform {inputsOpen ? 'rotate-180' : ''}"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.8"
+					stroke-linecap="round"
+					stroke-linejoin="round"><path d="M4 6l4 4 4-4" /></svg
+				>
+			</button>
+			<div id={inputsId} hidden={!inputsOpen} class="mt-5">
+				<div class="flex flex-col gap-4">
+					<NumberField
+						label={m.pity_input_gems()}
+						unit={m.field_unit_gems()}
+						bind:value={res.gems}
+					/>
+					<div class="grid grid-cols-2 gap-4">
 						<NumberField
-							label={m.planner_input_reserve()}
-							unit={m.field_unit_gems()}
-							hint={m.planner_input_reserve_hint()}
-							bind:value={reserveGems}
+							label={m.pity_input_single_tickets()}
+							unit={m.field_unit_tickets()}
+							bind:value={res.singleTickets}
+						/>
+						<NumberField
+							label={m.pity_input_ten_tickets()}
+							unit={m.field_unit_tickets()}
+							bind:value={res.tenPullTickets}
 						/>
 					</div>
-				</details>
+					<!-- 스택은 천장·확률 계산기와 같은 공유 값 -->
+					<div class="grid grid-cols-2 gap-4">
+						{#each chargeSystem.chargeTypes as stack (stack.id)}
+							<NumberField
+								label={stack.name}
+								max={stackMax}
+								bind:value={
+									() => res.stackByType[stack.id] ?? 0,
+									(v) => {
+										res.stackByType[stack.id] = v;
+									}
+								}
+							/>
+						{/each}
+					</div>
+					<NumberField
+						label={m.pity_input_mileage()}
+						hint={m.pity_input_mileage_hint()}
+						bind:value={res.mileage}
+					/>
+
+					<!-- 수급 조건 요약: 바꾸는 곳은 수급 계산기 하나 -->
+					<div class="flex flex-wrap items-center justify-between gap-2 text-sm">
+						<span class="font-num text-navy">
+							{m.planner_income_summary({
+								preset: presetLabel,
+								perDay: outcome.kind === 'ok' ? formatInt(outcome.incomePerDay) : '-'
+							})}
+						</span>
+						<a
+							href={resolve(localizeHref('/income') as Pathname)}
+							class="text-ink underline underline-offset-4 hover:text-brand-strong"
+						>
+							{m.planner_income_edit()}
+						</a>
+					</div>
+
+					<details class="group rounded-lg bg-wash/60">
+						<summary
+							class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 text-sm text-navy hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-strong"
+						>
+							<span>{m.planner_reserve_toggle()}</span>
+							<span class="flex items-center gap-2 font-num tabular-nums">
+								{#if reserveGems > 0}<span class="text-ink">{formatInt(reserveGems)}</span>{/if}
+								<span aria-hidden="true" class="transition-transform group-open:rotate-180">▾</span>
+							</span>
+						</summary>
+						<div class="px-3 pb-3">
+							<NumberField
+								label={m.planner_input_reserve()}
+								unit={m.field_unit_gems()}
+								hint={m.planner_input_reserve_hint()}
+								bind:value={reserveGems}
+							/>
+						</div>
+					</details>
+				</div>
 			</div>
+		</Panel>
+
+		<Panel title={m.planner_section_pick()}>
+			<PickupPicker {periods} selected={targets} ontoggle={toggle} {today} />
 		</Panel>
 	</div>
 </main>

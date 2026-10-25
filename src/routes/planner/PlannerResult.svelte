@@ -180,14 +180,27 @@
 			</ul>
 		{/if}
 
-		<!-- 안내: 판의 아래쪽(흰 쪽)에 둔다 (디자인 문서 10장) -->
-		<div class="mt-5 flex flex-col gap-1 text-xs leading-relaxed text-navy">
-			<p>{m.planner_note_worst_case()}</p>
+		<!--
+			안내: 판의 아래쪽(흰 쪽)에 둔다 (디자인 문서 10장).
+			2026-10-25 (5-20): 결과판 높이를 줄이려고 계산 기준은 접어 둔다. 미래시가 추정이라는 안내만 늘 보인다
+		-->
+		<div class="mt-5 flex flex-col gap-2 text-xs leading-relaxed text-navy">
 			{#if outcome.scheduleEstimated}
 				<p>{m.planner_note_schedule({ date: formatDate(outcome.scheduleVerifiedAt) })}</p>
 			{/if}
-			{#if outcome.mileageAssumed}<p>{m.planner_note_mileage()}</p>{/if}
-			{#if outcome.freePullsIgnored.length > 0}<p>{m.planner_note_free_pulls()}</p>{/if}
+			<details class="group">
+				<summary
+					class="inline-flex min-h-8 cursor-pointer list-none items-center gap-1.5 text-navy hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-strong"
+				>
+					{m.planner_note_toggle()}
+					<span aria-hidden="true" class="transition-transform group-open:rotate-180">▾</span>
+				</summary>
+				<div class="mt-1 flex flex-col gap-1">
+					<p>{m.planner_note_worst_case()}</p>
+					{#if outcome.mileageAssumed}<p>{m.planner_note_mileage()}</p>{/if}
+					{#if outcome.freePullsIgnored.length > 0}<p>{m.planner_note_free_pulls()}</p>{/if}
+				</div>
+			</details>
 		</div>
 	{/if}
 
