@@ -9,9 +9,9 @@
 	- 목표는 예정 픽업 목록에서 학생을 눌러 고른다. 새 목표는 우선순위 맨 아래
 	- 결과판 색: 전원 확보면 확보(파랑), 한 명이라도 부족·불가면 부족(주황), 목표가 없으면 색 없음
 	- 수급 조건은 수급 계산기의 저장값을 그대로 읽는다 (income-settings.ts). 플래너에서는 바꾸지 않는다
+	- 공유 링크에는 보낸 사람의 수급 조건이 실린다 (2026-10-25). 받은 사람이 "이 값으로 저장"하면 수급 계산기 값도 바뀐다
 -->
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
 	import type { Pathname } from '$app/types';
 	import Seo from '$lib/components/Seo.svelte';
@@ -27,13 +27,15 @@
 	import ResetButton from '$lib/components/ResetButton.svelte';
 	import ShareButton from '$lib/components/ShareButton.svelte';
 	import { getUserState } from '$lib/state/user-state.svelte';
-	import { getSavedStore, persistSection } from '$lib/state/saved.svelte';
+	import { persistSection } from '$lib/state/saved.svelte';
 	import { isInt, isSubsetOf } from '$lib/state/persist';
 	import {
 		INCOME_SECTION,
+		INCOME_SHARE_FIELDS,
+		incomeChecks,
 		incomeDefaults,
-		sanitizeIncome,
-		toIncomeInput
+		toIncomeInput,
+		type IncomeSettings
 	} from '$lib/state/income-settings';
 	import BalanceCurve from '../income/BalanceCurve.svelte';
 	import PlannerResult from './PlannerResult.svelte';
@@ -56,6 +58,9 @@
 	let targets = $state<TargetKey[]>([]);
 	let reserveGems = $state(0);
 
+	// 수급 조건: 수급 계산기가 저장한 값 (income-settings.ts). 플래너에서는 고치지 않는다
+	let income = $state<IncomeSettings>(incomeDefaults(today));
+
 	const saved = persistSection(
 		'planner',
 		() => ({ targets, reserveGems }),
@@ -65,7 +70,8 @@
 		},
 		() => ({ targets: [] as TargetKey[], reserveGems: 0 }),
 		{ targets: isSubsetOf(allKeys), reserveGems: isInt(0) },
-		// 공유 링크: 목표(우선순위 순) + 보유 재화. 수급 조건은 받는 사람의 수급 계산기 값으로 계산된다
+		// 공유 링크: 목표(우선순위 순) + 보유 재화 + 보낸 사람의 수급 조건 (2026-10-25 결정).
+		// 수급 조건은 수급 계산기와 같은 짧은 이름을 쓰고, 종료 날짜(d)는 싣지 않는다
 		{
 			fields: [
 				{ key: 'targets', param: 'tg', kind: 'list' },
@@ -78,18 +84,24 @@
 				'stackByType',
 				'mileage',
 				'apPurchasesPerDay'
-			]
+			],
+			linked: {
+				name: INCOME_SECTION,
+				fields: INCOME_SHARE_FIELDS.filter((f) => f.key !== 'endDate'),
+				defaults: () => incomeDefaults(today),
+				checks: incomeChecks(today),
+				get: () => income,
+				set: (v) => {
+					income = v as IncomeSettings;
+				},
+				keepMine: ['endDate']
+			}
 		}
 	);
 
 	const user = getUserState();
 	const res = user.resources;
 
-	// 수급 조건: 수급 계산기가 저장한 값. 브라우저에서만 읽을 수 있어 처음엔 기본값
-	let income = $state(incomeDefaults(today));
-	onMount(() => {
-		income = sanitizeIncome(getSavedStore().read(INCOME_SECTION), today);
-	});
 	const presetLabel = $derived(
 		listIncomePresets().find((p) => p.id === income.preset)?.label ?? ''
 	);
