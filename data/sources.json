@@ -36,7 +36,8 @@
     "29": { "publisher": "몰루로그",       "title": "블루 아카이브 이벤트, 픽업 미래시", "date": null, "url": "https://mollulog.net/futures", "retrievedAt": "2026-09-26", "tier": "community", "note": "일본 서버 기준 추정 일정. 총력전 #87 이후, 대결전 #35 이후 (schedule.json, status: estimated)" },
     "30": { "publisher": "넥슨 커뮤니티",  "title": "11/10(화) 모집 시스템 개편 사전 안내", "date": "2026-10-08", "url": "https://forum.nexon.com/bluearchive/board_view?board=1018&thread=3560305", "retrievedAt": "2026-10-14", "tier": "official", "note": "사전 안내. 상세는 별도 공지·공식 생방송 예정 (game-config.json chargeSystem)" },
     "31": { "publisher": "몰루로그",       "title": "블루 아카이브 이벤트, 픽업 미래시", "date": null, "url": "https://mollulog.net/futures", "retrievedAt": "2026-10-24", "tier": "community", "note": "한국 서버 픽업 미래시(일본 서버 기준 추정). 픽업 학생·배너 종류·이벤트 날짜 (schedule.json recruits, students.json). 사실 정보만 옮김 (docs/004 5장)" },
-    "32": { "publisher": "아카라이브 블루 아카이브 채널", "title": "개인적인 미래시 학생 평가 (26.10.21. 기준)", "date": "2026-10-21", "url": "https://arca.live/b/bluearchive/66213387", "retrievedAt": "2026-10-24", "tier": "community", "note": "교차 확인용. 한섭 픽업은 미래시 단축으로 1주 운영. 11월 일정이 몰루로그보다 1주 이르다 (schedule.json recruits note). 평가 의견은 옮기지 않음" }
+    "32": { "publisher": "아카라이브 블루 아카이브 채널", "title": "개인적인 미래시 학생 평가 (26.10.21. 기준)", "date": "2026-10-21", "url": "https://arca.live/b/bluearchive/66213387", "retrievedAt": "2026-10-24", "tier": "community", "note": "교차 확인용. 한섭 픽업은 미래시 단축으로 1주 운영. 11월 일정이 몰루로그보다 1주 이르다 (schedule.json recruits note). 평가 의견은 옮기지 않음" },
+    "33": { "publisher": "나무위키",       "title": "전술 대회", "date": null, "url": "https://namu.wiki/w/전술%20대회", "retrievedAt": "2026-10-25", "tier": "community", "note": "3장 보상 — 순위별 일일 보상 청휘석 (income-sources.json tactical-tournament rankRewards). 1위 45·2위 40·3~10위 35는 사용자 확인" }
   },
   "missingUrls": ["22", "23"],
   "unusedIds": ["15"]

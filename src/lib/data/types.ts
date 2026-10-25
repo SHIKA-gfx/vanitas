@@ -338,6 +338,8 @@ export interface IncomeSource {
 	amountRange?: { min: number; max: number };
 	tiers?: IncomeTier[];
 	tierNote?: string;
+	/** 순위별 금액 (전술대회 일일 보상). 금액 오름차순. 계산기 입력은 금액 하나이고, 플래너 부족분 메우기가 "한 단계 위"를 찾는 데 쓴다 */
+	rankRewards?: { label: string; amount: number }[];
 	samples?: { date: string; amount: number }[];
 	verified: boolean;
 	note?: string;
