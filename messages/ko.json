@@ -88,6 +88,7 @@
 	"planner_inputs_expand": "보유 재화 펼치기",
 	"planner_inputs_collapse": "보유 재화 접기",
 	"planner_note_toggle": "계산 기준",
+	"planner_moved": "{name}, {rank}순위",
 	"pity_page_title": "천장·확률 계산기",
 	"pity_input_banner": "모집",
 	"pity_section_inputs": "모집과 보유 재화",

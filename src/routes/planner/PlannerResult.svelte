@@ -6,9 +6,10 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { m } from '$lib/paraglide/messages.js';
-	import { formatDate, formatInt, formatPercent } from '$lib/format';
+	import { formatDate, formatInt } from '$lib/format';
 	import Panel, { type PanelTone } from '$lib/components/Panel.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import TargetList, { type TargetItem } from './TargetList.svelte';
 	import type { PlannerChoicePeriod, PlannerOutcome } from '$lib/calc/planner-adapter';
 	import { parseTargetKey, type TargetKey } from './target-key';
 
@@ -16,12 +17,12 @@
 		outcome: PlannerOutcome;
 		targets: TargetKey[];
 		periods: PlannerChoicePeriod[];
-		onmove: (index: number, by: -1 | 1) => void;
+		onreorder: (from: number, to: number) => void;
 		onremove: (index: number) => void;
 		actions?: Snippet;
 	}
 
-	let { outcome, targets, periods, onmove, onremove, actions }: Props = $props();
+	let { outcome, targets, periods, onreorder, onremove, actions }: Props = $props();
 
 	const choiceOf = (key: TargetKey) => {
 		const { recruitId, studentId } = parseTargetKey(key);
@@ -34,6 +35,26 @@
 
 	const result = $derived(outcome.kind === 'ok' ? outcome.result : null);
 	const firstShort = $derived(result ? result.outcomes.findIndex((o) => o.kind !== 'secured') : -1);
+	/** 내 목표 줄에 보여줄 값 (TargetList) — 계산 결과와 고른 학생 정보를 한 줄로 묶는다 */
+	const items = $derived<TargetItem[]>(
+		(result?.outcomes ?? []).map((o, i) => {
+			const { period, choice } = choiceOf(targets[i]);
+			return {
+				key: targets[i],
+				name: choice?.student.name.ko ?? nameOf(o.id),
+				provisional: choice?.student.koNameStatus === 'provisional',
+				ja: choice?.student.name.ja,
+				kind: o.kind,
+				shortfallGems: o.kind === 'short' ? o.shortfallGems : undefined,
+				ended: o.kind === 'unavailable' ? o.reason === 'period_ended' : undefined,
+				start: period?.recruit.start,
+				stackName: choice?.stack.name,
+				probability: o.kind !== 'unavailable' ? o.probabilityBeforePity : null,
+				stackStart: o.kind !== 'unavailable' ? o.stackStart : undefined
+			};
+		})
+	);
+
 	const tone: PanelTone = $derived(
 		!result || result.outcomes.length === 0
 			? 'neutral'
@@ -90,81 +111,15 @@
 			{/if}
 		</p>
 
-		<!-- 내 목표: 우선순위 순. 위/아래 단추로 순서를 바꾼다 (모바일 우선, 끌기 없음) -->
-		<h3 class="mt-5 mb-2 text-sm text-navy">{m.planner_section_targets()}</h3>
-		<ol class="flex flex-col gap-2">
-			{#each r.outcomes as o, i (targets[i])}
-				{@const { period, choice } = choiceOf(targets[i])}
-				{@const name = choice?.student.name.ko ?? nameOf(o.id)}
-				<li class="flex items-center gap-2 rounded-lg bg-surface/70 px-3 py-2">
-					<span class="w-6 shrink-0 text-center text-sm text-navy">{i + 1}</span>
-					<div class="min-w-0 flex-1">
-						<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-							<span class="font-bold text-ink">{name}</span>
-							{#if choice?.student.koNameStatus === 'provisional'}
-								<span class="text-xs text-navy">
-									{m.planner_provisional()}{#if choice.student.name.ja}
-										· {choice.student.name.ja}{/if}
-								</span>
-							{/if}
-							{#if o.kind === 'secured'}
-								<Badge tone="secured">{m.planner_badge_secured()}</Badge>
-							{:else if o.kind === 'short'}
-								<Badge tone="shortfall">{m.planner_badge_short()}</Badge>
-							{:else}
-								<Badge>{m.planner_badge_unavailable()}</Badge>
-							{/if}
-						</div>
-						<p class="text-xs text-navy">
-							{#if period}{formatDate(period.recruit.start)} · {choice?.stack.name}{/if}
-							{#if o.kind === 'short'}
-								· <span class="text-ink"
-									>{m.planner_target_short({ gems: formatInt(o.shortfallGems) })}</span
-								>
-							{:else if o.kind === 'unavailable'}
-								{o.reason === 'period_ended'
-									? m.planner_target_ended()
-									: m.planner_target_unknown()}
-							{/if}
-						</p>
-						{#if o.kind !== 'unavailable' && o.probabilityBeforePity !== null}
-							<p class="text-xs text-navy">
-								{m.planner_target_before_pity({
-									probability: formatPercent(o.probabilityBeforePity)
-								})}
-								· {m.planner_target_stack({
-									name: choice?.stack.name ?? '',
-									stack: formatInt(o.stackStart)
-								})}
-							</p>
-						{/if}
-					</div>
-					<!-- 순서 단추는 세로로 쌓아 글자 칸을 넓게 둔다. 빼기는 맨 아래 -->
-					<div class="flex shrink-0 flex-col items-center self-stretch">
-						<button
-							type="button"
-							class="grid h-9 w-11 place-items-center text-navy hover:text-ink disabled:opacity-30"
-							aria-label={m.planner_move_up({ name })}
-							disabled={i === 0}
-							onclick={() => onmove(i, -1)}>▲</button
-						>
-						<button
-							type="button"
-							class="grid h-9 w-11 place-items-center text-navy hover:text-ink disabled:opacity-30"
-							aria-label={m.planner_move_down({ name })}
-							disabled={i === r.outcomes.length - 1}
-							onclick={() => onmove(i, 1)}>▼</button
-						>
-						<button
-							type="button"
-							class="grid h-9 w-11 place-items-center text-sm text-navy hover:text-ink"
-							aria-label={m.planner_remove({ name })}
-							onclick={() => onremove(i)}>✕</button
-						>
-					</div>
-				</li>
-			{/each}
-		</ol>
+		<!-- 내 목표: 우선순위 순 (TargetList — 순위 태그·농도, 끌기 + ▲▼). 제목에 개수 -->
+		<h3 class="mt-5 mb-2 flex items-center gap-2 text-sm text-navy">
+			{m.planner_section_targets()}
+			<span
+				class="inline-flex h-5 min-w-6 items-center justify-center rounded-full bg-navy px-1.5 font-num text-xs font-bold text-white"
+				>{formatInt(items.length)}</span
+			>
+		</h3>
+		<TargetList {items} {onreorder} {onremove} />
 
 		{#if r.alternatives.length > 0}
 			<h3 class="mt-5 mb-2 text-sm text-navy">{m.planner_alternative_title()}</h3>
