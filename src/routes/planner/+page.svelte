@@ -145,11 +145,12 @@
 	function toggle(key: TargetKey) {
 		targets = targets.includes(key) ? targets.filter((k) => k !== key) : [...targets, key];
 	}
-	function move(index: number, by: -1 | 1) {
+	/** 우선순위 바꾸기: from 자리의 목표를 to 자리로 (끌기·▲▼ 모두). 저장 형식은 그대로 — 배열 순서가 우선순위 */
+	function reorder(from: number, to: number) {
+		if (from === to || from < 0 || to < 0 || from >= targets.length || to >= targets.length) return;
 		const next = [...targets];
-		const to = index + by;
-		if (to < 0 || to >= next.length) return;
-		[next[index], next[to]] = [next[to], next[index]];
+		const [key] = next.splice(from, 1);
+		next.splice(to, 0, key);
 		targets = next;
 	}
 	function remove(index: number) {
@@ -169,7 +170,7 @@
 
 	<!-- 오른쪽 열: 답 (결과판 → 기간별 계획 → 잔고) -->
 	<div class="flex flex-col gap-6 md:col-start-2 md:row-span-2 md:row-start-2">
-		<PlannerResult {outcome} {targets} {periods} onmove={move} onremove={remove}>
+		<PlannerResult {outcome} {targets} {periods} onreorder={reorder} onremove={remove}>
 			{#snippet actions()}<ShareButton url={saved.shareUrl} />{/snippet}
 		</PlannerResult>
 
