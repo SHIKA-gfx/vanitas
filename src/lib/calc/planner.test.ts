@@ -190,6 +190,57 @@ describe('planPickups — 우선순위와 대안', () => {
 		expect(r.outcomes[1]).toMatchObject({ kind: 'short', shortfallGems: 14200 });
 	});
 
+	it('부족 청휘석은 앞 순위 계획만 두고 센다 — 계획에 든 뒤 순위 목표의 비용을 섞지 않는다', () => {
+		// A(1순위, p1 모집 스택 0) 19,200 / B(2순위, p2 특별 스택 150) 6,000, 잔고 10,000
+		// B만 확보된다. A의 부족은 A 혼자일 때의 9,200 — B까지 더한 15,200이 아니다
+		const ab = input({
+			targets: [target('A', 'p1', 'normal'), target('B', 'p2', 'limited')],
+			stacks: { normal: 0, limited: 150 },
+			gemsByDay: flat(10000)
+		});
+		const r = planPickups(ab);
+		expect(r.outcomes.map((o) => o.kind)).toEqual(['short', 'secured']);
+		expect(r.outcomes[0]).toMatchObject({ kind: 'short', shortfallGems: 9200, stackStart: 0 });
+		// 모자란 만큼 더 받으면 A가 계획에 들고, B는 뒤 순위라 밀려난다
+		const more = planPickups({ ...ab, gemsByDay: flat(10000 + 9200) });
+		expect(more.outcomes.map((o) => o.kind)).toEqual(['secured', 'short']);
+	});
+
+	it('사용자 예시 — 2순위를 데려오려면 2순위 픽업까지 6,000개, 그러면 3순위가 밀려난다', () => {
+		// 시작 36,000, 픽업 사이마다 +6,000, 천장 24,000 (마일리지 없음). 1·2·3순위가 날짜 순서대로
+		const steps = (extra: number) =>
+			Array.from(
+				{ length: 30 },
+				(_, d) => 36000 + (d >= 7 ? 6000 + extra : 0) + (d >= 14 ? 6000 : 0)
+			);
+		const example = (extra: number) =>
+			planPickups(
+				input({
+					targets: [
+						target('1', 'p1', 'normal'),
+						target('2', 'p2', 'normal'),
+						target('3', 'p3', 'normal')
+					],
+					gemsByDay: steps(extra),
+					mileage: { ticketAt: [], pullsPerTicket: 10 }
+				})
+			);
+		// 2순위 픽업 때 18,000개뿐 → 넘기기. 3순위는 24,000개로 확보
+		const now = example(0);
+		expect(now.outcomes.map((o) => o.kind)).toEqual(['secured', 'short', 'secured']);
+		expect(now.outcomes[1]).toMatchObject({ shortfallGems: 6000 });
+		// 2순위 픽업까지 6,000개를 더 받으면 2순위 확보, 3순위는 18,000개 부족
+		const more = example(6000);
+		expect(more.outcomes.map((o) => o.kind)).toEqual(['secured', 'secured', 'short']);
+		expect(more.outcomes[2]).toMatchObject({ shortfallGems: 18000 });
+	});
+
+	it('대안 탐색을 끌 수 있다 (부족분 메우기가 다시 돌릴 때)', () => {
+		const r = planPickups(abc, { alternatives: false });
+		expect(r.alternatives).toEqual([]);
+		expect(r.outcomes).toEqual(planPickups(abc).outcomes);
+	});
+
 	it('더 많이 확보하는 조합을 대안으로 보여준다', () => {
 		const r = planPickups(abc);
 		expect(r.alternatives[0]).toEqual({

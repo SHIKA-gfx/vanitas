@@ -6,7 +6,7 @@
     "server": "ko",
     "currency": "pyroxene",
     "verifiedAt": "2026-09-26",
-    "sources": ["게임화면", "26", "27"],
+    "sources": ["게임화면", "26", "27", "33"],
     "notes": [
       "이 데이터는 게임 내 확인을 마쳤으나, 실제 수급량은 플레이 패턴에 따라 달라진다.",
       "perSeason / perSeasonDay / perEvent 수급원은 schedule 필드가 가리키는 일정표(ko/schedule.json)를 따른다.",
@@ -27,6 +27,20 @@
       "amountRange": { "min": 10, "max": 45 },
       "period": "daily",
       "varianceNote": "순위에 따라 변동. 기본값은 평균 추정치 20. 사용자가 자기 일일 보상을 입력할 수 있게 한다 (실측 로그 18, 2026-09).",
+      "rankRewards": [
+        { "label": "8001~15000위", "amount": 10 },
+        { "label": "4001~8000위",  "amount": 12 },
+        { "label": "2001~4000위",  "amount": 14 },
+        { "label": "1001~2000위",  "amount": 16 },
+        { "label": "501~1000위",   "amount": 18 },
+        { "label": "201~500위",    "amount": 20 },
+        { "label": "101~200위",    "amount": 25 },
+        { "label": "11~100위",     "amount": 30 },
+        { "label": "3~10위",       "amount": 35 },
+        { "label": "2위",          "amount": 40 },
+        { "label": "1위",          "amount": 45 }
+      ],
+      "rankRewardsNote": "순위별 일일 보상 청휘석 (매일 14시 수령). 출처 33(나무위키), 사용자 확인 1위 45·2위 40·3~10위 35 (2026-10-25). 금액 오름차순. 플래너 부족분 메우기의 \"한 단계 위\"가 쓴다 — 계산기 입력은 여전히 금액 하나",
       "verified": true
     },
     {

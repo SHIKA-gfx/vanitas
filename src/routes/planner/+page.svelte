@@ -26,7 +26,8 @@
 	import { getApConfig, getGameConfig, listIncomePresets, listRecruits } from '$lib/data';
 	import { formatInt } from '$lib/format';
 	import { gameToday } from '$lib/game-date';
-	import { listPlannerChoices, planFromData } from '$lib/calc/planner-adapter';
+	import { listPlannerChoices, planFromData, type PlannerQuery } from '$lib/calc/planner-adapter';
+	import { createShortfallFiller } from '$lib/calc/planner-fill';
 	import Panel from '$lib/components/Panel.svelte';
 	import NumberField from '$lib/components/NumberField.svelte';
 	import SegmentedField from '$lib/components/SegmentedField.svelte';
@@ -115,19 +116,20 @@
 		listIncomePresets().find((p) => p.id === income.preset)?.label ?? ''
 	);
 
-	const outcome = $derived(
-		planFromData({
-			today,
-			targets: targets.map(parseTargetKey),
-			gems: res.gems,
-			singleTickets: res.singleTickets,
-			tenPullTickets: res.tenPullTickets,
-			stacks: res.stackByType,
-			mileage: res.mileage,
-			reserveGems,
-			income: toIncomeInput(income, user.habits.apPurchasesPerDay)
-		})
-	);
+	const query = $derived<PlannerQuery>({
+		today,
+		targets: targets.map(parseTargetKey),
+		gems: res.gems,
+		singleTickets: res.singleTickets,
+		tenPullTickets: res.tenPullTickets,
+		stacks: res.stackByType,
+		mileage: res.mileage,
+		reserveGems,
+		income: toIncomeInput(income, user.habits.apPurchasesPerDay)
+	});
+	const outcome = $derived(planFromData(query));
+	/** 부족분 메우기 (docs/005 9장) — 계획 판의 접기를 펼칠 때만 계산한다. 같은 조건의 수급 계산은 목표끼리 나눠 쓴다 */
+	const filler = $derived(createShortfallFiller(query));
 
 	/*
 	 * 보유 재화는 한 줄 요약으로 접어 둔다. 처음 쓰는 사람(값이 모두 0)에게는 펼쳐 보여준다.
@@ -250,7 +252,7 @@
 							}))}
 						/>
 					{:else}
-						<PeriodPlan {outcome} {periods} />
+						<PeriodPlan {outcome} {periods} fill={(i) => filler(i)} />
 					{/if}
 				</div>
 			</Panel>

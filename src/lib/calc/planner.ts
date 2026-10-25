@@ -12,7 +12,9 @@
  * - 청휘석을 쓰면 그 뒤 모든 날의 잔고가 줄어든다. 그래서 "쓰는 날 이후 가장 낮은 잔고"와 비교한다
  *
  * 우선순위 계획(plan)은 1순위부터 하나씩 넣어 보고, 넣어도 앞선 목표가 모두 유지될 때만 남긴다.
+ * 못 넣은 목표의 부족 청휘석도 같은 묶음(앞 순위 계획 + 그 목표)으로 센다 — 뒤 순위 목표의 비용은 섞지 않는다.
  * 대안(alternatives)은 포함/제외 조합을 전수 탐색해 더 많이 확보하는 조합을 찾는다.
+ * 같은 묶음을 수급 조건만 바꿔 여러 번 다시 돌릴 때(부족분 메우기, planner-fill.ts)는 대안 탐색을 끈다.
  */
 
 import { chargeProbAtLeastOne, type ChargeRule } from './gacha';
@@ -128,6 +130,14 @@ export interface PlannerResult {
 
 /** 대안 전수 탐색의 상한. 2^12 = 4,096 조합 */
 export const ALTERNATIVE_LIMIT = 12;
+
+export interface PlanOptions {
+	/**
+	 * 대안 전수 탐색 (기본 켬). 끄면 alternatives는 빈 배열이다.
+	 * 부족분 메우기처럼 수급 조건 수 × 목표 수만큼 다시 돌릴 때 끈다
+	 */
+	alternatives?: boolean;
+}
 
 // ---------------------------------------------------------------------------
 
@@ -262,7 +272,7 @@ function beforePity(t: PlannerTarget, stackStart: number, rule: ChargeRule): num
 	return chargeProbAtLeastOne(t.rate, stackStart, rule.full - stackStart - 1, rule);
 }
 
-export function planPickups(input: PlannerInput): PlannerResult {
+export function planPickups(input: PlannerInput, options: PlanOptions = {}): PlannerResult {
 	if (input.gemsByDay.length === 0) throw new Error('gemsByDay가 비어 있다');
 	if (input.costPerPull <= 0) throw new Error('costPerPull은 1 이상이어야 한다');
 	const minAfter = suffixMin(input.gemsByDay);
@@ -276,12 +286,14 @@ export function planPickups(input: PlannerInput): PlannerResult {
 	}
 	const planned = evaluateSet(input, plan, minAfter);
 
-	// 2. 목표별 결과. 못 넣은 목표는 "완성된 계획에 이 목표를 더하면" 기준 — 스택 시작값과 모자란 청휘석 모두
+	// 2. 목표별 결과. 못 넣은 목표는 "앞 순위 계획에 이 목표를 더하면" 기준 — 스택 시작값과 모자란 청휘석 모두.
+	//    계획에 든 뒤 순위 목표는 빼고 센다: 뒤 순위는 앞 순위를 밀어내지 않으므로, 이 목표가 들어가면 그쪽이 다시 맞춰진다
+	//    (1번의 우선순위 계획이 이 목표를 넣어 볼 때와 같은 묶음 — 모자란 만큼 더 받으면 이 목표가 계획에 든다)
 	const outcomes: TargetOutcome[] = input.targets.map((t, i) => {
 		const unavailable = availability(input, t);
 		if (unavailable) return unavailable;
 		const inPlan = plan.includes(i);
-		const ev = inPlan ? planned : evaluateSet(input, [...plan, i], minAfter);
+		const ev = inPlan ? planned : evaluateSet(input, [...plan.filter((j) => j < i), i], minAfter);
 		const stackStart = ev.stackStart.get(t.id) ?? 0;
 		const common = {
 			id: t.id,
@@ -308,7 +320,8 @@ export function planPickups(input: PlannerInput): PlannerResult {
 		securedCount: plan.length,
 		periods: planned.periods,
 		balance,
-		alternatives: findAlternatives(input, usable, plan, minAfter)
+		alternatives:
+			options.alternatives === false ? [] : findAlternatives(input, usable, plan, minAfter)
 	};
 }
 

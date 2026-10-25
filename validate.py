@@ -492,6 +492,26 @@ def check_income_sources(strict):
                 if not s.get("tierNote"):
                     warn(f"income-sources: {sid} tiers가 있는데 tierNote 없음 — 등급 선택 안내 불가")
 
+        if "rankRewards" in s:
+            ranks = s["rankRewards"]
+            if not isinstance(ranks, list) or not ranks:
+                err(f"income-sources: {sid} rankRewards가 비어 있거나 목록이 아님")
+            else:
+                amounts = []
+                for rr in ranks:
+                    if not isinstance(rr, dict) or not rr.get("label") or not isinstance(rr.get("amount"), int):
+                        err(f"income-sources: {sid} rankRewards 항목은 label과 정수 amount를 가진 객체여야 함")
+                        continue
+                    amounts.append(rr["amount"])
+                if amounts != sorted(set(amounts)):
+                    err(f"income-sources: {sid} rankRewards는 금액이 겹치지 않는 오름차순이어야 함 (한 단계 위를 찾는다)")
+                r = s.get("amountRange")
+                if r and amounts and (amounts[0] != r.get("min") or amounts[-1] != r.get("max")):
+                    warn(f"income-sources: {sid} rankRewards 범위 {amounts[0]}~{amounts[-1]}가 "
+                         f"amountRange {r.get('min')}~{r.get('max')}와 다름")
+            if "tiers" in s:
+                err(f"income-sources: {sid} tiers와 rankRewards를 함께 둘 수 없음 (등급 선택 칸은 tiers만 찾는다)")
+
         if "amountRange" in s:
             r = s["amountRange"]
             if "min" not in r or "max" not in r:
