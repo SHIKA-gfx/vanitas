@@ -40,6 +40,20 @@ describe('listPlannerChoices', () => {
 		]);
 	});
 
+	it('페스의 픽업 외 학생은 고를 수 없고 따로 보여준다', () => {
+		const fes = listPlannerChoices(TODAY).find((p) => p.recruit.id === '2026-11-24-fes-5-5th')!;
+		expect(fes.offPickup.map((s) => s.id)).toEqual([
+			'hoshino_battle',
+			'shiroko_terror',
+			'nagisa_swimsuit',
+			'mika_swimsuit',
+			'aris_battle',
+			'kei'
+		]);
+		const choiceIds = fes.choices.map((c) => c.studentId);
+		for (const s of fes.offPickup) expect(choiceIds).not.toContain(s.id);
+	});
+
 	it('끝난 기간은 빠진다', () => {
 		const ids = listPlannerChoices('2026-11-20').map((p) => p.recruit.id);
 		expect(ids).not.toContain('2026-11-10-serenade-permanent');
@@ -57,7 +71,7 @@ describe('planFromData', () => {
 		expect(r.result.outcomes[0]).toMatchObject({ kind: 'secured', stackStart: 0 });
 		expect(r.result.periods[0]).toMatchObject({ day: 29, gemPulls: 160, mileagePulls: 40 });
 		expect(r.scheduleEstimated).toBe(true);
-		expect(r.scheduleVerifiedAt).toBe('2026-10-24');
+		expect(r.scheduleVerifiedAt).toBe('2026-10-25');
 		expect(r.mileageAssumed).toBe(true);
 	});
 

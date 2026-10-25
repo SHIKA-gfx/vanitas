@@ -327,6 +327,14 @@ def check_recruits():
                 if sid not in ids:
                     err(f"{tag} 학생 '{sid}'가 students.json에 없음")
                 used.add(sid)
+        # 픽업 외 모집 가능 학생: 있는 학생이어야 하고, 같은 기간의 픽업 학생과 겹치지 않는다
+        picked = {sid for b in r.get("banners", []) for sid in b.get("students", [])}
+        for sid in r.get("offPickup", []):
+            if sid not in ids:
+                err(f"{tag} 픽업 외 학생 '{sid}'가 students.json에 없음")
+            if sid in picked:
+                err(f"{tag} '{sid}'가 픽업 학생과 픽업 외 학생에 함께 있음")
+            used.add(sid)
         if r.get("freePulls") is not None and r["freePulls"] <= 0:
             err(f"{tag} freePulls는 양수")
     # 공지 뒤에 추정이 오는 것은 괜찮지만, 추정 뒤에 공지가 오면 순서가 틀린 것

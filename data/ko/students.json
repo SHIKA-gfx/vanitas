@@ -312,6 +312,60 @@
         "ja": "ノア"
       },
       "koNameStatus": "official"
+    },
+    {
+      "id": "hoshino_battle",
+      "gameId": 10098,
+      "name": {
+        "ko": "호시노(무장)",
+        "ja": "ホシノ（臨戦）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "shiroko_terror",
+      "gameId": 10100,
+      "name": {
+        "ko": "시로코*테러",
+        "ja": "シロコ*テラー"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "nagisa_swimsuit",
+      "gameId": 20048,
+      "name": {
+        "ko": "나기사(수영복)",
+        "ja": "ナギサ（水着）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "mika_swimsuit",
+      "gameId": 10122,
+      "name": {
+        "ko": "미카(수영복)",
+        "ja": "ミカ（水着）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "aris_battle",
+      "gameId": 10134,
+      "name": {
+        "ko": "아리스(무장)",
+        "ja": "アリス（臨戦）"
+      },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "kei",
+      "gameId": 10135,
+      "name": {
+        "ko": "케이",
+        "ja": "ケイ"
+      },
+      "koNameStatus": "official"
     }
   ]
 }

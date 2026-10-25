@@ -60,6 +60,8 @@ export interface PlannerChoice {
 export interface PlannerChoicePeriod {
 	recruit: RecruitPeriod;
 	choices: PlannerChoice[];
+	/** 픽업 외 모집 가능 학생 — 스택으로 확정되지 않아 고를 수 없다 (보여주기만) */
+	offPickup: Student[];
 }
 
 export type PlannerOutcome =
@@ -91,6 +93,7 @@ export type PlannerOutcome =
 export function listPlannerChoices(today: string, server: ServerId = 'ko'): PlannerChoicePeriod[] {
 	return listRecruits({ from: today, server }).map((recruit) => ({
 		recruit,
+		offPickup: (recruit.offPickup ?? []).map((id) => getStudent(id, server)),
 		choices: recruit.banners.flatMap((b) => {
 			const rule = getPityRule(b.type, recruit.start, server);
 			if (rule.kind !== 'charge') return [];

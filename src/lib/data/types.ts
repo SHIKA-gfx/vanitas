@@ -425,6 +425,11 @@ export interface RecruitPeriod {
 	/** 무료 모집 횟수 (스택·마일리지에 쌓이는지는 미확인) */
 	freePulls?: number;
 	banners: RecruitBanner[];
+	/**
+	 * 픽업 대상은 아니지만 이 기간에 모집할 수 있는 학생 (페스 모집의 페스 복각 등, 2026-10-25).
+	 * 스택 200은 "픽업 대상 학생"만 확정하므로(공지 2026-10-08) 플래너 목표로 고를 수 없다 — 보여주기만 한다
+	 */
+	offPickup?: string[];
 	sources: string[];
 	note?: string;
 }

@@ -117,7 +117,7 @@
 		{:else}
 			<!-- 타일 사이 20px: 날짜 탭이 타일 위로 10px 솟는다 -->
 			<ol class="flex flex-col gap-5 pt-2.5">
-				{#each current.periods as { recruit, choices, order } (recruit.id)}
+				{#each current.periods as { recruit, choices, order, offPickup } (recruit.id)}
 					<li class="relative rounded-xl px-3 pt-5 pb-3 {TINTS[order % TINTS.length]}">
 						<span
 							class="absolute -top-2.5 left-3 h-5 -skew-x-30 rounded-[2px_4px] bg-navy px-2.5 text-[0.6875rem] leading-5 font-bold text-white"
@@ -165,6 +165,14 @@
 								</li>
 							{/each}
 						</ul>
+						{#if offPickup.length > 0}
+							<!-- 픽업 외 모집 가능 (페스 복각 등): 스택 200은 픽업 대상만 확정하므로 고르기 단추가 아니다 -->
+							<div class="mt-3 text-xs leading-relaxed text-navy">
+								<p class="font-bold text-ink">{m.planner_off_pickup_title()}</p>
+								<p>{offPickup.map((s) => s.name.ko).join(', ')}</p>
+								<p>{m.planner_off_pickup_note()}</p>
+							</div>
+						{/if}
 					</li>
 				{/each}
 			</ol>
