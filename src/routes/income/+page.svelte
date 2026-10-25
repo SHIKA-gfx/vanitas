@@ -15,6 +15,7 @@
 	import { persistSection } from '$lib/state/saved.svelte';
 	import {
 		INCOME_SECTION,
+		INCOME_SHARE_FIELDS,
 		SUBSCRIPTION_MAX_COUNT,
 		incomeChecks,
 		incomeDefaults
@@ -125,15 +126,7 @@
 		incomeChecks(today),
 		// 공유 링크: 기본값과 다른 칸만 짧은 이름으로 (예: ?d=2026-12-31&tier=gold&sub=monthly-pass.continuous&g=3000)
 		{
-			fields: [
-				{ key: 'endDate', param: 'd', kind: 'str' },
-				{ key: 'preset', param: 'ps', kind: 'str' },
-				{ key: 'included', param: 'inc', kind: 'list' },
-				{ key: 'tacticalDaily', param: 'tac', kind: 'int' },
-				{ key: 'raidTier', param: 'tier', kind: 'str' },
-				{ key: 'participation', param: 'ev', kind: 'str' },
-				{ key: 'subscriptions', param: 'sub', kind: 'map-str' }
-			],
+			fields: INCOME_SHARE_FIELDS,
 			user: ['gems', 'singleTickets', 'tenPullTickets', 'apPurchasesPerDay']
 		}
 	);

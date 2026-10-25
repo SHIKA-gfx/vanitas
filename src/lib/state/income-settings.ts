@@ -8,7 +8,8 @@ import { getIncomeSources, listIncomePresets } from '$lib/data';
 import { listToggleableSources, presetIncluded } from '$lib/calc/income-adapter';
 import type { PlannerIncomeInput } from '$lib/calc/planner-adapter';
 import { addDays } from '$lib/game-date';
-import { isFutureDate, isInt, isOneOf, isRecordOf, isSubsetOf, sanitize } from './persist';
+import { isFutureDate, isInt, isOneOf, isRecordOf, isSubsetOf } from './persist';
+import type { ShareField } from './share';
 
 export const INCOME_SECTION = 'income';
 
@@ -64,10 +65,28 @@ export function incomeChecks(today: string) {
 	};
 }
 
-/** 저장된 값(없으면 기본값)을 검사해 돌려준다. 플래너가 수급 계산기의 저장값을 읽을 때 */
-export function sanitizeIncome(raw: unknown, today: string): IncomeSettings {
-	return sanitize(raw, incomeDefaults(today), incomeChecks(today));
-}
+/**
+ * 공유 링크의 짧은 이름 (기본값과 다른 칸만 실린다). 이미 퍼진 링크가 있어 이름은 바꾸지 않는다.
+ * 수급 계산기는 전부, 플래너는 종료 날짜(d)를 뺀 나머지를 쓴다 — 플래너의 기간은 미래시가 정한다
+ */
+type IncomeKey =
+	| 'endDate'
+	| 'preset'
+	| 'included'
+	| 'tacticalDaily'
+	| 'raidTier'
+	| 'participation'
+	| 'subscriptions';
+
+export const INCOME_SHARE_FIELDS: ShareField<IncomeKey>[] = [
+	{ key: 'endDate', param: 'd', kind: 'str' },
+	{ key: 'preset', param: 'ps', kind: 'str' },
+	{ key: 'included', param: 'inc', kind: 'list' },
+	{ key: 'tacticalDaily', param: 'tac', kind: 'int' },
+	{ key: 'raidTier', param: 'tier', kind: 'str' },
+	{ key: 'participation', param: 'ev', kind: 'str' },
+	{ key: 'subscriptions', param: 'sub', kind: 'map-str' }
+];
 
 /** 수급 계산기 입력 → 계산 인자 (기간·보유 재화를 뺀 부분) */
 export function toIncomeInput(s: IncomeSettings, apPurchasesPerDay: number): PlannerIncomeInput {

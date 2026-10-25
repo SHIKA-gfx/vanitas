@@ -284,6 +284,24 @@ export interface PersistedSection {
 export interface ShareSpec<T> {
 	fields: ShareField<Extract<keyof T, string>>[];
 	user: (keyof UserFlat)[];
+	/**
+	 * 다른 화면의 저장 묶음을 이 화면에서 읽고 공유 링크에 함께 싣는다 (예: 플래너 ← 수급 계산기 입력).
+	 * 이 화면에서는 고치지 않는다. 열 때 그 묶음의 저장값을 불러오고, 공유 링크로 열면 링크의 값으로 보여주며,
+	 * "이 값으로 저장"을 고르면 그 묶음에도 저장한다 (2026-10-25)
+	 */
+	linked?: LinkedSection;
+}
+
+export interface LinkedSection {
+	/** 저장 묶음 이름 ('income' 등) */
+	name: string;
+	fields: ShareField[];
+	defaults: () => Record<string, unknown>;
+	checks: Record<string, Check>;
+	get: () => Record<string, unknown>;
+	set: (value: Record<string, unknown>) => void;
+	/** 링크에 싣지 않고 받는 사람의 값을 그대로 두는 칸 (예: 수급 계산기의 종료 날짜) */
+	keepMine?: string[];
 }
 
 /**
@@ -307,10 +325,15 @@ export function persistSection<T extends Record<string, unknown>>(
 	const snapshotSection = () => $state.snapshot(get()) as T;
 	const userFields = USER_SHARE_FIELDS.filter((f) => share?.user.includes(f.key));
 
+	const linked = share?.linked;
+	const snapshotLinked = () =>
+		linked ? ($state.snapshot(linked.get()) as Record<string, unknown>) : null;
+
 	onMount(() => {
 		// 페이지가 레이아웃보다 먼저 마운트되므로 공유 값도 여기서 먼저 불러 둔다
 		store.restoreUser();
 		set(sanitize(store.read(name), defaults(), checks));
+		if (linked) linked.set(sanitize(store.read(linked.name), linked.defaults(), linked.checks));
 		if (share) openSharedLink();
 		ready = true;
 	});
@@ -321,10 +344,23 @@ export function persistSection<T extends Record<string, unknown>>(
 		const params = page.url.searchParams;
 		const section = decodeShare(params, share.fields);
 		const user = decodeShare(params, userFields);
-		if (!section.found && !user.found) return;
+		const link = linked ? decodeShare(params, linked.fields) : { values: {}, found: false };
+		if (!section.found && !user.found && !link.found) return;
 
 		const mineSection = snapshotSection();
 		const mineUser = store.userFlat();
+		const mineLinked = snapshotLinked();
+		if (linked && mineLinked) {
+			// 링크에 없는 칸은 보낸 사람의 기본값이다 (기본값과 다른 칸만 실린다). keepMine 칸만 내 값
+			const kept = Object.fromEntries((linked.keepMine ?? []).map((k) => [k, mineLinked[k]]));
+			linked.set(
+				sanitize(
+					{ ...linked.defaults(), ...link.values, ...kept },
+					linked.defaults(),
+					linked.checks
+				)
+			);
+		}
 
 		set(sanitize({ ...defaults(), ...section.values }, defaults(), checks));
 		const sharedUser: Record<string, unknown> = { ...mineUser };
@@ -332,14 +368,16 @@ export function persistSection<T extends Record<string, unknown>>(
 		store.applyUserFlat(sharedUser);
 
 		store.enterShared(
-			() => JSON.stringify([snapshotSection(), store.userFlat()]),
+			() => JSON.stringify([snapshotSection(), store.userFlat(), snapshotLinked()]),
 			() => {
 				set(mineSection);
 				store.applyUserFlat(mineUser);
+				if (linked && mineLinked) linked.set(mineLinked);
 			},
 			() => {
 				store.write(name, snapshotSection());
 				store.saveUser();
+				if (linked) store.write(linked.name, snapshotLinked());
 			},
 			clearQuery,
 			(kept) => track(kept ? 'shared-keep' : 'shared-back', { calc: name })
@@ -377,7 +415,16 @@ export function persistSection<T extends Record<string, unknown>>(
 			const query = share
 				? shareQuery([
 						[snapshotSection(), defaults(), share.fields],
-						[store.userFlat(), USER_DEFAULTS, userFields]
+						[store.userFlat(), USER_DEFAULTS, userFields],
+						...(linked
+							? [
+									[snapshotLinked() ?? {}, linked.defaults(), linked.fields] as [
+										object,
+										object,
+										ShareField[]
+									]
+								]
+							: [])
 					])
 				: '';
 			return `${page.url.origin}${page.url.pathname}${query ? `?${query}` : ''}`;
