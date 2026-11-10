@@ -44,7 +44,7 @@
 	import ShareButton from '$lib/components/ShareButton.svelte';
 	import { getUserState } from '$lib/state/user-state.svelte';
 	import { persistSection } from '$lib/state/saved.svelte';
-	import { isInt } from '$lib/state/persist';
+	import { isInt, isRecordOf } from '$lib/state/persist';
 	import {
 		INCOME_SECTION,
 		INCOME_SHARE_FIELDS,
@@ -82,25 +82,47 @@
 	let targets = $state<TargetKey[]>([]);
 	let reserveGems = $state(0);
 
+	/*
+	 * 남은 무료 모집 (2026-11-10): 무료 모집이 있는 기간이 진행 중일 때만 묻는다 — 이미 돌린 사람이 있어서.
+	 * 기간 id → 남은 횟수. 지금 기간 하나만 남기므로 기간이 끝나면 저절로 버려진다. 시작 전인 기간은 늘 전부로 본다
+	 */
+	const freeTotals = Object.fromEntries(
+		listRecruits()
+			.filter((r) => r.freePulls)
+			.map((r) => [r.id, r.freePulls!])
+	);
+	const freeNow = listRecruits({ from: today }).find((r) => r.freePulls && r.start <= today);
+	let freeLeft = $state<Record<string, number>>({});
+	const freeLeftNow = $derived(freeNow ? (freeLeft[freeNow.id] ?? freeNow.freePulls!) : 0);
+
 	// 수급 조건: 수급 계산기가 저장한 값 (income-settings.ts). 플래너에서는 고치지 않는다
 	let income = $state<IncomeSettings>(incomeDefaults(today));
 
 	const saved = persistSection(
 		'planner',
-		() => ({ targets, reserveGems }),
+		() => ({ targets, reserveGems, freeLeft }),
 		(v) => {
 			// 일정이 바로잡혀 기간 id가 바뀌어도 목표를 잃지 않게 새 id로 잇는다 (previousIds, 2026-11-10)
 			targets = normalizeTargetKeys(v.targets, allKeys, (id) => resolveRecruitId(id));
 			reserveGems = v.reserveGems;
+			freeLeft = v.freeLeft;
 		},
-		() => ({ targets: [] as TargetKey[], reserveGems: 0 }),
-		{ targets: isTargetKeyList, reserveGems: isInt(0) },
+		() => ({ targets: [] as TargetKey[], reserveGems: 0, freeLeft: {} as Record<string, number> }),
+		{
+			targets: isTargetKeyList,
+			reserveGems: isInt(0),
+			freeLeft: isRecordOf(
+				Object.keys(freeTotals),
+				(k, v) => Number.isInteger(v) && (v as number) >= 0 && (v as number) <= freeTotals[k]
+			)
+		},
 		// 공유 링크: 목표(우선순위 순) + 보유 재화 + 보낸 사람의 수급 조건 (2026-10-25 결정).
 		// 수급 조건은 수급 계산기와 같은 짧은 이름을 쓰고, 종료 날짜(d)는 싣지 않는다
 		{
 			fields: [
 				{ key: 'targets', param: 'tg', kind: 'list' },
-				{ key: 'reserveGems', param: 'rs', kind: 'int' }
+				{ key: 'reserveGems', param: 'rs', kind: 'int' },
+				{ key: 'freeLeft', param: 'fr', kind: 'map-int' }
 			],
 			user: [
 				'gems',
@@ -139,6 +161,7 @@
 		tenPullTickets: res.tenPullTickets,
 		stacks: res.stackByType,
 		mileage: res.mileage,
+		freePullsLeft: freeLeft,
 		reserveGems,
 		income: toIncomeInput(income, user.habits.apPurchasesPerDay)
 	});
@@ -309,6 +332,11 @@
 							>{m.planner_inputs_mileage({ count: formatInt(res.mileage) })}</span
 						>
 					{/if}
+					{#if freeNow}
+						<span class="rounded-md bg-wash px-2 py-1"
+							>{m.planner_inputs_free({ count: formatInt(freeLeftNow) })}</span
+						>
+					{/if}
 					{#if reserveGems > 0}
 						<span class="rounded-md bg-wash px-2 py-1"
 							>{m.planner_inputs_reserve({ count: formatInt(reserveGems) })}</span
@@ -369,6 +397,23 @@
 						hint={m.pity_input_mileage_hint()}
 						bind:value={res.mileage}
 					/>
+					{#if freeNow}
+						<NumberField
+							label={m.planner_input_free_left()}
+							unit={m.field_unit_times()}
+							max={freeNow.freePulls}
+							hint={m.planner_input_free_left_hint({
+								event: freeNow.event ?? '',
+								total: formatInt(freeNow.freePulls!)
+							})}
+							bind:value={
+								() => freeLeftNow,
+								(v) => {
+									freeLeft = { [freeNow.id]: v };
+								}
+							}
+						/>
+					{/if}
 
 					<!-- 수급 조건 요약: 바꾸는 곳은 수급 계산기 하나 -->
 					<div class="flex flex-wrap items-center justify-between gap-2 text-sm">
