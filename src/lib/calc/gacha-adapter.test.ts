@@ -112,7 +112,7 @@ describe('모집 스택 전환 (2026-11-10)', () => {
 		expect(r.evaluation.pity.system).toBe('point_exchange');
 	});
 
-	it('스택 방식은 마일리지 티켓을 더해 19,200개로 확정, 마일리지 가정을 표시한다', () => {
+	it('스택 방식은 마일리지 티켓을 더해 19,200개로 확정 (초회 범위는 기간마다로 확인, 2026-11-10)', () => {
 		const r = evaluateBanner({
 			bannerId: 'pickup_normal',
 			date: AFTER,
@@ -124,7 +124,7 @@ describe('모집 스택 전환 (2026-11-10)', () => {
 		if (!r.ok) return;
 		expect(r.evaluation.budget).toMatchObject({ fromMileage: 40, total: 200 });
 		expect(r.evaluation.verdict).toMatchObject({ kind: 'guaranteed', leftoverGemsAtPity: 0 });
-		expect(r.mileageAssumed).toBe(true);
+		expect(r.mileageAssumed).toBe(false);
 	});
 
 	it('이번 기간 마일리지를 넘기면 이미 받은 티켓은 빼고 센다', () => {

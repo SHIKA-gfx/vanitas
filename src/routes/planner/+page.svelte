@@ -23,7 +23,13 @@
 	import Seo from '$lib/components/Seo.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { localizeHref } from '$lib/paraglide/runtime.js';
-	import { getApConfig, getGameConfig, listIncomePresets, listRecruits } from '$lib/data';
+	import {
+		getApConfig,
+		getGameConfig,
+		listIncomePresets,
+		listRecruits,
+		resolveRecruitId
+	} from '$lib/data';
 	import { formatInt } from '$lib/format';
 	import { gameToday } from '$lib/game-date';
 	import { listPlannerChoices, planFromData, type PlannerQuery } from '$lib/calc/planner-adapter';
@@ -38,7 +44,7 @@
 	import ShareButton from '$lib/components/ShareButton.svelte';
 	import { getUserState } from '$lib/state/user-state.svelte';
 	import { persistSection } from '$lib/state/saved.svelte';
-	import { isInt, isSubsetOf } from '$lib/state/persist';
+	import { isInt } from '$lib/state/persist';
 	import {
 		INCOME_SECTION,
 		INCOME_SHARE_FIELDS,
@@ -51,7 +57,13 @@
 	import PlannerResult from './PlannerResult.svelte';
 	import PeriodPlan from './PeriodPlan.svelte';
 	import PickupPicker from './PickupPicker.svelte';
-	import { parseTargetKey, targetKey, type TargetKey } from './target-key';
+	import {
+		isTargetKeyList,
+		normalizeTargetKeys,
+		parseTargetKey,
+		targetKey,
+		type TargetKey
+	} from './target-key';
 
 	const ap = getApConfig();
 	const today = gameToday(new Date(), ap.purchase.resetTime, ap.purchase.resetTimezone);
@@ -61,8 +73,10 @@
 	/** 고를 수 있는 목표 (오늘 이후에 끝나는 기간) */
 	const periods = listPlannerChoices(today);
 	/** 저장값으로 허용하는 목표 — 끝난 기간도 포함해 "기간이 끝났어요"로 보여준다 */
-	const allKeys = listRecruits().flatMap((r) =>
-		r.banners.flatMap((b) => b.students.map((s) => targetKey(r.id, s)))
+	const allKeys = new Set(
+		listRecruits().flatMap((r) =>
+			r.banners.flatMap((b) => b.students.map((s) => targetKey(r.id, s)))
+		)
 	);
 
 	let targets = $state<TargetKey[]>([]);
@@ -75,11 +89,12 @@
 		'planner',
 		() => ({ targets, reserveGems }),
 		(v) => {
-			targets = v.targets;
+			// 일정이 바로잡혀 기간 id가 바뀌어도 목표를 잃지 않게 새 id로 잇는다 (previousIds, 2026-11-10)
+			targets = normalizeTargetKeys(v.targets, allKeys, (id) => resolveRecruitId(id));
 			reserveGems = v.reserveGems;
 		},
 		() => ({ targets: [] as TargetKey[], reserveGems: 0 }),
-		{ targets: isSubsetOf(allKeys), reserveGems: isInt(0) },
+		{ targets: isTargetKeyList, reserveGems: isInt(0) },
 		// 공유 링크: 목표(우선순위 순) + 보유 재화 + 보낸 사람의 수급 조건 (2026-10-25 결정).
 		// 수급 조건은 수급 계산기와 같은 짧은 이름을 쓰고, 종료 날짜(d)는 싣지 않는다
 		{

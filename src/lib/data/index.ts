@@ -260,6 +260,16 @@ export function listRecruits(options: { from?: string; server?: ServerId } = {})
 	return options.from ? rows.filter((r) => r.end > options.from!) : rows;
 }
 
+/**
+ * 기간 id를 지금 id로. 추정 일정이 바로잡혀 날짜(=id)가 바뀐 기간은 previousIds로 예전 id를 남겨 두고,
+ * 저장된 목표·공유 링크가 그 id를 가리키면 새 id로 이어 준다. 모르는 id는 그대로 돌려준다
+ */
+export function resolveRecruitId(id: string, server: ServerId = 'ko'): string {
+	const rows = getSchedule(server).recruits;
+	if (rows.some((r) => r.id === id)) return id;
+	return rows.find((r) => r.previousIds?.includes(id))?.id ?? id;
+}
+
 export function getStudent(id: string, server: ServerId = 'ko'): Student {
 	const found = dataset(server).students.students.find((s) => s.id === id);
 	if (!found) throw new Error(`알 수 없는 학생: ${id}`);

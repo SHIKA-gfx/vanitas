@@ -30,8 +30,8 @@ function query(over: Partial<PlannerQuery>): PlannerQuery {
 describe('listPlannerChoices', () => {
 	it('오늘 이후에 끝나는 기간의 픽업 학생을 기간 순으로', () => {
 		const periods = listPlannerChoices(TODAY);
-		expect(periods[0].recruit.id).toBe('2026-11-10-serenade-permanent');
-		const fes = periods.find((p) => p.recruit.id === '2026-11-24-fes-5-5th')!;
+		expect(periods[0].recruit.id).toBe('2026-11-10-pandemonium-cruise');
+		const fes = periods.find((p) => p.recruit.id === '2026-11-17-fes-5-5th')!;
 		expect(fes.choices.map((c) => [c.studentId, c.stack.name])).toEqual([
 			['ibuki_swimsuit', '특별 스택'],
 			['iroha_swimsuit', '특별 스택'],
@@ -41,7 +41,7 @@ describe('listPlannerChoices', () => {
 	});
 
 	it('페스의 픽업 외 학생은 고를 수 없고 따로 보여준다', () => {
-		const fes = listPlannerChoices(TODAY).find((p) => p.recruit.id === '2026-11-24-fes-5-5th')!;
+		const fes = listPlannerChoices(TODAY).find((p) => p.recruit.id === '2026-11-17-fes-5-5th')!;
 		expect(fes.offPickup.map((s) => s.id)).toEqual([
 			'hoshino_battle',
 			'shiroko_terror',
@@ -56,23 +56,24 @@ describe('listPlannerChoices', () => {
 
 	it('끝난 기간은 빠진다', () => {
 		const ids = listPlannerChoices('2026-11-20').map((p) => p.recruit.id);
-		expect(ids).not.toContain('2026-11-10-serenade-permanent');
-		expect(ids[0]).toBe('2026-11-17-pandemonium-cruise');
+		expect(ids).not.toContain('2026-11-10-pandemonium-cruise');
+		expect(ids[0]).toBe('2026-11-17-fes-5-5th');
 	});
 });
 
 describe('planFromData', () => {
-	it('보유 19,200개로 페스 한 명 확정 — 기간 마지막 날(11/30)에 뽑는다', () => {
+	it('보유 19,200개로 페스 한 명 확정 — 기간 마지막 날(11/23)에 뽑는다', () => {
 		const r = planFromData(
-			query({ gems: 19200, targets: [{ recruitId: '2026-11-24-fes-5-5th', studentId: 'rio' }] })
+			query({ gems: 19200, targets: [{ recruitId: '2026-11-17-fes-5-5th', studentId: 'rio' }] })
 		);
 		expect(r.kind).toBe('ok');
 		if (r.kind !== 'ok') return;
 		expect(r.result.outcomes[0]).toMatchObject({ kind: 'secured', stackStart: 0 });
-		expect(r.result.periods[0]).toMatchObject({ day: 29, gemPulls: 160, mileagePulls: 40 });
+		expect(r.result.periods[0]).toMatchObject({ day: 22, gemPulls: 160, mileagePulls: 40 });
+		// 12월 이후 기간이 추정이라 미래시 전체로는 추정. 마일리지 초회 범위는 기간마다로 확인 (2026-11-10)
 		expect(r.scheduleEstimated).toBe(true);
-		expect(r.scheduleVerifiedAt).toBe('2026-10-25');
-		expect(r.mileageAssumed).toBe(true);
+		expect(r.scheduleVerifiedAt).toBe('2026-11-10');
+		expect(r.mileageAssumed).toBe(false);
 	});
 
 	it('특별 스택 이월: 만마선에서 확정하면 페스 목표는 0에서 시작한다', () => {
@@ -81,8 +82,8 @@ describe('planFromData', () => {
 				gems: 99999,
 				stacks: { limited: 120 },
 				targets: [
-					{ recruitId: '2026-11-17-pandemonium-cruise', studentId: 'makoto_swimsuit' },
-					{ recruitId: '2026-11-24-fes-5-5th', studentId: 'rio' }
+					{ recruitId: '2026-11-10-pandemonium-cruise', studentId: 'makoto_swimsuit' },
+					{ recruitId: '2026-11-17-fes-5-5th', studentId: 'rio' }
 				]
 			})
 		);
@@ -96,7 +97,7 @@ describe('planFromData', () => {
 			query({
 				gems: 99999,
 				stacks: { normal: 150, limited: 30 },
-				targets: [{ recruitId: '2026-11-10-serenade-permanent', studentId: 'chiaki' }]
+				targets: [{ recruitId: '2026-11-24-pandemic-hazard-rerun', studentId: 'sena_casual' }]
 			})
 		);
 		expect(r.kind === 'ok' && r.result.outcomes[0]).toMatchObject({
@@ -107,14 +108,14 @@ describe('planFromData', () => {
 
 	it('무료 모집이 있는 기간은 계산에 넣지 않았다고 알린다', () => {
 		const r = planFromData(query({}));
-		expect(r.kind === 'ok' && r.freePullsIgnored).toEqual(['2026-11-17-pandemonium-cruise']);
+		expect(r.kind === 'ok' && r.freePullsIgnored).toEqual(['2026-11-10-pandemonium-cruise']);
 	});
 
 	it('고를 수 없는 목표(끝난 기간)는 unavailable', () => {
 		const r = planFromData(
 			query({
 				today: '2026-11-20',
-				targets: [{ recruitId: '2026-11-10-serenade-permanent', studentId: 'chiaki' }]
+				targets: [{ recruitId: '2026-11-10-pandemonium-cruise', studentId: 'makoto_swimsuit' }]
 			})
 		);
 		expect(r.kind === 'ok' && r.result.outcomes[0]).toMatchObject({

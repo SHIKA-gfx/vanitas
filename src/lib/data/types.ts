@@ -185,6 +185,11 @@ export interface GameConfig {
 		sharedBetweenTypes: boolean;
 		carryOver: boolean;
 		resetOnPickupObtained: boolean;
+		/**
+		 * 무료 모집이 스택·마일리지에 쌓이는가 (2026-11-10 확인, 출처 36).
+		 * 없거나 accumulate가 false면 플래너는 무료 모집을 계산에서 뺀다
+		 */
+		freePulls?: { accumulate: boolean; verified: boolean; sources: string[]; note?: string };
 		mileage: RecruitMileage;
 		[key: string]: unknown;
 	};
@@ -424,8 +429,13 @@ export interface RecruitPeriod {
 	status: 'announced' | 'estimated';
 	/** 함께 열리는 이벤트 이름 (표시용) */
 	event?: string;
-	/** 무료 모집 횟수 (스택·마일리지에 쌓이는지는 미확인) */
+	/** 무료 모집 횟수. 스택·마일리지에 쌓이는지는 game-config chargeSystem.freePulls */
 	freePulls?: number;
+	/**
+	 * 날짜가 바뀌어 id가 바뀐 기간의 예전 id (2026-11-10~).
+	 * 저장된 목표·공유 링크의 예전 id를 새 id로 이어 준다 — resolveRecruitId
+	 */
+	previousIds?: string[];
 	banners: RecruitBanner[];
 	/**
 	 * 픽업 대상은 아니지만 이 기간에 모집할 수 있는 학생 (페스 모집의 페스 복각 등, 2026-10-25).

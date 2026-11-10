@@ -4,63 +4,21 @@
     "id": "students",
     "server": "ko",
     "description": "픽업 플래너가 고를 수 있는 학생. 미래시(recruits)에 나오는 학생만 담는다 — 전체 도감이 아니다. 텍스트만, 이미지 없음.",
-    "verifiedAt": "2026-10-24",
+    "verifiedAt": "2026-11-10",
     "sources": [
-      "31"
+      "31",
+      "34",
+      "39"
     ],
     "notes": [
       "id는 VANITAS 안의 이름(영문 슬러그). gameId는 게임 내부 학생 번호로, 몰루로그 학생 이미지 주소에서 옮겼다 — 서버가 달라도 같은 학생을 가리킨다.",
       "name.ko: 한국 공식 표기. 한국 미출시라 공식 표기가 없으면 커뮤니티에서 주로 쓰는 이름을 넣고 koNameStatus를 provisional로 둔다 → 화면에 '가칭' + 일본 공식 이름 (2026-10-24 결정).",
       "의상 학생은 한국 공식 표기 방식 '이름(의상)'으로 쓴다. 몰루로그는 괄호 없이 붙여 쓴다(마코토수영복).",
-      "name.ja: 일본 공식 표기. null은 아직 옮기지 않은 것 — 검토 때 일본 공식 공지로 채운다."
+      "name.ja: 일본 공식 표기. null은 아직 옮기지 않은 것 — 검토 때 일본 공식 공지로 채운다.",
+      "2026-11-10: 마코토(수영복)·사츠키(수영복)은 특별 픽업 공지(34), 이로하(수영복)·이부키(수영복)은 생방송(39)으로 한국 공식 표기 확인 → official. 소야곡 상설화 기간을 빼며 그 기간에만 나오던 5명(마코토, 아코(드레스), 사츠키, 치아키, 칸나(수영복))도 뺐다."
     ]
   },
   "students": [
-    {
-      "id": "makoto",
-      "gameId": 20033,
-      "name": {
-        "ko": "마코토",
-        "ja": "マコト"
-      },
-      "koNameStatus": "official"
-    },
-    {
-      "id": "ako_dress",
-      "gameId": 10087,
-      "name": {
-        "ko": "아코(드레스)",
-        "ja": "アコ（ドレス）"
-      },
-      "koNameStatus": "official"
-    },
-    {
-      "id": "satsuki",
-      "gameId": 20040,
-      "name": {
-        "ko": "사츠키",
-        "ja": "サツキ"
-      },
-      "koNameStatus": "official"
-    },
-    {
-      "id": "chiaki",
-      "gameId": 10107,
-      "name": {
-        "ko": "치아키",
-        "ja": "チアキ"
-      },
-      "koNameStatus": "official"
-    },
-    {
-      "id": "kanna_swimsuit",
-      "gameId": 10096,
-      "name": {
-        "ko": "칸나(수영복)",
-        "ja": "カンナ（水着）"
-      },
-      "koNameStatus": "official"
-    },
     {
       "id": "makoto_swimsuit",
       "gameId": 10146,
@@ -68,7 +26,7 @@
         "ko": "마코토(수영복)",
         "ja": "マコト（水着）"
       },
-      "koNameStatus": "provisional"
+      "koNameStatus": "official"
     },
     {
       "id": "satsuki_swimsuit",
@@ -77,7 +35,7 @@
         "ko": "사츠키(수영복)",
         "ja": "サツキ（水着）"
       },
-      "koNameStatus": "provisional"
+      "koNameStatus": "official"
     },
     {
       "id": "ibuki_swimsuit",
@@ -86,7 +44,7 @@
         "ko": "이부키(수영복)",
         "ja": "イブキ（水着）"
       },
-      "koNameStatus": "provisional"
+      "koNameStatus": "official"
     },
     {
       "id": "iroha_swimsuit",
@@ -95,7 +53,7 @@
         "ko": "이로하(수영복)",
         "ja": "イロハ（水着）"
       },
-      "koNameStatus": "provisional"
+      "koNameStatus": "official"
     },
     {
       "id": "neru_uniform",

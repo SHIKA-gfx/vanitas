@@ -280,6 +280,7 @@ def check_recruits():
         err("schedule: meta.recruitsVerifiedAt 형식 오류 (YYYY-MM-DD) — 플래너가 '일정 확인일'로 보여준다")
     seen, used, prev = set(), set(), None
     single = []
+    previous_owner = {}  # 예전 id → 지금 id (저장된 목표를 이어 주는 칸, 2026-11-10)
     for r in rows:
         tag = f"recruits: {r.get('id')}"
         if r["id"] in seen:
@@ -337,6 +338,18 @@ def check_recruits():
             used.add(sid)
         if r.get("freePulls") is not None and r["freePulls"] <= 0:
             err(f"{tag} freePulls는 양수")
+        for old in r.get("previousIds", []):
+            if not isinstance(old, str) or not old[:10].count("-") == 2:
+                err(f"{tag} previousIds는 'YYYY-MM-DD-이름' 문자열 목록")
+            elif old == r["id"]:
+                err(f"{tag} previousIds에 자기 id가 있음")
+            elif old in previous_owner:
+                err(f"{tag} previousIds '{old}'를 {previous_owner[old]}도 갖고 있음")
+            else:
+                previous_owner[old] = r["id"]
+    for old, owner in previous_owner.items():
+        if old in seen:
+            err(f"recruits: {owner}의 previousIds '{old}'가 지금 있는 기간 id와 같음")
     # 공지 뒤에 추정이 오는 것은 괜찮지만, 추정 뒤에 공지가 오면 순서가 틀린 것
     seen_est = False
     for r in rows:

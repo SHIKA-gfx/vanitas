@@ -62,8 +62,8 @@
   },
   "chargeSystem": {
     "_status": "partial",
-    "_note": "2026-10-08 사전 안내(출처 30)로 확인한 값만 verified. 상세는 별도 공지·공식 생방송 예정. 공식 용어는 '스택'(일본은 '차지')이며 내부 이름 charge는 그대로 쓴다.",
-    "sources": ["30"],
+    "_note": "2026-10-08 사전 안내(출처 30), 11/10 특별 픽업 공지(34)·모집 가이드(35)·생방송 기사(36)로 확인한 값만 verified. 상시·리콜렉트·앙코르와 전환 시 포인트는 아직 확인 전. 공식 용어는 '스택'(일본은 '차지')이며 내부 이름 charge는 그대로 쓴다.",
+    "sources": ["30", "34", "35", "36"],
     "perPull": 1,
     "softPity": { "count": 100, "guaranteedRarity": 3, "pickupChance": 0.5, "verified": true },
     "hardPity": { "count": 200, "verified": true },
@@ -79,6 +79,7 @@
     "resetOnPickupObtained": true,
     "ticketsAccumulate": true,
     "ticketsNote": "개편 전에 보유한 1회·10회 모집 티켓도 개편 후 사용 가능하며 모집 스택이 쌓인다.",
+    "freePulls": { "accumulate": true, "verified": true, "sources": ["36"], "note": "무료 모집도 스택·모집 마일리지에 쌓인다 (5주년 무료 모집 200회, 기사 36). 플래너는 목표가 있는 기간에 그 목표를 데려오는 데 먼저 쓴다고 본다. 목표를 데려오고 남는 무료 모집은 스택에 넣지 않는다 — 중간에 픽업이 나오면 초기화되므로 이월량을 장담할 수 없다" },
     "pointsAtSwitch": { "value": "unconfirmed", "assumed": "평소처럼 기간 종료 시 기동석 조각 1:1 변환. 스택으로 넘어가지 않는다고 가정" },
     "mileage": {
       "name": "모집 마일리지",
@@ -90,9 +91,8 @@
       "firstTimeLast": 390,
       "repeatAfterFirstTime": true,
       "repeatRewardsIncludeTickets": false,
-      "firstTimeScope": "unconfirmed",
-      "firstTimeScopeAssumed": "period",
-      "note": "같은 기간의 일반·특별·페스 모집이 공유하고, 기간이 끝나면 이월되지 않는다. 초회 보상(390까지)을 모두 받은 뒤 반복 보상. 초회가 기간마다 다시 시작되는지는 미확인 — 마일리지가 기간마다 초기화되므로 기간마다로 가정. 티켓 외 보상은 계산에 쓰지 않아 옮기지 않았다 (출처 30 표 참조).",
+      "firstTimeScope": "period",
+      "note": "같은 기간의 픽업·특별 픽업·페스 모집이 공유하고, 기간이 끝나면 이월되지 않고 소멸한다(34·35). 초회 보상(390까지)을 모두 받은 뒤 반복 보상(20회마다, 티켓 없음). 초회 범위는 기간마다 — 가이드(35) 그림의 '모집 기간이 바뀌면 새로운 모집 마일리지를 받을 수 있어요'로 확인 (2026-11-10). 티켓 외 보상은 계산에 쓰지 않아 옮기지 않았다 (출처 30 표 참조).",
       "verified": true
     }
   },

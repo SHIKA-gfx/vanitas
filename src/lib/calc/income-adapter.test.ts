@@ -84,7 +84,7 @@ describe('이벤트 — 백에서 피어난 한 송이 (09-29 ~ 10-13, 14일, �
 
 	it('이벤트 목록이 끝난 뒤까지 계산하면 알려준다', () => {
 		const r = run({ included: ['event'], endDate: '2027-03-01' });
-		expect(r.eventsCoveredUntil).toBe('2027-01-26');
+		expect(r.eventsCoveredUntil).toBe('2027-01-19');
 		expect(
 			run({ included: ['daily-mission'], endDate: '2027-03-01' }).eventsCoveredUntil
 		).toBeNull();
