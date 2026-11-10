@@ -203,9 +203,10 @@ describe('fillShortfall — 과금과 한계', () => {
 	});
 
 	it('다 바꿔도 모자라면 남은 부족분을 알린다', () => {
+		// 만마선은 무료 모집 200회로 확보되므로(2026-11-10) 페스로 본다
 		const q = query({
 			gems: 0,
-			targets: [CRUISE],
+			targets: [FES],
 			income: {
 				...MAXED,
 				subscriptions: { 'monthly-pass': 'continuous', 'half-pass': 'continuous' }
@@ -220,23 +221,23 @@ describe('fillShortfall — 과금과 한계', () => {
 });
 
 describe('fillShortfall — 다른 목표와의 관계', () => {
-	const q = query({ gems: 15000, targets: [CRUISE, FES, NATSUZORA] });
+	const q = query({ gems: 15000, targets: [FES, NATSUZORA] });
 
 	it('도중에 함께 확보되는 목표와, 이 목표가 확보되며 밀려나는 목표를 알린다', () => {
 		const fill = fillShortfall(q, 0)!;
 		expect(fill.securedAt).not.toBeNull();
 		const also = fill.steps.flatMap((s) => s.alsoSecured);
-		// 3순위(12월 말)가 먼저 확보됐다가, 1순위가 확보되며 밀려난다 — 밀려난 목표의 새 부족분도 함께
-		expect(also).toContain(2);
+		// 2순위(12월 말)가 먼저 확보됐다가, 1순위가 확보되며 밀려난다 — 밀려난 목표의 새 부족분도 함께
+		expect(also).toContain(1);
 		const lost = fill.steps.at(-1)!.alsoLost;
-		expect(lost.map((l) => l.index)).toEqual([2]);
+		expect(lost.map((l) => l.index)).toEqual([1]);
 		const levers = fill.steps.map((s) => s.lever);
-		const after = outcomeOf({ ...q, income: levers.reduce(apply, NOTHING) }, 2);
+		const after = outcomeOf({ ...q, income: levers.reduce(apply, NOTHING) }, 1);
 		expect(after).toMatchObject({ kind: 'short', shortfallGems: lost[0].shortfallGems });
 	});
 
 	it('한 계산기로 여러 목표를 계산해도 따로 계산한 것과 같다', () => {
 		const filler = createShortfallFiller(q);
-		for (const i of [0, 1, 2]) expect(filler(i)).toEqual(fillShortfall(q, i));
+		for (const i of [0, 1]) expect(filler(i)).toEqual(fillShortfall(q, i));
 	});
 });

@@ -82,9 +82,12 @@
 						gems: formatInt(spend.gemsBefore - spend.gemsAfter)
 					})}
 				</p>
-				{#if spend.ticketPulls > 0 || spend.mileagePulls > 0}
+				{#if spend.freePulls > 0 || spend.ticketPulls > 0 || spend.mileagePulls > 0}
 					<p class="text-xs text-navy">
 						{[
+							spend.freePulls > 0
+								? m.planner_period_free_pulls({ pulls: formatInt(spend.freePulls) })
+								: '',
 							spend.ticketPulls > 0
 								? m.planner_period_owned_tickets({ pulls: formatInt(spend.ticketPulls) })
 								: '',

@@ -48,6 +48,11 @@ export interface PlannerQuery {
 	stacks: Record<string, number>;
 	/** 지금 진행 중인 기간의 모집 마일리지 */
 	mileage: number;
+	/**
+	 * 진행 중인 기간의 남은 무료 모집 (기간 id → 횟수). 없으면 그 기간의 무료 모집을 모두 남은 것으로 본다.
+	 * 시작 전인 기간은 늘 전부
+	 */
+	freePullsLeft?: Record<string, number>;
 	reserveGems?: number;
 	income: PlannerIncomeInput;
 	server?: ServerId;
@@ -87,8 +92,10 @@ export type PlannerOutcome =
 			incomePerDay: number;
 			/** 마일리지 초회 보상이 기간마다 다시 주어진다는 미확인 가정에 기댄다 */
 			mileageAssumed: boolean;
-			/** 무료 모집이 있지만 계산에 넣지 않은 기간 (스택·마일리지 적립 미확인) */
+			/** 무료 모집이 있지만 계산에 넣지 않은 기간 (game-config에서 스택·마일리지 적립이 확인되지 않았을 때) */
 			freePullsIgnored: string[];
+			/** 무료 모집을 계산에 넣은 기간 */
+			freePullsCounted: string[];
 	  };
 
 /**
@@ -174,13 +181,24 @@ export function planFromData(
 		};
 	});
 
+	// 무료 모집: 스택·마일리지에 쌓인다고 확인된 경우에만 (game-config chargeSystem.freePulls, 2026-11-10).
+	// 진행 중인 기간은 사용자가 적은 남은 횟수, 시작 전인 기간은 전부
+	const freeCounts = cs.freePulls?.accumulate === true;
+	const freePullsOf = (r: (typeof recruits)[number]) => {
+		if (!freeCounts || !r.freePulls) return 0;
+		if (r.start > query.today) return r.freePulls;
+		const left = query.freePullsLeft?.[r.id];
+		return left === undefined ? r.freePulls : Math.min(Math.max(0, Math.floor(left)), r.freePulls);
+	};
+
 	const result = planPickups(
 		{
 			// 끝난 기간도 넘긴다 — 저장·공유된 목표가 끝난 기간을 가리키면 planner가 period_ended로 알려준다
 			periods: listRecruits({ server }).map((r) => ({
 				id: r.id,
 				startDay: daysBetween(query.today, r.start),
-				endDay: daysBetween(query.today, r.end)
+				endDay: daysBetween(query.today, r.end),
+				freePulls: freePullsOf(r)
 			})),
 			targets,
 			gemsByDay: income.records.map((r) => r.balance),
@@ -210,6 +228,7 @@ export function planFromData(
 		incomeEstimated: income.estimated,
 		incomePerDay: income.perDay,
 		mileageAssumed: cs.mileage.firstTimeScope === 'unconfirmed' && result.periods.length > 0,
-		freePullsIgnored: recruits.filter((r) => r.freePulls).map((r) => r.id)
+		freePullsIgnored: freeCounts ? [] : recruits.filter((r) => r.freePulls).map((r) => r.id),
+		freePullsCounted: freeCounts ? recruits.filter((r) => r.freePulls).map((r) => r.id) : []
 	};
 }

@@ -154,6 +154,9 @@
 					<p>{m.planner_note_worst_case()}</p>
 					{#if outcome.mileageAssumed}<p>{m.planner_note_mileage()}</p>{/if}
 					{#if outcome.freePullsIgnored.length > 0}<p>{m.planner_note_free_pulls()}</p>{/if}
+					{#if outcome.result.periods.some((p) => p.freePulls > 0)}
+						<p>{m.planner_note_free_pulls_counted()}</p>
+					{/if}
 				</div>
 			</details>
 		</div>

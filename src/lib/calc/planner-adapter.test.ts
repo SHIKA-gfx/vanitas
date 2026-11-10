@@ -106,9 +106,36 @@ describe('planFromData', () => {
 		});
 	});
 
-	it('무료 모집이 있는 기간은 계산에 넣지 않았다고 알린다', () => {
-		const r = planFromData(query({}));
-		expect(r.kind === 'ok' && r.freePullsIgnored).toEqual(['2026-11-10-pandemonium-cruise']);
+	it('무료 모집을 계산에 넣는다 — 만마선 목표는 무료 200회로 청휘석 없이 확정 (2026-11-10)', () => {
+		const r = planFromData(
+			query({
+				targets: [{ recruitId: '2026-11-10-pandemonium-cruise', studentId: 'makoto_swimsuit' }]
+			})
+		);
+		expect(r.kind).toBe('ok');
+		if (r.kind !== 'ok') return;
+		expect(r.freePullsCounted).toEqual(['2026-11-10-pandemonium-cruise']);
+		expect(r.freePullsIgnored).toEqual([]);
+		expect(r.result.outcomes[0].kind).toBe('secured');
+		expect(r.result.periods[0]).toMatchObject({ pulls: 200, freePulls: 200, gemPulls: 0 });
+	});
+
+	it('진행 중인 기간은 남은 무료 모집만 쓴다', () => {
+		// 11/12, 무료 모집 20회 남음, 특별 스택 150 → 50연 중 20연 무료, 30연은 청휘석 (마일리지 0이라 티켓 없음)
+		const r = planFromData(
+			query({
+				today: '2026-11-12',
+				gems: 99999,
+				stacks: { limited: 150 },
+				freePullsLeft: { '2026-11-10-pandemonium-cruise': 20 },
+				targets: [{ recruitId: '2026-11-10-pandemonium-cruise', studentId: 'makoto_swimsuit' }]
+			})
+		);
+		expect(r.kind === 'ok' && r.result.periods[0]).toMatchObject({
+			pulls: 50,
+			freePulls: 20,
+			gemPulls: 30
+		});
 	});
 
 	it('고를 수 없는 목표(끝난 기간)는 unavailable', () => {

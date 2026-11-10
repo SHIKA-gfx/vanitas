@@ -30,6 +30,12 @@ export interface PlannerPeriod {
 	startDay: number;
 	/** 끝나는 날(그날은 포함하지 않음). 마지막으로 뽑을 수 있는 날 = endDay - 1 */
 	endDay: number;
+	/**
+	 * 이 기간에 쓸 수 있는 무료 모집 (스택·마일리지에 쌓인다, 2026-11-10).
+	 * 이 기간 목표를 데려오는 데 먼저 쓴다. 목표를 데려오고 남는 무료 모집은 스택에 넣지 않는다 —
+	 * 중간에 픽업이 나오면 스택이 초기화되므로 이월량을 장담할 수 없다. 목표가 없는 기간에는 쓰지 않은 것으로 본다
+	 */
+	freePulls?: number;
 }
 
 export interface PlannerTarget {
@@ -77,6 +83,8 @@ export interface PeriodSpend {
 	ticketPulls: number;
 	/** 마일리지로 받은 티켓으로 한 연차 */
 	mileagePulls: number;
+	/** 무료 모집으로 한 연차 */
+	freePulls: number;
 	/** 뽑는 날 잔고 — 쓰기 전 / 쓴 뒤 */
 	gemsBefore: number;
 	gemsAfter: number;
@@ -149,17 +157,24 @@ export function spendInPeriod(
 	pulls: number,
 	ownedTicketPulls: number,
 	startMileage: number,
-	mileage: PlannerInput['mileage']
-): { gemPulls: number; ticketPulls: number; mileagePulls: number } {
+	mileage: PlannerInput['mileage'],
+	freePulls = 0
+): { gemPulls: number; ticketPulls: number; mileagePulls: number; freePulls: number } {
 	const thresholds = new Set(mileage.ticketAt);
 	let earned = 0;
 	let owned = Math.max(0, ownedTicketPulls);
+	let free = Math.max(0, freePulls);
 	let m = startMileage;
 	let gemPulls = 0;
 	let ticketPulls = 0;
 	let mileagePulls = 0;
+	let freeUsed = 0;
+	// 무료 모집 → 이 기간 마일리지 티켓(기간제) → 가진 티켓 → 청휘석 순. 어느 것이든 마일리지는 쌓인다
 	for (let i = 0; i < pulls; i++) {
-		if (earned > 0) {
+		if (free > 0) {
+			free -= 1;
+			freeUsed += 1;
+		} else if (earned > 0) {
 			earned -= 1;
 			mileagePulls += 1;
 		} else if (owned > 0) {
@@ -169,7 +184,7 @@ export function spendInPeriod(
 		m += 1;
 		if (thresholds.has(m)) earned += mileage.pullsPerTicket;
 	}
-	return { gemPulls, ticketPulls, mileagePulls };
+	return { gemPulls, ticketPulls, mileagePulls, freePulls: freeUsed };
 }
 
 /** 오늘부터 끝까지, 각 날 이후 가장 낮은 잔고 */
@@ -233,7 +248,8 @@ function evaluateSet(input: PlannerInput, chosen: number[], minAfter: number[]):
 			pulls,
 			ownedTickets,
 			inProgress ? input.currentMileage : 0,
-			input.mileage
+			input.mileage,
+			period.freePulls ?? 0
 		);
 		ticketsUsed += s.ticketPulls;
 		const gems = s.gemPulls * input.costPerPull;
@@ -250,6 +266,7 @@ function evaluateSet(input: PlannerInput, chosen: number[], minAfter: number[]):
 			gemPulls: s.gemPulls,
 			ticketPulls: s.ticketPulls,
 			mileagePulls: s.mileagePulls,
+			freePulls: s.freePulls,
 			gemsBefore: before,
 			gemsAfter: before - gems
 		});
