@@ -39,7 +39,8 @@ describe('spendInPeriod — 기간 안 티켓 순서', () => {
 		expect(spendInPeriod(200, 0, 0, MILEAGE)).toEqual({
 			gemPulls: 160,
 			ticketPulls: 0,
-			mileagePulls: 40
+			mileagePulls: 40,
+			freePulls: 0
 		});
 	});
 
@@ -48,8 +49,71 @@ describe('spendInPeriod — 기간 안 티켓 순서', () => {
 		expect(spendInPeriod(80, 20, 0, MILEAGE)).toEqual({
 			gemPulls: 50,
 			ticketPulls: 20,
-			mileagePulls: 10
+			mileagePulls: 10,
+			freePulls: 0
 		});
+	});
+
+	it('무료 모집을 가장 먼저 쓰고, 무료 모집도 마일리지를 쌓는다 (2026-11-10)', () => {
+		// 무료 150연 동안 70·130·150에서 티켓 30연, 170에서 10연 더 → 151~190은 마일리지 티켓, 191~200은 청휘석
+		expect(spendInPeriod(200, 0, 0, MILEAGE, 150)).toEqual({
+			gemPulls: 10,
+			ticketPulls: 0,
+			mileagePulls: 40,
+			freePulls: 150
+		});
+		// 무료 200회면 천장까지 청휘석 0개 (받은 마일리지 티켓은 남는다)
+		expect(spendInPeriod(200, 30, 0, MILEAGE, 200)).toEqual({
+			gemPulls: 0,
+			ticketPulls: 0,
+			mileagePulls: 0,
+			freePulls: 200
+		});
+	});
+});
+
+describe('planPickups — 무료 모집 (2026-11-10)', () => {
+	it('무료 모집이 있는 기간의 목표는 그만큼 청휘석을 덜 쓴다', () => {
+		const r = planPickups(
+			input({
+				periods: [{ id: 'p1', startDay: 0, endDay: 7, freePulls: 200 }],
+				targets: [target('a', 'p1', 'limited')],
+				gemsByDay: flat(0)
+			})
+		);
+		expect(r.outcomes[0].kind).toBe('secured');
+		expect(r.periods[0]).toMatchObject({ pulls: 200, freePulls: 200, gemPulls: 0 });
+	});
+
+	it('목표를 데려오고 남는 무료 모집은 스택에 넣지 않는다 — 다음 같은 종류 목표는 0에서', () => {
+		const r = planPickups(
+			input({
+				periods: [
+					{ id: 'p1', startDay: 0, endDay: 7, freePulls: 200 },
+					{ id: 'p2', startDay: 7, endDay: 14 }
+				],
+				targets: [target('a', 'p1', 'limited'), target('b', 'p2', 'limited')],
+				stacks: { limited: 150 },
+				gemsByDay: flat(99999)
+			})
+		);
+		expect(r.periods[0]).toMatchObject({ pulls: 50, freePulls: 50, gemPulls: 0 });
+		expect(r.outcomes[1]).toMatchObject({ kind: 'secured', stackStart: 0 });
+	});
+
+	it('목표가 없는 기간의 무료 모집은 쓰지 않은 것으로 본다 — 스택이 그대로 이월된다', () => {
+		const r = planPickups(
+			input({
+				periods: [
+					{ id: 'p1', startDay: 0, endDay: 7, freePulls: 200 },
+					{ id: 'p2', startDay: 7, endDay: 14 }
+				],
+				targets: [target('b', 'p2', 'limited')],
+				stacks: { limited: 40 },
+				gemsByDay: flat(99999)
+			})
+		);
+		expect(r.outcomes[0]).toMatchObject({ kind: 'secured', stackStart: 40 });
 	});
 });
 
