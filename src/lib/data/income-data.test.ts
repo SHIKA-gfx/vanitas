@@ -40,6 +40,6 @@ describe('이벤트', () => {
 		const events = listEvents();
 		const starts = events.map((e) => e.start);
 		expect(starts).toEqual([...starts].sort());
-		expect(events.at(-1)?.end).toBe('2027-01-26');
+		expect(events.at(-1)?.end).toBe('2027-01-19');
 	});
 });

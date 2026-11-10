@@ -37,9 +37,9 @@ const MAXED: PlannerIncomeInput = {
 };
 
 const TODAY = '2026-10-25';
-const CRUISE = { recruitId: '2026-11-17-pandemonium-cruise', studentId: 'makoto_swimsuit' };
-const FES = { recruitId: '2026-11-24-fes-5-5th', studentId: 'rio' };
-const NATSUZORA = { recruitId: '2026-12-29-natsuzora-rerun', studentId: 'seia_swimsuit' };
+const CRUISE = { recruitId: '2026-11-10-pandemonium-cruise', studentId: 'makoto_swimsuit' };
+const FES = { recruitId: '2026-11-17-fes-5-5th', studentId: 'rio' };
+const NATSUZORA = { recruitId: '2026-12-22-natsuzora-rerun', studentId: 'seia_swimsuit' };
 
 function query(over: Partial<PlannerQuery>): PlannerQuery {
 	return {
@@ -90,17 +90,9 @@ describe('fillShortfall — 언제 계산하나', () => {
 	it('확보·불가 목표에는 메우는 방법이 없다', () => {
 		expect(fillShortfall(query({ gems: 99999, targets: [FES] }), 0)).toBeNull();
 		// 끝난 기간 (저장·공유된 낡은 목표)
-		const ended = query({ today: '2026-11-20', targets: [CRUISE, FES] });
-		expect(outcomeOf(ended, 0).kind).toBe('short');
-		expect(
-			fillShortfall(
-				{
-					...ended,
-					targets: [{ recruitId: '2026-11-10-serenade-permanent', studentId: 'chiaki' }]
-				},
-				0
-			)
-		).toBeNull();
+		const ended = query({ today: '2026-11-20', targets: [CRUISE] });
+		expect(outcomeOf(ended, 0).kind).toBe('unavailable');
+		expect(fillShortfall(ended, 0)).toBeNull();
 	});
 
 	it('수급 입력이 잘못되면 계산하지 않는다', () => {
@@ -160,14 +152,14 @@ describe('fillShortfall — 무료 방법', () => {
 
 describe('fillShortfall — 한 단계 위', () => {
 	it('전술대회는 지금 일일 보상보다 많은 첫 순위 금액으로 올린다 (20 → 25개, 101~200위)', () => {
-		// 다른 무료 방법은 다 쓴 상태라 전술대회만 남는다. 138개 부족 — 25개 × 36일이면 메워진다
-		const q = query({ gems: 9300, targets: [FES], income: { ...MAXED, tacticalDaily: 20 } });
+		// 다른 무료 방법은 다 쓴 상태라 전술대회만 남는다. 113개 부족 — 5개 × 29일이면 메워진다
+		const q = query({ gems: 9900, targets: [FES], income: { ...MAXED, tacticalDaily: 20 } });
 		const fill = fillShortfall(q, 0)!;
 		expect(fill.securedAt).toBe(0);
 		expect(fill.steps[0]).toMatchObject({
 			kind: 'free',
 			lever: { kind: 'tacticalRank', from: 20, to: 25, rank: '101~200위' },
-			gainGems: 180
+			gainGems: 145
 		});
 	});
 
@@ -193,19 +185,21 @@ describe('fillShortfall — 과금과 한계', () => {
 		const firstPaid = kinds.indexOf('paid');
 		expect(firstPaid).toBeGreaterThan(0);
 		expect(kinds.slice(firstPaid).every((k) => k === 'paid')).toBe(true);
-		// 그 픽업(11/24~11/30 뽑기, 36일째)까지 받으려면 30일 상품 2회
-		expect(fill.steps[firstPaid].lever).toMatchObject({ kind: 'subscription', from: 0, to: 2 });
+		// 그 픽업(11/17~11/23 뽑기, 29일째)까지 받으려면 30일 상품 1회
+		expect(fill.steps[firstPaid].lever).toMatchObject({ kind: 'subscription', from: 0, to: 1 });
 	});
 
 	it('정액 상품으로 확보되면, 확보되는 가장 적은 구매 횟수로 줄인다', () => {
-		// 무료는 다 받고 있고, 월정액 1회면 충분한 정도로 모자라다
-		const base = query({ gems: 7900, targets: [FES], income: MAXED });
-		const short = outcomeOf(base, 0);
-		expect(short.kind).toBe('short');
+		// 무료는 다 받고 있고, 남겨 둘 청휘석 때문에 978개 모자라다.
+		// 그 픽업(12/22~12/28 뽑기, 64일째)까지 받으려면 30일 상품 3회지만 1회(1,592개)로 확보된다
+		const base = query({ gems: 0, reserveGems: 3000, targets: [NATSUZORA], income: MAXED });
+		expect(outcomeOf(base, 0)).toMatchObject({ kind: 'short', shortfallGems: 978 });
 		const fill = fillShortfall(base, 0)!;
 		expect(fill.securedAt).toBe(0);
-		const step = fill.steps[0];
-		expect(step.lever).toMatchObject({ kind: 'subscription', id: 'monthly-pass', from: 0, to: 1 });
+		expect(fill.steps[0]).toMatchObject({
+			lever: { kind: 'subscription', id: 'monthly-pass', from: 0, to: 1 },
+			gainGems: 1592
+		});
 	});
 
 	it('다 바꿔도 모자라면 남은 부족분을 알린다', () => {

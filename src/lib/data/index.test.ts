@@ -9,7 +9,8 @@ import {
 	getRateGroups,
 	getStudent,
 	listBannerTypes,
-	listRecruits
+	listRecruits,
+	resolveRecruitId
 } from './index';
 
 describe('확률 그룹', () => {
@@ -151,7 +152,23 @@ describe('픽업 미래시 (플래너)', () => {
 	});
 
 	it('가칭 학생은 koNameStatus로 구분한다', () => {
-		expect(getStudent('makoto_swimsuit').koNameStatus).toBe('provisional');
+		expect(getStudent('kasumi_swimsuit').koNameStatus).toBe('provisional');
+		expect(getStudent('makoto_swimsuit').koNameStatus).toBe('official');
 		expect(getStudent('rio').koNameStatus).toBe('official');
+	});
+});
+
+describe('resolveRecruitId — 날짜가 바뀐 기간의 예전 id (2026-11-10)', () => {
+	it('예전 id는 지금 id로, 지금 id와 모르는 id는 그대로', () => {
+		expect(resolveRecruitId('2026-11-17-pandemonium-cruise')).toBe('2026-11-10-pandemonium-cruise');
+		expect(resolveRecruitId('2026-12-29-natsuzora-rerun')).toBe('2026-12-22-natsuzora-rerun');
+		expect(resolveRecruitId('2026-11-10-pandemonium-cruise')).toBe('2026-11-10-pandemonium-cruise');
+		expect(resolveRecruitId('2026-11-10-serenade-permanent')).toBe('2026-11-10-serenade-permanent');
+	});
+
+	it('예전 id가 지금 있는 기간 id와 겹치지 않는다 (이어 주기가 모호해지지 않게)', () => {
+		const rows = listRecruits();
+		const current = new Set(rows.map((r) => r.id));
+		for (const r of rows) for (const old of r.previousIds ?? []) expect(current.has(old)).toBe(false);
 	});
 });
