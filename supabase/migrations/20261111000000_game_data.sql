@@ -7,6 +7,7 @@
 --   게임 데이터 표 9개: 읽기는 누구나(anon·authenticated), 추가·수정·삭제는 관리자만
 --   admins: 클라이언트 역할에는 권한 없음 — 관리자 추가·삭제는 SQL 편집기에서만
 --   change_log: 관리자만 읽기, 쓰기는 트리거만
+--   deploy_requests: 관리자만 추가·읽기 (추가는 reason 칸만 — 누가·언제는 DB가 채운다)
 --   service_role(비밀 키)에는 표 권한을 주지 않는다 — 이 프로젝트는 비밀 키를 쓰지 않는다
 --
 -- 2026-05-30 이후 새 Supabase 프로젝트는 public 스키마의 표를 Data API에 자동으로 열지 않는다.
@@ -303,5 +304,28 @@ create view public.change_log_saves with (security_invoker = true) as
    group by tx;
 revoke all on table public.change_log_saves from anon, authenticated, service_role;
 grant select on table public.change_log_saves to authenticated;
+
+-- ============================================================ 7. 배포 요청 (docs/006 결정 A)
+
+-- 관리자 화면의 저장(④의 save_recruit)이 한 행을 넣는다. Supabase Database Webhook(대시보드에서 설정)이
+-- 이 표의 INSERT를 보고 Cloudflare Pages 배포 훅을 부른다 → 빌드가 DB를 읽어 사이트에 반영한다.
+-- 배포 훅 주소는 웹훅 설정에만 둔다 (레포·이 파일에 쓰지 않는다).
+-- SQL 편집기로 데이터를 고친 뒤 손으로 배포: insert into public.deploy_requests (reason) values ('SQL 편집기에서 수정');
+create table public.deploy_requests (
+  id     bigint generated always as identity primary key,
+  at     timestamptz not null default now(),
+  actor  uuid default auth.uid(), -- SQL 편집기에서 넣으면 null
+  reason text not null check (reason <> '' and length(reason) <= 200)
+);
+comment on table public.deploy_requests is '배포 요청. INSERT마다 Database Webhook이 Cloudflare Pages 배포 훅을 부른다 (docs/006 6-4)';
+create index deploy_requests_at_idx on public.deploy_requests (at desc);
+
+alter table public.deploy_requests enable row level security;
+revoke all on table public.deploy_requests from anon, authenticated, service_role;
+grant select on table public.deploy_requests to authenticated;
+-- 열 단위 권한: 클라이언트는 reason만 쓴다. actor·at은 기본값으로만 — 다른 사람 이름으로 요청할 수 없다
+grant insert (reason) on table public.deploy_requests to authenticated;
+create policy "읽기: 관리자" on public.deploy_requests for select to authenticated using ((select public.is_admin()));
+create policy "추가: 관리자" on public.deploy_requests for insert to authenticated with check ((select public.is_admin()));
 
 commit;
