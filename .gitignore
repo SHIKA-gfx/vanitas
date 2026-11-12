@@ -36,5 +36,8 @@ Thumbs.db
 src/lib/paraglide
 project.inlang/cache/
 
+# 넣기 SQL — npm run data:seed-sql이 만든다 (docs/006 7-1)
+supabase/seed.sql
+
 # 개인 실측 기록은 레포 밖(../VANITAS_DECISIONS/LOG)에 둔다
 logs/
