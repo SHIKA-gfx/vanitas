@@ -1,6 +1,6 @@
 # 006. DB 이전 설계 (Supabase)
 
-> 작성: 2026-11-04 · 갱신: 2026-11-11 (11/10 공지 반영 #77·#78, 관리자 페이지 필수, 결정 A~E·G) · 상태: 설계 확정
+> 작성: 2026-11-04 · 갱신: 2026-11-12 (② 넣기·내보내기, Supabase 설정 완료, Security Advisor) · 상태: 설계 확정, ① 완료
 > 관련: 개발 결정 문서 3-3(결정)·5장(보안 개념)·6-8(배포), `docs/005`(미래시 데이터, 10장 `previousIds`), `supabase/migrations/`
 
 ## 1. 무엇을 하는가
@@ -57,7 +57,7 @@
 | DB를 못 읽음 (일시정지·네트워크·행이 비어 있음) | 빌드 중단 → 사이트는 이전 버전 (결정 C) |
 | `validate.py` 오류 | 빌드 중단 → 사이트는 이전 버전 |
 
-- Cloudflare Pages 빌드 명령을 `npm run build`에서 `npm run build:pages`로 바꾼다 (대시보드). `npm run build`(= `vite build`)는 그대로 두어 빌드 검사 CI가 쓴다
+- Cloudflare Pages 빌드 명령을 `npm run build`에서 `npm run build:pages`(= `npm run data:export && python3 validate.py && vite build`)로 바꾼다 (대시보드). `npm run build`(= `vite build`)는 그대로 두어 빌드 검사 CI가 쓴다
 - 빌드 환경의 Python: 빌드 이미지 v3 기본 3.13, v2 기본 3.11. `validate.py`는 표준 라이브러리만 쓰고 3.11 문법으로도 돈다 (확인 2026-11-04). 대시보드에서 빌드 시스템 버전만 확인한다
 - 설정은 Production 환경 변수에만 `db`로 둔다. PR 미리보기는 레포 JSON으로 빌드된다
 
@@ -198,13 +198,15 @@ datasets (path → json)      admins ──▶ auth.users      change_log (트�
 | `VANITAS_DATA_SOURCE` | `json`(기본) / `db` | Cloudflare Production | — |
 | 배포 훅 주소 | Cloudflare가 준 주소 | Supabase Database Webhook 설정에만 (6-4) | **비밀** |
 | 관리자 비밀번호 | | 본인만 | **비밀** |
+| DB 비밀번호 | 프로젝트를 만들 때 정한 것 | 비밀번호 관리자에만. 이 구성에서는 쓰지 않는다 | **비밀** |
 
 - 레포·채팅·이슈에 비밀값을 쓰지 않는다. 레거시 `anon`·`service_role` JWT 키는 2026년 말 폐지 예정이라 새 키(`sb_publishable_…`)를 쓴다
 - 공개용 키도 `.env`에 둔다(`.gitignore` 대상) — 노출돼도 괜찮지만 레포에 박아 두면 키를 바꿀 때 커밋이 필요하다
 
-### 5-5. Supabase 설정 순서 (사용자)
+### 5-5. Supabase 설정 순서 (사용자, 2026-11-12 완료)
 
-1. 프로젝트 만들기 — 지역 Northeast Asia (Seoul). "새 표 자동 공개"는 꺼진 기본값 그대로
+1. 프로젝트 만들기 — 이름 `VANITAS`, 지역 Northeast Asia (Seoul), GitHub 연동 안 함(마이그레이션은 SQL Editor로 적용한다).
+   Security 칸: Enable Data API **켬**, Automatically expose new tables **끔**(켜진 것이 기본값), Enable automatic RLS **켬**
 2. SQL Editor에 `supabase/migrations/20261111000000_game_data.sql`을 붙여 넣고 실행
 3. Authentication → 이메일 로그인 켜기, 새 가입 끄기
 4. Authentication → Users → Add user (본인 이메일·비밀번호, 자동 확인) → User UID 복사 →
@@ -214,7 +216,18 @@ datasets (path → json)      admins ──▶ auth.users      change_log (트�
 7. Supabase 대시보드 → Database Webhooks → 새 웹훅: 표 `deploy_requests`, 이벤트 Insert, HTTP POST, 주소 = 6의 배포 훅
 8. 연결 시험: SQL Editor에서 `insert into public.deploy_requests (reason) values ('웹훅 시험');` → Cloudflare에 새 빌드가 뜨는지.
    아직 설정이 `json`이라 지금과 같은 빌드다 (운영 사이트에 영향 없음)
-9. Security Advisor를 한 번 열어 경고가 있으면 PR에 적는다
+9. Security Advisor를 한 번 열어 경고를 처리한다 (5-6)
+
+### 5-6. Security Advisor (2026-11-12)
+
+| 경고 | 대상 | 처리 |
+|---|---|---|
+| 로그인 안 한 사람·로그인한 사람이 security definer 함수를 부를 수 있다 | `rls_auto_enable()` — "Enable automatic RLS"가 만든 이벤트 트리거 함수 | **실행 권한을 거둠** (`20261112000000_advisor_revoke.sql`). 이벤트 트리거는 실행 권한과 관계없이 돌아 자동 RLS는 그대로 |
+| 로그인한 사람이 security definer 함수를 부를 수 있다 | `is_admin()` | **그대로.** 보안 규칙과 관리자 화면이 `authenticated`로 부른다. 부른 사람 자신이 관리자인지만 알려 준다 (`anon`은 이미 막힘) |
+| 유출 비밀번호 검사 꺼짐 | Auth | **그대로.** 무료 요금제에서 켤 수 없다. 새 가입 끔 + 관리자 계정 하나 + 강한 비밀번호로 대신한다 |
+
+- Info: `admins`에 RLS는 켜져 있고 정책이 없다 — 일부러 그렇다 (SQL Editor에서만 다룬다)
+- 남는 경고 2건(`is_admin`, 유출 비밀번호)은 발표에서 "알고 둔 경고"로 이유와 함께 보여 준다
 
 ## 6. 관리자 페이지 `/admin` (필수, ④)
 
@@ -264,31 +277,62 @@ datasets (path → json)      admins ──▶ auth.users      change_log (트�
 - 호출이 실패해도 관리자 화면은 바로 모른다. 확인은 SQL Editor에서 `select * from net._http_response order by created desc limit 5;`(웹훅 응답 기록)와 Cloudflare 배포 목록
 - SQL 편집기로 데이터를 고친 뒤에는 `insert into public.deploy_requests (reason) values ('SQL 편집기에서 수정');` 한 줄로 배포한다
 
-## 7. 넣기·내보내기 (②)
+## 7. 넣기·내보내기 (②, 2026-11-12)
 
 ### 7-1. 구조
 
-- **변환은 순수 함수, 통신은 얇게** — 계산 계층과 같은 원칙. `파일 → 행`과 `행 → 파일` 두 함수를 vitest로 왕복 시험한다(DB 없이)
-- 내보내기(`scripts/data-export.mjs`): Data API에서 게임 데이터 표 9개를 공개용 키로 읽어(`anon`) `data/*.json`을 쓴다. 문서 10행이 다 있고 정식 표가 비어 있지 않아야 성공 — 아니면 실패로 끝낸다
-- 처음 넣기: 스크립트가 **SQL 파일을 만든다** → 사용자가 SQL 편집기에서 실행. 비밀 키가 필요 없다. **전환 직전(⑤)에 그때의 최신 레포 JSON으로 다시 만든다** (지금 기준 기간 8 · 학생 34 · 출처 38)
+**변환은 순수 함수, 통신·파일은 얇게** — 계산 계층과 같은 원칙. 관리자 화면(④)도 같은 변환을 쓴다.
+
+| 파일 | 하는 일 |
+|---|---|
+| `src/lib/data/db/rows.ts` | DB 행 모양(열 이름 그대로), 표 목록·넣는 순서, 표로 뺀 배열 3개 |
+| `src/lib/data/db/convert.ts` | `filesToRows`(파일 → 표 9개의 행, 자리 표시) / `rowsToFiles`(행 → 파일, 키 순서 4-4). 기간 하나 단위 `recruitToRows`·`rowsToRecruits` |
+| `src/lib/data/db/format-json.ts` | 압축 서식 (7-3) |
+| `src/lib/data/db/seed-sql.ts` | 넣기 SQL — 한 트랜잭션으로 표 9개를 비우고(truncate) 다시 넣고, 표별 행 수를 돌려준다 |
+| `scripts/data-export.ts` | DB(Data API, 공개용 키) → 파일. 빌드·스냅샷·비교 |
+| `scripts/data-seed-sql.ts` | 레포 파일 → `supabase/seed.sql` (레포에 넣지 않는다) |
+| `scripts/data-format.ts` | 레포 파일을 내보내기와 같은 모양으로 다시 쓰기 (7-3) |
+
+- 스크립트는 **Node가 TypeScript를 바로 실행**한다(`node --experimental-strip-types`, Node 22.6 이상). 새 의존성이 없다.
+  그래서 스크립트가 불러오는 `src/lib/data/db/` 파일은 상대 경로 import에 `.ts`를 붙이고 타입은 `import type`으로 가져온다 (Node 타입 지우기 규칙)
+- **새 칸 막기**: 정식 표로 옮긴 것(출처·학생·기간·배너)에 표에 없는 칸이 있으면 변환이 멈춘다.
+  조용히 버리면 11/10의 `previousIds` 같은 새 칸이 DB를 한 번 거치며 사라진다 — 열을 더하고(마이그레이션) 변환을 고친 뒤에 넣는다
+- 넣기의 비우기는 `truncate`라 행 트리거가 돌지 않는다 → `change_log`에는 넣은 행(INSERT)만 한 저장으로 남는다
+
+| 명령 | 언제 | 하는 일 |
+|---|---|---|
+| `npm run data:seed-sql` | 처음 넣기, 전환 직전(⑤) | `supabase/seed.sql`을 만든다 → VS Code로 열어 전체 복사 → SQL Editor에서 실행 |
+| `npm run data:check` | 넣은 뒤 확인, 아무 때나 | DB를 읽어 레포와 **비교만** 한다. 값이 다른 파일이 있으면 실패 |
+| `npm run data:pull` | 스냅샷 | DB를 읽어 `data/`를 덮어쓴다 |
+| `npm run data:format` | 서식 맞추기 (7-3) | 레포 파일을 키 순서·서식만 다시 쓴다. `-- --check`는 쓰지 않고 검사만 |
+| `npm run data:export` | 빌드 1단계 (`build:pages`) | `VANITAS_DATA_SOURCE=db`일 때만 DB를 읽어 `data/`를 덮어쓴다. `json`이면 아무것도 안 한다 |
+
+`data:check`·`data:pull`은 로컬 `.env`의 `PUBLIC_SUPABASE_URL`·`PUBLIC_SUPABASE_PUBLISHABLE_KEY`를 쓴다(`--env-file=.env`).
+`build:pages`는 Cloudflare(리눅스)에서 도는 명령이라 Windows에서 그대로 돌리지 않는다(`python3`).
+
+**내보내기가 실패로 끝나는 경우** (빌드가 멈춘다, 결정 C): 연결 실패·HTTP 오류(일시정지, 잘못된 키), 표 하나가 한 번에 읽는 한도(1,000행)에 닿음,
+출처·학생·기간·문서 표가 비어 있음, DB 문서 목록과 레포 `data/` 파일 목록이 다름, 변환 오류(자리 표시 없음, 없는 기간을 가리키는 행).
 
 ### 7-2. 왕복 검사
 
-1. JSON → 행 → JSON이 원래 파일과 **값과 키 순서까지** 같다
-2. 다시 꺼낸 JSON으로 단위 테스트(실데이터 기간 id를 쓰는 planner·planner-fill·index 테스트 포함)와 `validate.py`가 그대로 통과한다
+1. **단위 테스트** (`src/lib/data/db/*.test.ts`, CI): 레포 파일 → 행 → 파일이 값까지 같고, 한 번 돌린 결과는 다시 돌려도 키 순서까지 같다.
+   자리 표시 자리·키 순서, 빈 칸 빼기, 순서(`seq`), 새 칸 막기, 서식 폭 경계, 넣기 SQL 따옴표
+2. **로컬 끝까지 시험** (2026-11-12, Postgres 16 + PostgREST 13 + 게이트웨이 흉내): 마이그레이션 두 개 → 넣기 SQL(두 번 실행해도 같음) →
+   `data:check` 9개 같음 · `sources.json` 키 순서만 다름 → `data:pull` 뒤 `validate.py` 오류 0 · 단위 테스트 전부 통과 · 다시 `pull`하면 바뀐 파일 없음 ·
+   `data:format -- --check` 통과(내보내기와 서식 맞추기가 같은 글자를 만든다). 잘못된 키·빈 표·빠진 문서·값이 다른 경우 모두 실패로 끝남
 
-로컬 Postgres 시험(5-3)에서 둘 다 확인했다. ②에서 시험 코드로 고정한다.
+운영 DB에서는 넣은 뒤 `npm run data:check`로 같은 결과(9개 같음, `sources.json` 키 순서만 다름)를 확인한다.
 
 ### 7-3. 서식 (결정 E: 압축 서식)
 
 레포 JSON 10개 중 8개는 손으로 정렬한 서식이다(한 줄에 여러 키, 열 맞춤). 손 정렬은 규칙으로 다시 만들 수 없으므로 내보내기는 정해진 규칙 하나로 쓰고,
-②에서 레포 JSON을 그 서식으로 **한 번 맞추는 커밋**을 둔다 (값 변화 없음). 그 뒤로는 스냅샷 PR에 실제 바뀐 값만 보인다.
-페스 공지 데이터 PR(11/16~17 예상)과 겹치지 않게 그 뒤에 한다.
+레포 JSON을 그 서식으로 **한 번 맞추는 PR**을 따로 둔다 (`npm run data:format`, 값 변화 없음). 그 뒤로는 스냅샷 PR에 실제 바뀐 값만 보인다.
+페스 공지 데이터 PR(11/16~17 예상)과 겹치지 않게 그 뒤에 하고, 같은 PR에서 CI에 `npm run data:format -- --check`를 더한다.
 
-- 규칙: **한 줄(들여쓰기·키 포함 100자, prettier와 같은 폭)에 들어가는 배열·객체는 안의 묶음까지 한 줄**, 들어가지 않으면 2칸 들여쓰기로 펴고 안쪽에 같은 규칙.
-  키 순서는 4-4, 끝에 줄바꿈 하나
-- 줄 수 (2026-11-11 시험): 10개 합계 지금 1,924 → 약 2,370 (표준 `JSON.stringify` 2칸이면 3,569). `schedule.json` 176 → 약 527, `sources.json` 50 → 약 311(출처 한 건이 100자를 넘어 펴진다),
-  `level-table.json`·`students.json`은 오히려 줄어든다(585 → 125, 329 → 223)
+- 규칙: **한 줄(들여쓰기·키·뒤의 쉼표 포함 100자, prettier와 같은 폭)에 들어가는 배열·객체는 안의 묶음까지 한 줄**, 들어가지 않으면 2칸 들여쓰기로 펴고 안쪽에 같은 규칙.
+  글자 수는 JS 문자열 길이(한글 한 자 = 1). 키 순서는 4-4, 끝에 줄바꿈 하나
+- 줄 수 (2026-11-12): 10개 합계 지금 1,924 → 약 2,360 (표준 `JSON.stringify` 2칸이면 3,569). `schedule.json` 176 → 약 527, `sources.json` 50 → 약 311(출처 한 건이 100자를 넘어 펴진다),
+  `level-table.json`·`students.json`은 오히려 줄어든다(585 → 125, 329 → 218)
 
 ## 8. 운영
 
@@ -310,8 +354,8 @@ datasets (path → json)      admins ──▶ auth.users      change_log (트�
 
 | 시기 | v0.2 | DB |
 |---|---|---|
-| ~11/13 | 실기기 확인 | ① 이 문서 + 마이그레이션 Merge, Supabase 프로젝트·설정과 웹훅 연결 시험(5-5) |
-| 11/14~11/18 | 페스 공지 데이터 PR (11/16~17 예상) | ② 넣기·내보내기·왕복 시험·서식 맞추기 → ③ 빌드 연결(`build:pages`, 기본 json) |
+| ~11/13 | 실기기 확인 | ① 이 문서 + 마이그레이션 (#79, 11/12 완료), Supabase 프로젝트·설정과 웹훅 연결 시험(5-5, 완료) |
+| 11/12~11/18 | 페스 공지 데이터 PR (11/16~17 예상) | ② 넣기·내보내기·왕복 시험 + ③ 빌드 연결(`build:pages`, 기본 json)을 한 PR로 → 넣기 → 페스 PR 뒤 서식 맞추기 PR |
 | 11/19~11/25 | README 화면 → v0.2 릴리스, 제보 대응 | ④ **`/admin` (필수)**: 로그인, 미래시 목록·편집(id 바꾸기), 저장 함수, 저장 → 재배포, 변경 기록, 홈의 관리자 버튼 |
 | 11/26~11/30 | | ⑤ DB 읽기로 전환, 예약 작업. 문서·발표 준비. ⑥ 사용자 로그인 저장은 시간이 남을 때만 |
 
@@ -346,3 +390,7 @@ datasets (path → json)      admins ──▶ auth.users      change_log (트�
 | 2026-11-11 | A 저장 알림은 DB 웹훅(`deploy_requests`, 추가는 `reason` 칸만) / B 레이드·이벤트는 문서형 / C DB를 못 읽으면 빌드 중단 / D 예약 작업이 스냅샷 PR |
 | 2026-11-11 | E 문서형 열은 `json`, 표로 뺀 배열 자리에 `{"$table": …}`. 내보내기는 압축 서식(100자 안이면 한 줄) |
 | 2026-11-11 | G 관리자 페이지는 주소로만, 시연 계정 없음. 관리자로 로그인한 브라우저에서는 홈에 버튼 (`localStorage` 표시, 방문자 화면은 Supabase를 부르지 않는다) |
+| 2026-11-12 | Supabase 프로젝트: GitHub 연동 안 함, 새 표 자동 공개 끔, 자동 RLS 켬. Advisor 경고 중 `rls_auto_enable()`만 권한을 거두고 둘은 이유와 함께 둔다 (5-6) |
+| 2026-11-12 | 스크립트는 Node가 TypeScript를 바로 실행 (새 의존성 없음). 변환은 `src/lib/data/db/`의 순수 함수로 관리자 화면과 같이 쓴다 |
+| 2026-11-12 | 정식 표로 옮긴 데이터에 표에 없는 칸이 있으면 변환이 멈춘다 (새 칸이 DB를 거치며 사라지지 않게) |
+| 2026-11-12 | ②와 ③(빌드 연결)을 한 PR로. 서식 맞추기는 페스 데이터 PR 뒤 따로 |

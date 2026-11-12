@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
+		"build:pages": "npm run data:export && python3 validate.py && vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -13,7 +14,12 @@
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"test:unit": "vitest",
-		"test": "npm run test:unit -- --run"
+		"test": "npm run test:unit -- --run",
+		"data:export": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/data-export.ts",
+		"data:pull": "node --experimental-strip-types --disable-warning=ExperimentalWarning --env-file=.env scripts/data-export.ts --db",
+		"data:check": "node --experimental-strip-types --disable-warning=ExperimentalWarning --env-file=.env scripts/data-export.ts --db --check",
+		"data:seed-sql": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/data-seed-sql.ts",
+		"data:format": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/data-format.ts"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
