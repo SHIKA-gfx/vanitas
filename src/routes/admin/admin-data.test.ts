@@ -65,6 +65,12 @@ describe('관리자 화면 표시', () => {
 				details: 'Key is still referenced from table "banner_students".'
 			})
 		).toBe('기간에서 쓰이고 있어 지울 수 없어요');
+		expect(
+			dbErrorMessage({
+				code: 'P0001',
+				message: '다른 곳에서 먼저 고쳤다 — 다시 읽고 고친다: ko/schedule.json'
+			})
+		).toMatch(/다시 열어/);
 		expect(dbErrorMessage({ message: '알 수 없음' })).toBe('알 수 없음');
 	});
 });
