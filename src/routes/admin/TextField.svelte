@@ -16,6 +16,8 @@
 		error?: string;
 		/** 여러 줄 (메모) */
 		multiline?: boolean;
+		/** 모바일 키보드 (게임 번호는 numeric — NumberField는 쉼표를 넣어 번호에 맞지 않는다) */
+		inputmode?: HTMLInputAttributes['inputmode'];
 	}
 	let {
 		label,
@@ -24,7 +26,8 @@
 		autocomplete,
 		hint,
 		error,
-		multiline = false
+		multiline = false,
+		inputmode
 	}: Props = $props();
 	const id = $props.id();
 	const describedBy = $derived(
@@ -57,6 +60,7 @@
 			{id}
 			{type}
 			{autocomplete}
+			{inputmode}
 			bind:value
 			spellcheck="false"
 			aria-describedby={describedBy}
