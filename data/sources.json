@@ -307,12 +307,21 @@
     },
     "40": {
       "publisher": "몰루로그",
-      "title": "StartYourEngines!&특수교역부 몰루로그 미래시",
+      "title": "StartYourEngines! 미래시",
       "date": null,
       "url": "https://mollulog.net/events/start-your-engines",
       "retrievedAt": "2026-11-14",
       "tier": "community",
-      "note": "게헨나 레이싱 이벤트 및 특수교역부 미래시 정보\nhttps://mollulog.net/events/art-for-someone-rerun"
+      "note": "게헨나 레이싱 이벤트 미래시 정보"
+    },
+    "41": {
+      "publisher": "몰루로그",
+      "title": "누구를 위한 예술인가 ~위작과 미학의 행방~(복각) 미래시 정보",
+      "date": null,
+      "url": "https://mollulog.net/events/art-for-someone-rerun",
+      "retrievedAt": "2026-11-14",
+      "tier": "community",
+      "note": "누구를 위한 예술인가 ~위작과 미학의 행방~(복각) 미래시 정보"
     }
   },
   "missingUrls": ["22", "23", "39"],
