@@ -14,8 +14,18 @@
 		hint?: string;
 		/** 입력 오류 안내 */
 		error?: string;
+		/** 여러 줄 (메모) */
+		multiline?: boolean;
 	}
-	let { label, value = $bindable(''), type = 'text', autocomplete, hint, error }: Props = $props();
+	let {
+		label,
+		value = $bindable(''),
+		type = 'text',
+		autocomplete,
+		hint,
+		error,
+		multiline = false
+	}: Props = $props();
 	const id = $props.id();
 	const describedBy = $derived(
 		[error ? `${id}-error` : '', hint ? `${id}-hint` : ''].filter(Boolean).join(' ') || undefined
@@ -34,16 +44,26 @@
 			{label}
 		</label>
 	</div>
-	<input
-		{id}
-		{type}
-		{autocomplete}
-		bind:value
-		spellcheck="false"
-		aria-describedby={describedBy}
-		aria-invalid={error ? true : undefined}
-		class="field {error ? 'field-error' : ''}"
-	/>
+	{#if multiline}
+		<textarea
+			{id}
+			bind:value
+			rows="3"
+			aria-describedby={describedBy}
+			aria-invalid={error ? true : undefined}
+			class="field h-auto min-h-24 py-3 leading-relaxed {error ? 'field-error' : ''}"></textarea>
+	{:else}
+		<input
+			{id}
+			{type}
+			{autocomplete}
+			bind:value
+			spellcheck="false"
+			aria-describedby={describedBy}
+			aria-invalid={error ? true : undefined}
+			class="field {error ? 'field-error' : ''}"
+		/>
+	{/if}
 	{#if error}
 		<p id="{id}-error" class="mt-2 text-xs font-bold text-blocked">{error}</p>
 	{/if}

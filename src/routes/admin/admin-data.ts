@@ -3,9 +3,10 @@
  * 표 → 기간 변환은 내보내기와 같은 함수(src/lib/data/db/convert.ts)를 쓴다 — 화면과 사이트가 같은 모양을 본다.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { BannerType, RecruitPeriod } from '$lib/data/types';
+import type { BannerType, GameConfig, RecruitPeriod } from '$lib/data/types';
 import type { GameDataRows } from '$lib/data/db/rows';
 import { rowsToRecruits, rowsToStudents } from '$lib/data/db/convert';
+import type { ValidationContext } from './recruit-edit';
 
 const RECRUIT_TABLES = [
 	'recruits',
@@ -35,29 +36,134 @@ export async function checkAdmin(sb: SupabaseClient): Promise<boolean> {
 	return data === true;
 }
 
+export interface Choice {
+	id: string;
+	label: string;
+}
+
 export interface RecruitOverview {
 	recruits: RecruitPeriod[];
 	studentName: Map<string, string>;
 	bannerName: Map<string, string>;
+	/** 편집 화면의 선택지 (파일 순서) */
+	students: Choice[];
+	/** 한국 서버에서 운영하는 배너 종류 */
+	bannerTypes: Choice[];
+	/** "id · 발행처 · 제목", id 숫자 순 */
+	sources: Choice[];
+	/** 저장 전 검사 (recruit-edit.ts validateRecruits) */
+	validation: ValidationContext;
 }
 
-/** 미래시 기간 전부 + 이름표 (학생·배너 종류) */
+const DOCS = ['ko/banner-types.json', 'ko/game-config.json'] as const;
+
+/** 미래시 기간 전부 + 이름표 + 편집 선택지 + 검사에 쓰는 값 */
 export async function loadRecruits(sb: SupabaseClient): Promise<RecruitOverview> {
-	const [tables, students, bannerDoc] = await Promise.all([
+	const [tables, students, sources, docs] = await Promise.all([
 		Promise.all(RECRUIT_TABLES.map((t) => rows<never>(sb, t))),
 		rows<GameDataRows['students'][number]>(sb, 'students'),
-		sb.from('datasets').select('data').eq('path', 'ko/banner-types.json').maybeSingle()
+		rows<GameDataRows['sources'][number]>(sb, 'sources'),
+		sb
+			.from('datasets')
+			.select('path, data')
+			.in('path', [...DOCS])
 	]);
-	if (bannerDoc.error) fail('datasets', bannerDoc.error);
+	if (docs.error) fail('datasets', docs.error);
+	const doc = (path: string) => docs.data?.find((d) => d.path === path)?.data;
+	const bannerTypes =
+		(doc(DOCS[0]) as { bannerTypes?: BannerType[] } | undefined)?.bannerTypes ?? [];
+	const schedule = (doc(DOCS[1]) as GameConfig | undefined)?.pitySystem.schedule ?? [];
+	const firstStack = schedule.find((p) => p.system === 'charge')?.effectiveFrom;
+	if (!firstStack) throw new Error('game-config: 모집 스택 전환일(charge)을 찾지 못했어요');
+
 	const recruitRows = Object.fromEntries(
 		RECRUIT_TABLES.map((t, i) => [t, tables[i]])
 	) as unknown as RecruitTables;
-	const doc = bannerDoc.data?.data as { bannerTypes?: BannerType[] } | undefined;
+	const studentList = rowsToStudents(students);
+	const sourceList = [...sources].sort((a, b) => Number(a.id) - Number(b.id));
 	return {
 		recruits: rowsToRecruits(recruitRows),
-		studentName: new Map(rowsToStudents(students).map((s) => [s.id, s.name.ko])),
-		bannerName: new Map((doc?.bannerTypes ?? []).map((b) => [b.id, b.nameKo]))
+		studentName: new Map(studentList.map((s) => [s.id, s.name.ko])),
+		bannerName: new Map(bannerTypes.map((b) => [b.id, b.nameKo])),
+		students: studentList.map((s) => ({
+			id: s.id,
+			label: s.koNameStatus === 'provisional' ? `${s.name.ko} (가칭)` : s.name.ko
+		})),
+		bannerTypes: bannerTypes
+			.filter((b) => b.availableInKo)
+			.map((b) => ({ id: b.id, label: b.nameKo })),
+		sources: sourceList.map((s) => ({
+			id: s.id,
+			label: `${s.id} · ${s.publisher} · ${s.title}${s.tier === 'official' ? ' (공식)' : ''}`
+		})),
+		validation: {
+			studentIds: new Set(studentList.map((s) => s.id)),
+			sourceTier: new Map(sourceList.map((s) => [s.id, s.tier])),
+			bannerAvailable: new Map(bannerTypes.map((b) => [b.id, b.availableInKo])),
+			firstStack
+		}
 	};
+}
+
+// ------------------------------------------------------------ 기간 저장·삭제 (DB 함수, supabase/migrations/20261114000000_save_recruit.sql)
+
+export interface SaveOptions {
+	/** 일정 확인일을 이 날짜로 (schedule.json meta.recruitsVerifiedAt). null이면 그대로 */
+	verifiedAt: string | null;
+	/** 같은 저장에서 배포 요청 */
+	deploy: boolean;
+}
+
+/** 기간 하나를 한 트랜잭션으로 저장하고 저장된 id를 돌려준다. originalId가 null이면 새 기간 */
+export async function saveRecruit(
+	sb: SupabaseClient,
+	originalId: string | null,
+	recruit: RecruitPeriod,
+	options: SaveOptions
+): Promise<string> {
+	const { data, error } = await sb.rpc('save_recruit', {
+		p_original_id: originalId,
+		p_recruit: recruit,
+		p_verified_at: options.verifiedAt,
+		p_deploy: options.deploy
+	});
+	if (error) throw new Error(dbErrorMessage(error));
+	return data as string;
+}
+
+export async function deleteRecruit(
+	sb: SupabaseClient,
+	id: string,
+	deploy: boolean
+): Promise<void> {
+	const { error } = await sb.rpc('delete_recruit', { p_id: id, p_deploy: deploy });
+	if (error) throw new Error(dbErrorMessage(error));
+}
+
+/** DB 오류 → 화면 문장. 저장 전 검사를 거쳐도 다른 탭에서 바꾼 것과 부딪히면 여기로 온다 */
+export function dbErrorMessage(error: {
+	code?: string;
+	message: string;
+	details?: string | null;
+}): string {
+	switch (error.code) {
+		case '42501':
+			return '관리자만 저장할 수 있어요 (로그인이 끝났을 수 있어요)';
+		case '23505':
+			return error.message.includes('예전 id') || error.message.includes('기간 id')
+				? error.message
+				: '같은 id의 기간이 이미 있어요';
+		case '23503':
+			return '없는 학생이나 출처를 가리켜요 (다른 곳에서 지웠을 수 있어요)';
+		case '23514':
+			return `값이 규칙에 맞지 않아요: ${error.message}`;
+		case 'P0002':
+			return '그 기간이 이제 없어요 (다른 곳에서 지웠을 수 있어요). 목록을 다시 읽어 주세요';
+		case 'PGRST202':
+			return '저장 함수가 없어요 — SQL Editor에서 20261114000000_save_recruit.sql을 실행했는지 봐 주세요';
+		default:
+			return error.message;
+	}
 }
 
 export interface SaveLog {

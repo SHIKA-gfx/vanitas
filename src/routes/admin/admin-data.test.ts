@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	actorLabel,
+	dbErrorMessage,
 	formatKst,
 	formatPeriod,
 	shortList,
@@ -38,5 +39,19 @@ describe('관리자 화면 표시', () => {
 		);
 		expect(signInMessage({ message: 'x', status: 429 })).toMatch(/잠시 뒤/);
 		expect(signInMessage({ message: 'Network error' })).toBe('로그인하지 못했어요: Network error');
+	});
+
+	it('DB 오류 문장', () => {
+		expect(
+			dbErrorMessage({
+				code: '23505',
+				message: 'duplicate key value violates unique constraint "recruits_pkey"'
+			})
+		).toBe('같은 id의 기간이 이미 있어요');
+		expect(dbErrorMessage({ code: '23505', message: '예전 id x가 지금 있는 기간 id와 같다' })).toBe(
+			'예전 id x가 지금 있는 기간 id와 같다'
+		);
+		expect(dbErrorMessage({ code: 'PGRST202', message: 'x' })).toMatch(/save_recruit.sql/);
+		expect(dbErrorMessage({ message: '알 수 없음' })).toBe('알 수 없음');
 	});
 });
