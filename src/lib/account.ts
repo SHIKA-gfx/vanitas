@@ -13,6 +13,22 @@ export const ACCOUNTS_OPEN = false;
 export const PREVIEW_KEY = 'vanitas:accounts-preview';
 /** 로그인에서 돌아갈 화면 (이 탭에만) */
 export const RETURN_KEY = 'vanitas:auth-return';
+/** 이 기기에서 마지막으로 고른 로그인 수단 (google · kakao · email). 계정 창의 "○○ 계정으로 로그인했어요"에 쓴다 */
+export const PROVIDER_KEY = 'vanitas:auth-provider';
+
+/** 로그인 수단을 기억한다 (로그인 단추·관리자 화면의 비밀번호 로그인). null이면 지운다(로그아웃) */
+export function rememberProvider(
+	provider: string | null,
+	storage?: Pick<Storage, 'setItem' | 'removeItem'>
+) {
+	try {
+		const s = storage ?? localStorage;
+		if (provider) s.setItem(PROVIDER_KEY, provider);
+		else s.removeItem(PROVIDER_KEY);
+	} catch {
+		// 기억하지 못하면 계정 정보로 짐작한다
+	}
+}
 
 type Store = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
@@ -46,8 +62,9 @@ export function safeReturnPath(path: string | null, fallback: string): string {
 
 export interface AccountUser {
 	id: string;
+	/** 이번에 로그인한 수단 (google · kakao · email …) */
 	provider: string;
-	/** 제공자가 준 이름(없으면 null). 화면에는 첫 글자만 */
+	/** 제공자가 준 이름(없으면 null). 계정 창에서 어느 계정인지 보여 주는 데만 쓴다 */
 	name: string | null;
 }
 
@@ -55,25 +72,41 @@ interface SupabaseUserLike {
 	id: string;
 	app_metadata?: Record<string, unknown>;
 	user_metadata?: Record<string, unknown>;
+	identities?: readonly { provider?: string; last_sign_in_at?: string | null }[] | null;
 }
 
-export function toAccountUser(u: SupabaseUserLike): AccountUser {
+/**
+ * 이번에 로그인한 수단. app_metadata.provider는 계정을 **처음 만든** 수단이라, 같은 이메일로 계정이 이어진 경우
+ * (예: 이메일로 만든 관리자 계정에 같은 Gmail의 구글 로그인이 붙음 — Supabase가 자동으로 잇는다) 틀린다 (2026-11-15).
+ * → ① 이 기기에서 고른 수단이 이 계정에 붙어 있으면 그것 ② 연결된 수단(identities) 가운데 마지막으로 로그인한 것
+ *   (비밀번호 로그인은 이 시각을 바꾸지 않아 ①이 먼저다) ③ app_metadata
+ */
+function currentProvider(u: SupabaseUserLike, remembered: string | null): string {
+	const linked = new Set<string>([
+		...(u.identities ?? [])
+			.map((i) => i.provider)
+			.filter((p): p is string => typeof p === 'string'),
+		...(Array.isArray(u.app_metadata?.providers)
+			? (u.app_metadata.providers as unknown[])
+			: []
+		).filter((p): p is string => typeof p === 'string'),
+		...(typeof u.app_metadata?.provider === 'string' ? [u.app_metadata.provider] : [])
+	]);
+	if (remembered && linked.has(remembered)) return remembered;
+	const latest = [...(u.identities ?? [])]
+		.filter((i) => typeof i.provider === 'string' && typeof i.last_sign_in_at === 'string')
+		.sort((a, b) => Date.parse(b.last_sign_in_at!) - Date.parse(a.last_sign_in_at!))[0];
+	if (latest?.provider) return latest.provider;
+	const first = u.app_metadata?.provider;
+	return typeof first === 'string' ? first : 'unknown';
+}
+
+export function toAccountUser(u: SupabaseUserLike, remembered: string | null = null): AccountUser {
 	const meta = u.user_metadata ?? {};
 	const name = ['full_name', 'name', 'nickname', 'preferred_username', 'user_name']
 		.map((k) => meta[k])
 		.find((v): v is string => typeof v === 'string' && v.trim() !== '');
-	const provider = u.app_metadata?.provider;
-	return {
-		id: u.id,
-		provider: typeof provider === 'string' ? provider : 'unknown',
-		name: name?.trim() ?? null
-	};
-}
-
-/** 계정 단추의 글자: 이름 첫 글자, 없으면 null(화면이 "계정"이라고 쓴다) */
-export function initialOf(user: AccountUser): string | null {
-	const first = user.name ? [...user.name][0] : undefined;
-	return first ? first.toUpperCase() : null;
+	return { id: u.id, provider: currentProvider(u, remembered), name: name?.trim() ?? null };
 }
 
 /**

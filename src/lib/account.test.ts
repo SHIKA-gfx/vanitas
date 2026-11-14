@@ -3,7 +3,6 @@ import {
 	accountsVisible,
 	callbackProblem,
 	hasSessionHint,
-	initialOf,
 	PREVIEW_KEY,
 	safeReturnPath,
 	toAccountUser
@@ -56,23 +55,60 @@ describe('로그인 기록·돌아갈 곳', () => {
 });
 
 describe('계정 정보', () => {
-	it('제공자와 이름, 첫 글자', () => {
+	it('제공자와 이름', () => {
 		const g = toAccountUser({
 			id: 'u1',
 			app_metadata: { provider: 'google' },
 			user_metadata: { full_name: 'shika kim' }
 		});
 		expect(g).toEqual({ id: 'u1', provider: 'google', name: 'shika kim' });
-		expect(initialOf(g)).toBe('S');
 		const k = toAccountUser({
 			id: 'u2',
 			app_metadata: { provider: 'kakao' },
 			user_metadata: { name: '시카' }
 		});
-		expect(initialOf(k)).toBe('시');
+		expect(k.name).toBe('시카');
 		const none = toAccountUser({ id: 'u3' });
 		expect(none).toEqual({ id: 'u3', provider: 'unknown', name: null });
-		expect(initialOf(none)).toBeNull();
+	});
+
+	it('이어진 계정은 마지막으로 로그인한 수단 (처음 만든 수단이 아니라)', () => {
+		const linked = toAccountUser({
+			id: 'admin',
+			app_metadata: { provider: 'email', providers: ['email', 'google'] },
+			user_metadata: { full_name: 'JAEHYEON KIM' },
+			identities: [
+				{ provider: 'email', last_sign_in_at: '2026-11-14T08:00:00Z' },
+				{ provider: 'google', last_sign_in_at: '2026-11-15T00:20:00Z' }
+			]
+		});
+		expect(linked.provider).toBe('google');
+		const viaEmail = toAccountUser({
+			id: 'admin',
+			app_metadata: { provider: 'email' },
+			identities: [
+				{ provider: 'email', last_sign_in_at: '2026-11-15T01:00:00Z' },
+				{ provider: 'google', last_sign_in_at: '2026-11-15T00:20:00Z' }
+			]
+		});
+		expect(viaEmail.provider).toBe('email');
+		expect(toAccountUser({ id: 'x', identities: null }).provider).toBe('unknown');
+	});
+
+	it('이 기기에서 고른 수단이 이 계정에 붙어 있으면 그것이 먼저', () => {
+		const u = {
+			id: 'admin',
+			app_metadata: { provider: 'email', providers: ['email', 'google'] },
+			identities: [
+				{ provider: 'email', last_sign_in_at: '2026-11-14T08:00:00Z' },
+				{ provider: 'google', last_sign_in_at: '2026-11-15T00:20:00Z' }
+			]
+		};
+		// 구글로 로그인한 뒤 관리자 화면에서 비밀번호로 다시 로그인 — 비밀번호 로그인은 시각을 바꾸지 않는다
+		expect(toAccountUser(u, 'email').provider).toBe('email');
+		expect(toAccountUser(u, 'google').provider).toBe('google');
+		// 이 계정에 없는 수단을 기억하고 있으면 무시
+		expect(toAccountUser(u, 'kakao').provider).toBe('google');
 	});
 });
 

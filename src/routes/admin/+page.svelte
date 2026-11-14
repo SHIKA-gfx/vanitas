@@ -11,6 +11,7 @@
 	import PageTitle from '$lib/components/PageTitle.svelte';
 	import Panel from '$lib/components/Panel.svelte';
 	import { setAdminMarker } from '$lib/admin-marker';
+	import { rememberProvider } from '$lib/account';
 	import AdminButton from './AdminButton.svelte';
 	import AdminHome from './AdminHome.svelte';
 	import LoginForm from './LoginForm.svelte';
@@ -43,6 +44,8 @@
 	async function signIn(email: string, password: string): Promise<string | null> {
 		const { data, error } = await sb!.auth.signInWithPassword({ email, password });
 		if (error) return signInMessage(error);
+		// 홈의 계정 창이 "구글 계정으로 로그인했어요"로 잘못 쓰지 않게 (구글 로그인이 이어진 관리자 계정, docs/007)
+		rememberProvider('email');
 		await verify(data.user);
 		return null;
 	}
@@ -50,6 +53,7 @@
 	async function signOut() {
 		await sb?.auth.signOut();
 		setAdminMarker(false);
+		rememberProvider(null);
 		view = { kind: 'signed-out' };
 	}
 
