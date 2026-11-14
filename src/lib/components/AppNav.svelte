@@ -18,6 +18,7 @@
 	import { sections as items } from '$lib/nav';
 	import NavIcon from '$lib/icons/NavIcon.svelte';
 	import BackupButton from './BackupButton.svelte';
+	import AdminLink from './AdminLink.svelte';
 
 	const href = (path: string) => resolve(localizeHref(path) as Pathname);
 	const isCurrent = (path: string) => page.route.id?.startsWith(path) ?? false;
@@ -99,7 +100,7 @@
 				{/each}
 			</ul>
 		</nav>
-		<!-- 맨 아래: 정보와 출처, 백업 링크 (다른 기기로 입력 옮기기) -->
+		<!-- 맨 아래: 정보와 출처, (홈에서 관리자에게만) 관리자 페이지, 백업 링크 (다른 기기로 입력 옮기기) -->
 		<div class="mt-auto">
 			<a
 				href={href('/about')}
@@ -120,6 +121,9 @@
 				</svg>
 				{m.nav_about()}
 			</a>
+			{#if page.route.id === '/'}
+				<AdminLink variant="nav" />
+			{/if}
 			<BackupButton variant="nav" />
 		</div>
 	</div>

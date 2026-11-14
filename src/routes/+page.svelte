@@ -16,6 +16,7 @@
 	import VanitasSymbol from '$lib/components/VanitasSymbol.svelte';
 	import HomeFrame from './HomeFrame.svelte';
 	import BackupButton from '$lib/components/BackupButton.svelte';
+	import AdminLink from '$lib/components/AdminLink.svelte';
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
 
 	const href = (path: string) => resolve(localizeHref(path) as Pathname);
@@ -96,6 +97,8 @@
 	</div>
 	<!--
 		홈 맨 아래 (2026-10-02)
+		- 관리자 페이지 버튼 (2026-11-14): 관리자로 로그인한 브라우저에서만, 백업 링크 바로 위.
+		  백업 링크처럼 넓은 화면에서는 왼쪽 목록에 있다 (AdminLink)
 		- 백업 링크: 왼쪽 목록이 없는 화면(모바일·태블릿)에서만, 하단 탭바 바로 위에
 		- 한 줄 푸터: 모든 폭. 데스크톱은 화면 맨 아래
 		목록 아래 여백(pb-36)으로 타일과 겹치지 않게 자리를 비워 둔다.
@@ -103,6 +106,7 @@
 	<div
 		class="absolute inset-x-0 bottom-[calc(var(--tabbar-space)+0.5rem)] flex flex-col items-center gap-3 px-4 lg:bottom-5"
 	>
+		<AdminLink variant="block" class="lg:hidden" />
 		<div class="lg:hidden">
 			<BackupButton variant="block" />
 		</div>
