@@ -5,7 +5,8 @@
 	- 로그아웃 상태: "로그인" → 창에서 Google / 카카오
 	- 로그인 상태: 사람 + 확인 표시 아이콘 + "계정" → 창에서 로그인한 제공자, 로그아웃, 계정 삭제(한 번 더 묻고)
 	  아이콘은 다른 단추처럼 선만 (16px, 선 1.75) — 처음의 남색 원 + 흰 글자는 혼자만 면이라 어울리지 않았다 (2026-11-15)
-	- ⑥-3 전에는 ?accounts=preview를 붙인 브라우저에서만 보인다 (account.ts ACCOUNTS_OPEN)
+	- 계정 창에 계정 저장 상태 (저장함·저장 중·오프라인·고르기, sync.svelte.ts)
+	- 모두에게 보인다 (2026-11-15 ⑥-3, account.ts ACCOUNTS_OPEN). 그 전에는 ?accounts=preview 브라우저에서만
 
 	제공자 단추는 글자만 쓴다. 공식 로그인 단추 이미지(구글·카카오 디자인 가이드)를 받아 오면 그때 바꾼다.
 	창은 <dialog> — Esc로 닫히고, 열린 동안 뒤쪽은 눌리지 않는다.
@@ -19,6 +20,8 @@
 	import { m } from '$lib/paraglide/messages.js';
 	import { account } from '$lib/account.svelte';
 	import { accountsVisible, type Provider } from '$lib/account';
+	import { accountSync } from '$lib/sync.svelte';
+	import { getSavedStore } from '$lib/state/saved.svelte';
 
 	let { variant = 'block' }: { variant?: 'nav' | 'block' } = $props();
 
@@ -51,6 +54,33 @@
 				return m.account_signed_in_email();
 			default:
 				return m.account_signed_in();
+		}
+	});
+
+	const store = getSavedStore();
+	const syncLine = $derived.by(() => {
+		if (store.paused) return m.sync_paused_shared();
+		const s = accountSync.status;
+		switch (s.kind) {
+			case 'saved':
+				return m.sync_saved({
+					time: new Intl.DateTimeFormat('ko-KR', {
+						month: 'numeric',
+						day: 'numeric',
+						hour: '2-digit',
+						minute: '2-digit'
+					}).format(s.at)
+				});
+			case 'saving':
+				return m.sync_saving();
+			case 'offline':
+				return m.sync_offline();
+			case 'choose':
+				return m.sync_choose();
+			case 'error':
+				return m.sync_error({ message: s.message });
+			default:
+				return m.sync_checking();
 		}
 	});
 
@@ -212,9 +242,21 @@
 					<p class="text-sm text-navy">{account.user.name}</p>
 				{/if}
 			</div>
-			<p class="rounded-lg bg-wash p-3 text-xs leading-relaxed text-navy">
-				{m.account_sync_pending()}
-			</p>
+			<div class="flex flex-col gap-2 rounded-lg bg-wash p-3 text-xs leading-relaxed text-navy">
+				<p aria-live="polite">{syncLine}</p>
+				{#if accountSync.status.kind === 'choose' && !accountSync.conflict}
+					<button
+						type="button"
+						onclick={() => {
+							close();
+							void accountSync.reopen();
+						}}
+						class="self-start font-bold text-brand-strong underline underline-offset-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-strong"
+					>
+						{m.sync_choose_open()}
+					</button>
+				{/if}
+			</div>
 			<div class="flex flex-wrap items-center justify-between gap-2">
 				<button
 					type="button"

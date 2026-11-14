@@ -2,12 +2,13 @@
  * 로그인 상태 (docs/007 5장). 화면 전체에 하나 — 왼쪽 목록과 홈의 계정 단추, /auth/callback이 같이 본다.
  *
  * 브라우저에서만 움직인다(start). 이 기기에 로그인 기록이 없으면 Supabase를 불러오지 않는다.
- * 저장값 맞추기는 ⑥-3 (docs/007 4장).
+ * 저장값 맞추기는 sync.svelte.ts (docs/007 4장) — AccountSync.svelte가 이 상태를 보고 켠다.
  */
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import { browser } from '$app/environment';
 import { setAdminMarker } from './admin-marker';
 import { loadSupabase } from './supabase';
+import { accountSync } from './sync.svelte';
 import {
 	hasSessionHint,
 	PROVIDER_KEY,
@@ -114,6 +115,7 @@ class AccountState {
 		if (error) throw error;
 		// 서버의 계정은 이미 없다 — 이 기기의 로그인 정보만 지운다
 		await sb.auth.signOut({ scope: 'local' });
+		accountSync.forget();
 		rememberProvider(null);
 		this.user = null;
 	}

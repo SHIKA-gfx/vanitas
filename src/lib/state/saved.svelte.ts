@@ -4,7 +4,8 @@
 // - 저장소는 브라우저에서만 읽는다. 서버 렌더링은 기본값으로 그리고, 화면이 뜬 뒤(onMount) 저장값을 덮는다.
 //   (서버와 브라우저의 첫 화면이 같아야 하이드레이션이 어긋나지 않는다)
 // - 공유 값(UserState)은 레이아웃이, 계산기별 입력은 각 페이지가 persistSection으로 저장한다.
-// - 입력이 바뀌면 바로 저장한다. 서버로는 아무것도 보내지 않는다.
+// - 입력이 바뀌면 바로 저장한다. 서버로는 아무것도 보내지 않는다 — 로그인했으면 계정 맞추기(sync.svelte.ts)가
+//   onLocalWrite로 알아채고 따로 올린다 (docs/007 4장).
 //
 // 공유 링크 (2026-10-02, 기획 B안)
 // - 공유 링크로 열면 링크의 값으로 계산해서 보여주고, 저장은 멈춘다 (sharedView, paused).
@@ -47,6 +48,14 @@ export class SavedStore {
 	paused = $state(false);
 	/** 공유 링크로 연 값을 보고 있다 → 화면 아래에 "내 값으로 돌아가기" 띠 */
 	sharedView = $state(false);
+	/**
+	 * 저장 파일을 통째로 바꾼 횟수 (importFile). 열려 있는 계산기 화면이 이 값을 보고 자기 묶음을 다시 읽는다 —
+	 * 계정 값을 받았을 때 지금 화면에도 바로 보이게 (2026-11-15)
+	 */
+	generation = $state(0);
+	// 화면이 그리지 않는 목록이라 반응형일 필요가 없다
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	#listeners = new Set<() => void>();
 
 	#shared: {
 		snapshot: () => string;
@@ -87,6 +96,17 @@ export class SavedStore {
 		} catch {
 			// 저장 공간이 꽉 찼거나 막혔다. 계산은 계속된다
 		}
+		this.#notify();
+	}
+
+	/** 이 기기에 저장할 때마다 부른다 (계정 맞추기). 해제 함수를 돌려준다 */
+	onLocalWrite(listener: () => void): () => void {
+		this.#listeners.add(listener);
+		return () => this.#listeners.delete(listener);
+	}
+
+	#notify() {
+		for (const l of this.#listeners) l();
 	}
 
 	/** 공유 값을 저장소에서 불러온다. 여러 번 불러도 처음 한 번만 */
@@ -172,8 +192,11 @@ export class SavedStore {
 		return withSection(this.#file, 'user', this.userFlat());
 	}
 
-	/** 백업 파일로 이 기기의 저장값을 통째로 바꾼다. 계산기별 입력은 각 화면을 열 때 칸마다 검사된다 */
-	importFile(file: SaveFile) {
+	/**
+	 * 백업 파일·계정 값으로 이 기기의 저장값을 통째로 바꾼다. 계산기별 입력은 각 화면이 칸마다 검사해 다시 읽는다 (generation).
+	 * fromAccount: 계정에서 받은 값 — 계정 맞추기에 "이 기기에서 고침"으로 알리지 않는다
+	 */
+	importFile(file: SaveFile, options: { fromAccount?: boolean } = {}) {
 		this.#open();
 		this.#file = file;
 		try {
@@ -183,6 +206,8 @@ export class SavedStore {
 		}
 		this.applyUserFlat(file.sections.user);
 		this.userReady = true;
+		this.generation++;
+		if (!options.fromAccount) this.#notify();
 	}
 
 	saveUser() {
@@ -384,6 +409,17 @@ export function persistSection<T extends Record<string, unknown>>(
 		);
 		track('shared-open', { calc: name });
 	}
+
+	// 저장 파일이 통째로 바뀌면(백업 불러오기, 계정 값 받기) 이 화면의 입력도 다시 읽는다
+	let seenGeneration = store.generation;
+	$effect(() => {
+		const g = store.generation;
+		if (!ready || g === seenGeneration) return;
+		seenGeneration = g;
+		set(sanitize(store.read(name), defaults(), checks));
+		if (linked) linked.set(sanitize(store.read(linked.name), linked.defaults(), linked.checks));
+		baseline = ''; // 받아 온 값을 "계산했다"로 세지 않는다
+	});
 
 	// 이 화면에서 처음 값을 바꾸면 한 번 알린다 (불러오기·공유 링크로 바뀐 값은 세지 않는다)
 	let baseline = '';

@@ -8,15 +8,21 @@
 	바깥 주소인지 알 수 없어 오류로 본다. 레포 주소가 바뀌면 이 파일에서 바꾼다. 레포 공개 전까지는 열리지 않는다.
 -->
 <script lang="ts">
+	import type { Pathname } from '$app/types';
+	import { resolve } from '$app/paths';
+	import { localizeHref } from '$lib/paraglide/runtime';
 	import Seo from '$lib/components/Seo.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import Panel from '$lib/components/Panel.svelte';
 
-	const sections = [
+	// 입력값 저장 아래에 개인정보 처리방침 링크 (로그인 저장, 2026-11-15 docs/007)
+	const privacyHref = resolve(localizeHref('/privacy') as Pathname);
+
+	const sections: { title: string; body: string[]; privacy?: boolean }[] = [
 		{ title: m.about_unofficial_title(), body: [m.about_unofficial_body()] },
 		{ title: m.about_copyright_title(), body: [m.about_copyright_body()] },
 		{ title: m.about_data_title(), body: [m.about_data_body()] },
-		{ title: m.about_storage_title(), body: [m.about_storage_body()] },
+		{ title: m.about_storage_title(), body: [m.about_storage_body()], privacy: true },
 		{ title: m.about_analytics_title(), body: [m.about_analytics_body()] },
 		{ title: m.about_fonts_title(), body: [m.about_fonts_gyeonggi(), m.about_fonts_oxanium()] }
 	];
@@ -44,6 +50,11 @@
 					{#each s.body as line (line)}
 						<p class="leading-relaxed text-ink">{line}</p>
 					{/each}
+					{#if s.privacy}
+						<p class="text-sm">
+							<a href={privacyHref} class={LINK}>{m.privacy_title()}</a>
+						</p>
+					{/if}
 				</section>
 			{/each}
 
