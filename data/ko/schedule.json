@@ -5,7 +5,7 @@
     "description": "한국 서버 콘텐츠 일정. 청휘석 수급 계산기의 레이드·이벤트 수급 시점과, 이후 플래너의 픽업 일정이 쓴다.",
     "server": "ko",
     "verifiedAt": "2026-09-26",
-    "recruitsVerifiedAt": "2026-11-10",
+    "recruitsVerifiedAt": "2026-11-14",
     "sources": ["26", "27", "28", "29", "31", "32", "34", "36", "37", "38", "39"],
     "notes": [
       "start / end는 게임 날짜(YYYY-MM-DD). end는 종료일로, 시즌 길이 = end - start (일).",
@@ -522,6 +522,24 @@
       ],
       "sources": ["31"],
       "note": "이벤트 상설화와 함께 복각 픽업. 몰루로그(31) 날짜에서 1주 앞당긴 추정 — 11월 3기간이 몰루로그보다 1주 일렀으므로 (2026-11-10)."
+    },
+    {
+      "id": "2027-02-09-start-your-engines",
+      "start": "2027-02-09",
+      "end": "2027-02-23",
+      "status": "estimated",
+      "event": "Start Your Engines! ~183호여 영원하라!~",
+      "banners": [{ "type": "pickup_normal", "students": ["hifumi_racing", "azusa_racing"] }],
+      "sources": ["40"]
+    },
+    {
+      "id": "2027-02-23-art-for-someone",
+      "start": "2027-02-23",
+      "end": "2027-03-02",
+      "status": "estimated",
+      "event": "누구를 위한 예술인가 ~위작과 미학의 행방~",
+      "banners": [{ "type": "pickup_normal", "students": ["miyo", "fuyu", "ritsu"] }],
+      "sources": ["40"]
     }
   ]
 }

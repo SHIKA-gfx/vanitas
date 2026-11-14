@@ -213,6 +213,41 @@
       "name": { "ko": "아리스(무장)", "ja": "アリス（臨戦）" },
       "koNameStatus": "official"
     },
-    { "id": "kei", "gameId": 10135, "name": { "ko": "케이", "ja": "ケイ" }, "koNameStatus": "official" }
+    {
+      "id": "kei",
+      "gameId": 10135,
+      "name": { "ko": "케이", "ja": "ケイ" },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "hifumi_racing",
+      "gameId": 10153,
+      "name": { "ko": "히후미(레이싱)", "ja": "ヒフミ（レーシング）" },
+      "koNameStatus": "provisional"
+    },
+    {
+      "id": "azusa_racing",
+      "gameId": 20063,
+      "name": { "ko": "아즈사(레이싱)", "ja": "アズサ（レーシング）" },
+      "koNameStatus": "provisional"
+    },
+    {
+      "id": "miyo",
+      "gameId": 10127,
+      "name": { "ko": "미요", "ja": "ミヨ" },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "fuyu",
+      "gameId": 10128,
+      "name": { "ko": "후유", "ja": "フユ" },
+      "koNameStatus": "official"
+    },
+    {
+      "id": "ritsu",
+      "gameId": 20050,
+      "name": { "ko": "리츠", "ja": "リツ" },
+      "koNameStatus": "official"
+    }
   ]
 }
