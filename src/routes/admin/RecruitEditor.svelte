@@ -215,6 +215,7 @@
 						labelOf={studentName}
 						addLabel="학생 더하기"
 						invalid={banner.students.length === 0}
+						hint={i === 0 ? '목록에 없는 학생은 위의 학생 탭에서 더해요' : undefined}
 					/>
 				</div>
 			{/each}
@@ -239,7 +240,7 @@
 			labelOf={sourceLabel}
 			addLabel="출처 더하기"
 			invalid={draft.sources.length === 0}
-			hint="공지된 기간에는 공식 출처가 하나 있어야 해요. 목록에 없는 새 출처는 지금은 SQL Editor로 더해요"
+			hint="공지된 기간에는 공식 출처가 하나 있어야 해요. 목록에 없으면 위의 출처 탭에서 더해요 — 고치던 내용은 그대로 남아요"
 		/>
 		<PickList
 			label="예전 id"
