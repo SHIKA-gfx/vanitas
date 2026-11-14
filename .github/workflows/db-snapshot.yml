@@ -4,7 +4,8 @@
 # 이 작업이 이틀마다(+ Actions 탭에서 손으로) DB를 내보내 data/와 다르면 data/db-snapshot 브랜치에 PR을 만들거나 갱신한다.
 # - DB를 읽는 것 자체가 무료 프로젝트의 "일주일 비활성 일시정지"를 막는다
 # - 공개용 키로 읽기만 한다 (빌드와 같은 data:export). 레포 Secrets: PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY
-# - GITHUB_TOKEN으로 만든 PR에는 다른 워크플로(빌드 검사·데이터 검사)가 돌지 않는다 → validate.py는 여기서 돌리고 결과를 PR 본문에 적는다
+# - 봇(github-actions[bot])이 만든 PR의 다른 워크플로(빌드 검사·데이터 검사)는 쓰기 권한이 있는 사람이 승인해야 돈다 (2026-06 GitHub 변경, "Action required").
+#   그래서 validate.py는 여기서도 돌려 결과를 PR 본문에 적는다 — 승인 전에도 PR만 보고 판단할 수 있다
 # - DB를 못 읽거나 validate.py 오류가 있으면 작업이 실패한다 → GitHub가 메일로 알린다
 # - Merge는 사람이 한다. Merge해도 사이트는 바뀌지 않는다 (사이트는 이미 DB로 빌드된다)
 # - 레포 설정 Actions → General → "Allow GitHub Actions to create and approve pull requests"가 켜져 있어야 PR을 만든다
@@ -87,7 +88,7 @@ jobs:
             echo "DB(Supabase)에서 내보낸 \`data/\` 스냅샷이에요 ($today, 작업 \`db-snapshot.yml\`, docs/006 8장)."
             echo
             echo "- 사이트는 이미 DB로 빌드되므로 Merge해도 사이트는 바뀌지 않아요. 레포를 DB와 맞춰 두는 PR이에요 (되돌리기 \`json\` 대비)"
-            echo "- 이 PR에는 다른 검사 워크플로가 돌지 않아요. 검사 결과는 아래"
+            echo "- 봇이 만든 PR이라 빌드 검사·데이터 검사는 **승인해야 돌아요** (PR 아래 검사 칸 또는 Actions의 \"Approve and run\"). 이 작업이 돌린 validate.py 결과는 아래"
             echo
             echo "### validate.py: $check"
             echo

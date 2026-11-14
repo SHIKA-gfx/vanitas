@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { getSchedule } from '$lib/data';
 import { listPlannerChoices, planFromData, type PlannerQuery } from './planner-adapter';
 
 /** 수급 없음 — 보유분만으로 계산해 결과를 손으로 셀 수 있게 한다 */
@@ -72,7 +73,9 @@ describe('planFromData', () => {
 		expect(r.result.periods[0]).toMatchObject({ day: 22, gemPulls: 160, mileagePulls: 40 });
 		// 12월 이후 기간이 추정이라 미래시 전체로는 추정. 마일리지 초회 범위는 기간마다로 확인 (2026-11-10)
 		expect(r.scheduleEstimated).toBe(true);
-		expect(r.scheduleVerifiedAt).toBe('2026-11-10');
+		// 일정 확인일은 데이터의 미래시 확인일 그대로 — 관리자 화면에서 기간을 저장할 때마다 바뀌므로 날짜를 적어 두지 않는다
+		expect(r.scheduleVerifiedAt).toBe(getSchedule().meta.recruitsVerifiedAt);
+		expect(r.scheduleVerifiedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 		expect(r.mileageAssumed).toBe(false);
 	});
 
