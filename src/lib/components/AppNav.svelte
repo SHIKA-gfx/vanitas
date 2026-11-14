@@ -19,6 +19,7 @@
 	import NavIcon from '$lib/icons/NavIcon.svelte';
 	import BackupButton from './BackupButton.svelte';
 	import AdminLink from './AdminLink.svelte';
+	import AccountButton from './AccountButton.svelte';
 
 	const href = (path: string) => resolve(localizeHref(path) as Pathname);
 	const isCurrent = (path: string) => page.route.id?.startsWith(path) ?? false;
@@ -100,7 +101,7 @@
 				{/each}
 			</ul>
 		</nav>
-		<!-- 맨 아래: 정보와 출처, (홈에서 관리자에게만) 관리자 페이지, 백업 링크 (다른 기기로 입력 옮기기) -->
+		<!-- 맨 아래: 정보와 출처, (홈에서 관리자에게만) 관리자 페이지, 로그인·계정 (docs/007 결정 H), 백업 링크 (다른 기기로 입력 옮기기) -->
 		<div class="mt-auto">
 			<a
 				href={href('/about')}
@@ -124,6 +125,7 @@
 			{#if page.route.id === '/'}
 				<AdminLink variant="nav" />
 			{/if}
+			<AccountButton variant="nav" />
 			<BackupButton variant="nav" />
 		</div>
 	</div>

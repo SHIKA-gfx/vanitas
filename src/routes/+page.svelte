@@ -17,6 +17,7 @@
 	import HomeFrame from './HomeFrame.svelte';
 	import BackupButton from '$lib/components/BackupButton.svelte';
 	import AdminLink from '$lib/components/AdminLink.svelte';
+	import AccountButton from '$lib/components/AccountButton.svelte';
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
 
 	const href = (path: string) => resolve(localizeHref(path) as Pathname);
@@ -29,11 +30,11 @@
 	맨 아래 묶음(백업·푸터)을 탭바 바로 위에 붙인다 (예전에는 홈 전용 배경이 그 자리까지 덮도록 늘였다)
 -->
 <main
-	class="relative -mb-(--tabbar-space) min-h-screen overflow-hidden pb-(--tabbar-space) lg:mb-0 lg:pb-0"
+	class="relative -mb-(--tabbar-space) flex min-h-screen flex-col overflow-hidden pb-(--tabbar-space) md:block lg:mb-0 lg:pb-0"
 >
 	<!-- 데스크톱은 화면 높이 안에서 위아래 가운데. 모바일은 위에서부터 (하단 탭바가 있어서) -->
 	<div
-		class="relative mx-auto flex max-w-4xl flex-col gap-6 px-4 pt-10 pb-36 md:min-h-screen md:justify-center lg:py-10"
+		class="relative mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 pt-10 pb-6 md:min-h-screen md:justify-center md:pb-36 lg:py-10"
 	>
 		<!-- 데스크톱 -->
 		<div class="hidden md:block">
@@ -99,14 +100,20 @@
 		홈 맨 아래 (2026-10-02)
 		- 관리자 페이지 버튼 (2026-11-14): 관리자로 로그인한 브라우저에서만, 백업 링크 바로 위.
 		  백업 링크처럼 넓은 화면에서는 왼쪽 목록에 있다 (AdminLink)
+		- 로그인·계정 (2026-11-15, docs/007 결정 H): 백업 링크 바로 위. 넓은 화면에서는 왼쪽 목록에 있다
 		- 백업 링크: 왼쪽 목록이 없는 화면(모바일·태블릿)에서만, 하단 탭바 바로 위에
 		- 한 줄 푸터: 모든 폭. 데스크톱은 화면 맨 아래
-		목록 아래 여백(pb-36)으로 타일과 겹치지 않게 자리를 비워 둔다.
+		태블릿·데스크톱은 목록 아래 여백(pb-36)으로 타일과 겹치지 않게 자리를 비워 두고 화면 아래에 붙인다.
+		모바일은 단추가 셋(관리자·계정·백업)까지 늘어 낮은 화면(375×667)에서 타일과 겹쳤다 (2026-11-15) →
+		모바일만 흐름에 두고 mt-auto로 아래에 붙인다. 화면이 낮으면 겹치지 않고 아래로 밀린다
 	-->
 	<div
-		class="absolute inset-x-0 bottom-[calc(var(--tabbar-space)+0.5rem)] flex flex-col items-center gap-3 px-4 lg:bottom-5"
+		class="mt-auto flex flex-col items-center gap-3 px-4 pb-2 md:absolute md:inset-x-0 md:bottom-[calc(var(--tabbar-space)+0.5rem)] md:pb-0 lg:bottom-5"
 	>
 		<AdminLink variant="block" class="lg:hidden" />
+		<div class="lg:hidden">
+			<AccountButton variant="block" />
+		</div>
 		<div class="lg:hidden">
 			<BackupButton variant="block" />
 		</div>
