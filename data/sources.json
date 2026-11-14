@@ -304,6 +304,15 @@
       "retrievedAt": "2026-11-10",
       "tier": "official",
       "note": "5주년 페스티벌 현장 생방송. 내용은 기사 36·37·38로 확인 — 다시보기 주소를 찾으면 채운다"
+    },
+    "40": {
+      "publisher": "몰루로그",
+      "title": "StartYourEngines!&특수교역부 몰루로그 미래시",
+      "date": null,
+      "url": "https://mollulog.net/events/start-your-engines",
+      "retrievedAt": "2026-11-14",
+      "tier": "community",
+      "note": "게헨나 레이싱 이벤트 및 특수교역부 미래시 정보\nhttps://mollulog.net/events/art-for-someone-rerun"
     }
   },
   "missingUrls": ["22", "23", "39"],
