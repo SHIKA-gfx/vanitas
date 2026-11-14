@@ -10,11 +10,21 @@ import { setAdminMarker } from './admin-marker';
 import { loadSupabase } from './supabase';
 import {
 	hasSessionHint,
+	PROVIDER_KEY,
+	rememberProvider,
 	RETURN_KEY,
 	toAccountUser,
 	type AccountUser,
 	type Provider
 } from './account';
+
+function rememberedProvider(): string | null {
+	try {
+		return localStorage.getItem(PROVIDER_KEY);
+	} catch {
+		return null;
+	}
+}
 
 function storageKeys(): string[] {
 	try {
@@ -59,7 +69,7 @@ class AccountState {
 	}
 
 	#apply(session: Session | null) {
-		this.user = session ? toAccountUser(session.user) : null;
+		this.user = session ? toAccountUser(session.user, rememberedProvider()) : null;
 	}
 
 	/** 제공자 화면으로 간다. 돌아오면 /auth/callback이 이어 받는다 */
@@ -71,6 +81,7 @@ class AccountState {
 		} catch {
 			// 돌아갈 화면을 못 기억하면 홈으로 간다
 		}
+		rememberProvider(provider);
 		const { error } = await sb.auth.signInWithOAuth({
 			provider,
 			options: { redirectTo: callbackUrl }
@@ -91,6 +102,7 @@ class AccountState {
 		const sb = await loadSupabase();
 		await sb?.auth.signOut();
 		setAdminMarker(false);
+		rememberProvider(null);
 		this.user = null;
 	}
 
@@ -102,6 +114,7 @@ class AccountState {
 		if (error) throw error;
 		// 서버의 계정은 이미 없다 — 이 기기의 로그인 정보만 지운다
 		await sb.auth.signOut({ scope: 'local' });
+		rememberProvider(null);
 		this.user = null;
 	}
 }
