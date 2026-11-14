@@ -14,8 +14,8 @@
 
 	interface Props {
 		title: string;
-		/** 이 계산기의 아이콘 (nav.ts의 아이콘과 같게) */
-		icon: NavIconName;
+		/** 이 계산기의 아이콘 (nav.ts의 아이콘과 같게). 없으면 칩 없이 제목만 (관리자 화면) */
+		icon?: NavIconName;
 		/** 제목 오른쪽의 동작 (입력 초기화) */
 		actions?: Snippet;
 		/** 배치용 클래스 (예: 격자에서 여러 칸 차지하기 md:col-span-2) */
@@ -26,13 +26,15 @@
 </script>
 
 <div class="flex min-h-11 items-center gap-2 pr-12 lg:pr-14 {className}">
-	<span
-		class="flex size-10 shrink-0 items-center justify-center rounded-full border border-white bg-surface/94 shadow-e1 md:size-12"
-	>
-		<span class="flex" style:view-transition-name="vt-icon-{icon}">
-			<NavIcon name={icon} class="size-[1.375rem]! text-brand-strong md:size-[1.625rem]!" />
+	{#if icon}
+		<span
+			class="flex size-10 shrink-0 items-center justify-center rounded-full border border-white bg-surface/94 shadow-e1 md:size-12"
+		>
+			<span class="flex" style:view-transition-name="vt-icon-{icon}">
+				<NavIcon name={icon} class="size-[1.375rem]! text-brand-strong md:size-[1.625rem]!" />
+			</span>
 		</span>
-	</span>
+	{/if}
 	<h1 class="text-[1.375rem] font-bold text-ink min-[380px]:text-2xl md:text-[1.75rem]">{title}</h1>
 	{@render actions?.()}
 </div>
