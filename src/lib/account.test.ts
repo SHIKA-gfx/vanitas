@@ -25,16 +25,22 @@ function memory(): Storage {
 describe('로그인 단추 보이기', () => {
 	it('열기 전에는 ?accounts=preview를 붙인 브라우저에서만, off로 끈다', () => {
 		const s = memory();
-		expect(accountsVisible(new URLSearchParams(''), s, false)).toBe(false);
-		expect(accountsVisible(new URLSearchParams('accounts=preview'), s, false)).toBe(true);
+		expect(accountsVisible(new URLSearchParams(''), s, false, false)).toBe(false);
+		expect(accountsVisible(new URLSearchParams('accounts=preview'), s, false, false)).toBe(true);
 		expect(s.getItem(PREVIEW_KEY)).toBe('1');
-		expect(accountsVisible(new URLSearchParams(''), s, false)).toBe(true);
-		expect(accountsVisible(new URLSearchParams('accounts=off'), s, false)).toBe(false);
+		expect(accountsVisible(new URLSearchParams(''), s, false, false)).toBe(true);
+		expect(accountsVisible(new URLSearchParams('accounts=off'), s, false, false)).toBe(false);
+	});
+
+	it('모두에게 열면 늘 보인다 (지금)', () => {
+		expect(accountsVisible(new URLSearchParams(''), memory(), false)).toBe(true);
 	});
 
 	it('로그인한 기기는 늘 보인다 (로그아웃하게). 저장소가 없어도 멈추지 않는다', () => {
-		expect(accountsVisible(new URLSearchParams(''), undefined, true)).toBe(true);
-		expect(accountsVisible(new URLSearchParams('accounts=preview'), undefined, false)).toBe(false);
+		expect(accountsVisible(new URLSearchParams(''), undefined, true, false)).toBe(true);
+		expect(accountsVisible(new URLSearchParams('accounts=preview'), undefined, false, false)).toBe(
+			false
+		);
 	});
 });
 

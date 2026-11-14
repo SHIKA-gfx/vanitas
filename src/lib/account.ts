@@ -6,10 +6,11 @@ export type Provider = 'google' | 'kakao';
 export const PROVIDERS: readonly Provider[] = ['google', 'kakao'];
 
 /**
- * 로그인 단추를 열었는가 (⑥-3에서 true). 그 전에는 주소에 ?accounts=preview를 붙인 브라우저에서만 보인다 —
- * 운영 사이트에서 실제 구글·카카오 로그인을 시험하려고. ?accounts=off로 끈다. 이 기기에 로그인 기록이 있으면 늘 보인다(로그아웃하게)
+ * 로그인 단추를 모두에게 열었는가 (2026-11-15 ⑥-3에서 true). false로 두면 주소에 ?accounts=preview를 붙인
+ * 브라우저에서만 보인다 — 운영 사이트에서 실제 구글·카카오 로그인을 시험할 때 (?accounts=off로 끈다).
+ * 이 기기에 로그인 기록이 있으면 늘 보인다(로그아웃하게)
  */
-export const ACCOUNTS_OPEN = false;
+export const ACCOUNTS_OPEN = true;
 export const PREVIEW_KEY = 'vanitas:accounts-preview';
 /** 로그인에서 돌아갈 화면 (이 탭에만) */
 export const RETURN_KEY = 'vanitas:auth-return';
@@ -35,9 +36,10 @@ type Store = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 export function accountsVisible(
 	search: URLSearchParams,
 	storage: Store | undefined,
-	signedIn: boolean
+	signedIn: boolean,
+	open = ACCOUNTS_OPEN
 ): boolean {
-	if (ACCOUNTS_OPEN || signedIn) return true;
+	if (open || signedIn) return true;
 	try {
 		const flag = search.get('accounts');
 		if (flag === 'preview') storage?.setItem(PREVIEW_KEY, '1');

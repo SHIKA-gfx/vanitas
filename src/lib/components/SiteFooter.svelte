@@ -1,5 +1,6 @@
 <!--
-	한 줄 푸터 (공개 준비 3번, 2026-10-02): "비공식 팬 사이트 · 정보와 출처".
+	한 줄 푸터 (공개 준비 3번, 2026-10-02): "비공식 팬 사이트 · 정보와 출처 · 개인정보 처리방침".
+	개인정보 처리방침은 로그인을 연 날 더했다 (2026-11-15, docs/007 7장).
 	전체 고지는 정보 페이지(/about)에 두고, 계산기 화면은 한 화면에 담기도록 푸터를 짧게 유지한다.
 -->
 <script lang="ts">
@@ -9,6 +10,7 @@
 	import { m } from '$lib/paraglide/messages.js';
 
 	const aboutHref = resolve(localizeHref('/about') as Pathname);
+	const privacyHref = resolve(localizeHref('/privacy') as Pathname);
 </script>
 
 <p class="text-center text-xs text-navy">
@@ -19,5 +21,12 @@
 		class="underline underline-offset-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-strong"
 	>
 		{m.footer_about()}
+	</a>
+	<span aria-hidden="true">·</span>
+	<a
+		href={privacyHref}
+		class="underline underline-offset-4 hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-strong"
+	>
+		{m.footer_privacy()}
 	</a>
 </p>
