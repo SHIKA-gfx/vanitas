@@ -6,6 +6,7 @@
 	import Panel from '$lib/components/Panel.svelte';
 	import AdminButton from './AdminButton.svelte';
 	import type { DeployRequest } from './admin-data';
+	import type { CheckResult } from './build-check';
 	import { actorLabel, formatKst } from './admin-data';
 
 	interface Props {
@@ -13,8 +14,25 @@
 		me: string;
 		/** 배포 요청을 넣고 목록을 다시 읽는다. 실패하면 문장을 던진다 */
 		redeploy: () => Promise<void>;
+		/** 지금 DB 전부로 빌드 검사 (validate.py) */
+		check: () => Promise<CheckResult>;
 	}
-	let { deploys, me, redeploy }: Props = $props();
+	let { deploys, me, redeploy, check }: Props = $props();
+
+	let checking = $state(false);
+	let result = $state<CheckResult | { failed: string } | null>(null);
+
+	async function onCheck() {
+		if (checking) return;
+		checking = true;
+		result = null;
+		try {
+			result = await check();
+		} catch (e) {
+			result = { failed: (e as Error).message };
+		}
+		checking = false;
+	}
 
 	let pending = $state(false);
 	let message = $state<{ ok: boolean; text: string } | null>(null);
@@ -53,8 +71,30 @@
 			<AdminButton {onclick} disabled={pending}>
 				{pending ? '요청하는 중…' : '다시 배포'}
 			</AdminButton>
-			<span class="text-xs text-navy">빌드 결과는 Cloudflare 배포 목록에서</span>
+			<AdminButton onclick={onCheck} disabled={checking}>
+				{checking ? '검사하는 중…' : '빌드 검사'}
+			</AdminButton>
 		</div>
+		<p class="text-xs text-navy">
+			빌드 결과는 Cloudflare 배포 목록에서. "빌드 검사"는 지금 DB로 빌드하면 검사(validate.py)를
+			통과하는지 이 브라우저에서 미리 봐요 (처음에는 10초쯤)
+		</p>
+		{#if result}
+			{#if 'failed' in result}
+				<p role="alert" class="text-sm font-bold text-blocked">{result.failed}</p>
+			{:else}
+				<div role="status" class="text-sm">
+					<p class="font-bold {result.errors.length > 0 ? 'text-blocked' : 'text-ink'}">
+						빌드 검사: 오류 {result.errors.length}건 · 경고 {result.warnings.length}건
+						{result.errors.length > 0 ? '— 이대로는 DB 빌드가 멈춰요' : ''}
+					</p>
+					<ul class="mt-1 list-disc pl-5 text-xs text-ink">
+						{#each result.errors as m, i (i)}<li class="text-blocked">오류: {m}</li>{/each}
+						{#each result.warnings as m, i (i)}<li>경고: {m}</li>{/each}
+					</ul>
+				</div>
+			{/if}
+		{/if}
 		{#if message}
 			<p role="status" class="text-sm font-bold {message.ok ? 'text-ink' : 'text-blocked'}">
 				{message.text}
