@@ -51,7 +51,20 @@ describe('관리자 화면 표시', () => {
 		expect(dbErrorMessage({ code: '23505', message: '예전 id x가 지금 있는 기간 id와 같다' })).toBe(
 			'예전 id x가 지금 있는 기간 id와 같다'
 		);
-		expect(dbErrorMessage({ code: 'PGRST202', message: 'x' })).toMatch(/save_recruit.sql/);
+		expect(dbErrorMessage({ code: 'PGRST202', message: 'x' })).toMatch(/supabase\/migrations/);
+		expect(
+			dbErrorMessage({
+				code: '23505',
+				message: 'duplicate key value violates unique constraint "students_game_id_key"'
+			})
+		).toBe('같은 게임 번호의 학생이 이미 있어요');
+		expect(
+			dbErrorMessage({
+				code: '23503',
+				message: 'update or delete on table "students" violates foreign key constraint',
+				details: 'Key is still referenced from table "banner_students".'
+			})
+		).toBe('기간에서 쓰이고 있어 지울 수 없어요');
 		expect(dbErrorMessage({ message: '알 수 없음' })).toBe('알 수 없음');
 	});
 });

@@ -221,9 +221,9 @@ export function validateRecruits(rows: readonly RecruitPeriod[], ctx: Validation
 export type SyncState = 'same' | 'changed' | 'new';
 
 export interface SiteSync {
-	/** DB의 기간 id → 사이트와 같은가 */
+	/** DB의 id → 사이트와 같은가 */
 	byId: Map<string, SyncState>;
-	/** 사이트에는 있고 DB에는 없는 기간 (지운 기간) */
+	/** 사이트에는 있고 DB에는 없는 것 (지운 것) */
 	removed: string[];
 }
 
@@ -243,10 +243,12 @@ function canonical(value: unknown): string {
 	return JSON.stringify(sort(value));
 }
 
-/** 이 화면을 연 배포(사이트)에 들어 있는 기간과 DB의 기간을 비교한다. 키 순서는 보지 않는다 */
-export function compareWithSite(
-	db: readonly RecruitPeriod[],
-	site: readonly RecruitPeriod[]
+/**
+ * 이 화면을 연 배포(사이트)에 들어 있는 것과 DB를 비교한다 (기간·학생·출처). 키 순서는 보지 않는다
+ */
+export function compareWithSite<T extends { id: string }>(
+	db: readonly T[],
+	site: readonly T[]
 ): SiteSync {
 	const siteById = new Map(site.map((r) => [r.id, canonical(r)]));
 	const dbIds = new Set(db.map((r) => r.id));
