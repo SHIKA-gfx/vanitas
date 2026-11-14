@@ -37,7 +37,7 @@ AP를 사는 데 쓰는 청휘석이 모집 몇 연분인지처럼, 서로 다�
 ### 픽업 플래너
 
 <p align="center">
-  <img src=".github/assets/readme-planner-desktop.png" alt="픽업 플래너 데스크톱 화면 — 보유 재화, 예정 픽업, 목표 4명 중 2명 확정 가능 판정" width="100%">
+  <img src=".github/assets/readme-planner-desktop.png" alt="픽업 플래너 데스크톱 화면 — 보유 재화와 목표 4명 중 2명 확정 가능 판정" width="100%">
 </p>
 <p align="center">
   <img src=".github/assets/readme-planner-mobile.png" alt="픽업 플래너 모바일 화면 — 고르기 탭과 계획 탭" width="70%">
