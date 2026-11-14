@@ -476,7 +476,7 @@ datasets (path → json)      admins ──▶ auth.users      change_log (트�
 - **전환 뒤 규칙**: `data/`는 DB의 스냅샷이다. 직접 고치지 않는다 — 고친 값은 다음 DB 빌드에서 덮인다. 고칠 것은 `/admin`이나 SQL 편집기로
 - **되돌리기**: Cloudflare의 `VANITAS_DATA_SOURCE`를 `json`으로 바꾸고 다시 배포하면 레포 JSON으로 돌아간다
 - 무료 한도: Cloudflare Pages 빌드 월 500회. 저장 한 번이 빌드 한 번
-- (선택) **사용자 로그인 저장**: 브라우저 저장값(`vanitas:v1`의 `version` + `sections`)을 사용자마다 한 행에 통째로 둔다. 열로 나누지 않으므로
+- (선택) **사용자 로그인 저장** (→ `docs/007`, v0.3): 브라우저 저장값(`vanitas:v1`의 `version` + `sections`)을 사용자마다 한 행에 통째로 둔다. 열로 나누지 않으므로
   저장값 모양이 바뀌어도(#78의 `planner.freeLeft`, 공유 이름 `fr`) DB를 고치지 않는다. 읽을 때는 지금처럼 `persistSection`의 검사·`normalizeTargetKeys`를 거친다
 
 ## 9. 일정과 PR
