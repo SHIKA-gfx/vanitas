@@ -5,6 +5,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { BannerType, GameConfig, RecruitPeriod, Student } from '$lib/data/types';
 import type { GameDataRows } from '$lib/data/db/rows';
+import { TABLES } from '$lib/data/db/rows';
 import type { SourceEntry } from '$lib/data/db/convert';
 import { rowsToRecruits, rowsToSources, rowsToStudents } from '$lib/data/db/convert';
 import type { ValidationContext } from './recruit-edit';
@@ -190,6 +191,49 @@ export async function saveSource(
 	return data as string;
 }
 
+// ------------------------------------------------------------ 데이터 문서 (DB 함수, supabase/migrations/20261114180000_save_dataset.sql)
+
+export interface DatasetVersion {
+	path: string;
+	data: Record<string, unknown>;
+	/** 판 — 저장할 때 그사이 바뀌었는지 본다 */
+	updated_at: string;
+}
+
+/** 문서 10개 (경로 순) */
+export async function loadDatasets(sb: SupabaseClient): Promise<DatasetVersion[]> {
+	const { data, error } = await sb.from('datasets').select('path, data, updated_at').order('path');
+	if (error) fail('datasets', error);
+	return (data ?? []) as DatasetVersion[];
+}
+
+/** 게임 데이터 표 9개 전부 — 빌드 검사가 내보내기와 같은 파일을 만든다 (rowsToFiles) */
+export async function loadAllRows(sb: SupabaseClient): Promise<GameDataRows> {
+	const read = await Promise.all(TABLES.map((t) => rows<never>(sb, t)));
+	return Object.fromEntries(TABLES.map((t, i) => [t, read[i]])) as unknown as GameDataRows;
+}
+
+/**
+ * 문서를 통째로 저장하고 새 판을 돌려준다. 글자(JSON)로 보내 키 순서를 지킨다.
+ * 그사이 다른 저장이 문서를 바꿨으면 멈춘다 (40001)
+ */
+export async function saveDataset(
+	sb: SupabaseClient,
+	path: string,
+	doc: Record<string, unknown>,
+	expected: string,
+	deploy: boolean
+): Promise<string> {
+	const { data, error } = await sb.rpc('save_dataset', {
+		p_path: path,
+		p_data: JSON.stringify(doc),
+		p_expected: expected,
+		p_deploy: deploy
+	});
+	if (error) throw new Error(dbErrorMessage(error));
+	return data as string;
+}
+
 /** DB 오류 → 화면 문장. 저장 전 검사를 거쳐도 다른 탭에서 바꾼 것과 부딪히면 여기로 온다 */
 export function dbErrorMessage(error: {
 	code?: string;
@@ -211,6 +255,12 @@ export function dbErrorMessage(error: {
 				: '없는 학생이나 출처를 가리켜요 (다른 곳에서 지웠을 수 있어요)';
 		case '23514':
 			return `값이 규칙에 맞지 않아요: ${error.message}`;
+		case 'P0001':
+			return error.message.startsWith('다른 곳에서 먼저 고쳤다')
+				? '그사이 다른 저장이 이 문서를 바꿨어요 (기간 저장의 일정 확인일 등). 취소하고 다시 열어 고쳐 주세요'
+				: error.message;
+		case '22P02':
+			return error.message;
 		case 'P0002':
 			return '그 기간이 이제 없어요 (다른 곳에서 지웠을 수 있어요). 목록을 다시 읽어 주세요';
 		case 'PGRST202':
