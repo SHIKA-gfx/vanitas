@@ -23,11 +23,12 @@ const handleRootRedirect: Handle = ({ event, resolve }) => {
 
 /**
  * 관리자 페이지는 검색에서 뺀다 (docs/006 6-1, 결정 G). 브라우저에서만 그리는 화면이라(ssr = false)
- * 페이지 안의 meta만으로는 글을 읽지 않는 검색 로봇에게 닿지 않는다 → 응답 머리에 붙인다
+ * 페이지 안의 meta만으로는 글을 읽지 않는 검색 로봇에게 닿지 않는다 → 응답 머리에 붙인다.
+ * 로그인에서 돌아오는 곳(/auth/callback, docs/007)도 같다
  */
 const handleAdminNoindex: Handle = async ({ event, resolve }) => {
 	const response = await resolve(event);
-	if (event.route.id?.startsWith('/admin')) {
+	if (event.route.id?.startsWith('/admin') || event.route.id?.startsWith('/auth')) {
 		response.headers.set('X-Robots-Tag', 'noindex, nofollow');
 	}
 	return response;
