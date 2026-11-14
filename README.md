@@ -64,19 +64,21 @@ AP를 사는 데 쓰는 청휘석이 모집 몇 연분인지처럼, 서로 다�
 - 확인이 끝나지 않은 값은 `verified: false`로 두고, 화면에 "추정"으로 표시해요
 - 각 수치의 출처는 [`data/sources.json`](data/sources.json)과 파일마다의 `meta.sources`에 있어요
 - 구조와 값은 `validate.py`가 검사해요
+- 데이터의 원본은 DB(Supabase)예요. `data/`는 DB에서 내보낸 사본이에요 (바뀌면 스냅샷 PR로 맞춰요)
 
 수치가 게임과 다르면 [데이터 오류 제보](https://github.com/SHIKA-gfx/vanitas/issues/new/choose)로 알려 주세요.
 
 ## 기술
 
-| 영역       | 사용                                       |
-| ---------- | ------------------------------------------ |
-| 프레임워크 | SvelteKit 2, Svelte 5, TypeScript          |
-| 스타일     | Tailwind CSS 4, 경기천년체·Oxanium 웹폰트  |
-| 다국어     | Paraglide JS (지금은 한국어)               |
-| 테스트     | Vitest, `validate.py` (데이터)             |
-| 배포       | Cloudflare Pages, GitHub Actions 빌드 검사 |
-| 통계       | Umami (쿠키 없는 익명 통계)                |
+| 영역       | 사용                                              |
+| ---------- | ------------------------------------------------- |
+| 프레임워크 | SvelteKit 2, Svelte 5, TypeScript                 |
+| 스타일     | Tailwind CSS 4, 경기천년체·Oxanium 웹폰트         |
+| 다국어     | Paraglide JS (지금은 한국어)                      |
+| 테스트     | Vitest, `validate.py` (데이터)                    |
+| DB         | Supabase (빌드 때 읽기, 관리자 페이지에서 고치기) |
+| 배포       | Cloudflare Pages, GitHub Actions 빌드 검사        |
+| 통계       | Umami (쿠키 없는 익명 통계)                       |
 
 계산 로직(`src/lib/calc`)은 데이터 구조를 모르는 순수 함수로 두고, 데이터와의 연결은 어댑터가 맡아요.
 화면과 계산을 나눠 두어서, 계산은 화면 없이도 테스트할 수 있어요.

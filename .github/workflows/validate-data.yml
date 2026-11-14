@@ -2,9 +2,9 @@ name: Validate game data
 
 on:
   push:
-    paths: ['data/**', 'logs/**', 'validate.py']
+    paths: ['data/**', 'logs/**', 'validate.py', 'scripts/data-format.ts', 'src/lib/data/db/**']
   pull_request:
-    paths: ['data/**', 'logs/**', 'validate.py']
+    paths: ['data/**', 'logs/**', 'validate.py', 'scripts/data-format.ts', 'src/lib/data/db/**']
 
 jobs:
   validate:
@@ -16,3 +16,11 @@ jobs:
           python-version: '3.12'
       - name: Validate data files
         run: python3 validate.py
+
+      # data/는 DB 스냅샷이라 내보내기와 같은 서식이어야 한다 (docs/006 7-3).
+      # 서식 스크립트는 Node 기본 기능만 쓴다 — npm ci가 필요 없다
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 서식이 내보내기와 같은지
+        run: npm run data:format -- --check

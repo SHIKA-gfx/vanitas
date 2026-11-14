@@ -1,0 +1,110 @@
+# DB 스냅샷 (docs/006 8장, 결정 D)
+#
+# 2026-11-14부터 사이트 데이터의 정본은 DB(Supabase)이고, 레포 data/는 그 스냅샷이다.
+# 이 작업이 이틀마다(+ Actions 탭에서 손으로) DB를 내보내 data/와 다르면 data/db-snapshot 브랜치에 PR을 만들거나 갱신한다.
+# - DB를 읽는 것 자체가 무료 프로젝트의 "일주일 비활성 일시정지"를 막는다
+# - 공개용 키로 읽기만 한다 (빌드와 같은 data:export). 레포 Secrets: PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY
+# - GITHUB_TOKEN으로 만든 PR에는 다른 워크플로(빌드 검사·데이터 검사)가 돌지 않는다 → validate.py는 여기서 돌리고 결과를 PR 본문에 적는다
+# - DB를 못 읽거나 validate.py 오류가 있으면 작업이 실패한다 → GitHub가 메일로 알린다
+# - Merge는 사람이 한다. Merge해도 사이트는 바뀌지 않는다 (사이트는 이미 DB로 빌드된다)
+# - 레포 설정 Actions → General → "Allow GitHub Actions to create and approve pull requests"가 켜져 있어야 PR을 만든다
+
+name: DB snapshot
+
+on:
+  schedule:
+    # 이틀마다 한국 시간 새벽 4시 17분 (UTC 19:17). 정각은 GitHub 예약이 몰려 늦어진다
+    - cron: '17 19 */2 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: db-snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BRANCH: data/db-snapshot
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # 내보내기 스크립트는 Node 기본 기능만 쓴다 — npm ci가 필요 없다
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: DB에서 내보내기
+        env:
+          VANITAS_DATA_SOURCE: db
+          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+        run: npm run data:export
+
+      - name: 데이터 검사 (validate.py)
+        id: validate
+        run: |
+          set +e
+          python3 validate.py > validate.log 2>&1
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          cat validate.log
+
+      - name: 바뀌었으면 PR 만들기·갱신
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VALIDATE_CODE: ${{ steps.validate.outputs.code }}
+        run: |
+          open_pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+
+          if git diff --quiet -- data; then
+            echo "DB와 레포 data/가 같다 — PR 없음"
+            if [ -n "$open_pr" ]; then
+              gh pr close "$open_pr" --delete-branch --comment "DB와 main의 data/가 같아져 닫아요 (DB 스냅샷 작업)."
+            fi
+            exit "$VALIDATE_CODE"
+          fi
+
+          today=$(TZ=Asia/Seoul date +%F)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$BRANCH"
+          git add data
+          git commit -q -m "data: DB 스냅샷 ($today)"
+          git push -q --force origin "$BRANCH"
+
+          if [ "$VALIDATE_CODE" = "0" ]; then check="통과"; else check="**오류 — 이대로는 빌드가 멈춰요**"; fi
+          {
+            echo "DB(Supabase)에서 내보낸 \`data/\` 스냅샷이에요 ($today, 작업 \`db-snapshot.yml\`, docs/006 8장)."
+            echo
+            echo "- 사이트는 이미 DB로 빌드되므로 Merge해도 사이트는 바뀌지 않아요. 레포를 DB와 맞춰 두는 PR이에요 (되돌리기 \`json\` 대비)"
+            echo "- 이 PR에는 다른 검사 워크플로가 돌지 않아요. 검사 결과는 아래"
+            echo
+            echo "### validate.py: $check"
+            echo
+            echo '```'
+            tail -n 15 validate.log
+            echo '```'
+            echo
+            echo "### 바뀐 파일"
+            echo
+            echo '```'
+            git diff --stat HEAD~1 -- data
+            echo '```'
+          } > pr-body.md
+
+          if [ -n "$open_pr" ]; then
+            gh pr edit "$open_pr" --title "data: DB 스냅샷 ($today)" --body-file pr-body.md
+          else
+            gh pr create --base main --head "$BRANCH" --title "data: DB 스냅샷 ($today)" --body-file pr-body.md
+          fi
+          exit "$VALIDATE_CODE"
