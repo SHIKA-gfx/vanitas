@@ -32,15 +32,15 @@
     "note": "카페 2호점은 AP를 생산하지 않는다. 혼동하기 쉬우므로 계산기 UI에 안내 문구 필요."
   },
   "ranks": [
-    { "rank": 1,  "maxComfort": 1000, "apPerComfort": 0.0029, "maxStorage": 90 },
-    { "rank": 2,  "maxComfort": 1500, "apPerComfort": 0.0032, "maxStorage": 150 },
-    { "rank": 3,  "maxComfort": 2000, "apPerComfort": 0.0035, "maxStorage": 220 },
-    { "rank": 4,  "maxComfort": 2500, "apPerComfort": 0.0038, "maxStorage": 300 },
-    { "rank": 5,  "maxComfort": 3000, "apPerComfort": 0.0041, "maxStorage": 390 },
-    { "rank": 6,  "maxComfort": 3500, "apPerComfort": 0.0042, "maxStorage": 460 },
-    { "rank": 7,  "maxComfort": 4000, "apPerComfort": 0.0042, "maxStorage": 530 },
-    { "rank": 8,  "maxComfort": 4500, "apPerComfort": 0.0042, "maxStorage": 600 },
-    { "rank": 9,  "maxComfort": 5000, "apPerComfort": 0.0042, "maxStorage": 670 },
+    { "rank": 1, "maxComfort": 1000, "apPerComfort": 0.0029, "maxStorage": 90 },
+    { "rank": 2, "maxComfort": 1500, "apPerComfort": 0.0032, "maxStorage": 150 },
+    { "rank": 3, "maxComfort": 2000, "apPerComfort": 0.0035, "maxStorage": 220 },
+    { "rank": 4, "maxComfort": 2500, "apPerComfort": 0.0038, "maxStorage": 300 },
+    { "rank": 5, "maxComfort": 3000, "apPerComfort": 0.0041, "maxStorage": 390 },
+    { "rank": 6, "maxComfort": 3500, "apPerComfort": 0.0042, "maxStorage": 460 },
+    { "rank": 7, "maxComfort": 4000, "apPerComfort": 0.0042, "maxStorage": 530 },
+    { "rank": 8, "maxComfort": 4500, "apPerComfort": 0.0042, "maxStorage": 600 },
+    { "rank": 9, "maxComfort": 5000, "apPerComfort": 0.0042, "maxStorage": 670 },
     { "rank": 10, "maxComfort": 5500, "apPerComfort": 0.0042, "maxStorage": 740 }
   ]
 }

@@ -11,7 +11,12 @@
     "available": ["point_exchange", "charge"],
     "schedule": [
       { "system": "point_exchange", "effectiveFrom": "2021-11-09", "status": "announced" },
-      { "system": "charge",         "effectiveFrom": "2026-11-10", "status": "announced", "sources": ["30"] }
+      {
+        "system": "charge",
+        "effectiveFrom": "2026-11-10",
+        "status": "announced",
+        "sources": ["30"]
+      }
     ],
     "note": "게임 날짜마다 effectiveFrom이 그 날 이하인 마지막 행이 적용된다 (getPitySystem). 배포 없이 날짜가 되면 바뀐다. 한국은 2026-11-10 점검 후 모집 스택 방식(내부 이름 charge)."
   },
@@ -19,15 +24,8 @@
     "currency": "pyroxene",
     "single": 120,
     "ten": 1200,
-    "tenPullGuarantee": {
-      "minRarity": 2,
-      "slot": 10,
-      "note": "10회 모집 시 10번째 자리에 ★2 이상 1명 확정"
-    },
-    "ticketRules": {
-      "tenSingleTicketsAsTenPull": true,
-      "mixTicketsWithPyroxene": true
-    }
+    "tenPullGuarantee": { "minRarity": 2, "slot": 10, "note": "10회 모집 시 10번째 자리에 ★2 이상 1명 확정" },
+    "ticketRules": { "tenSingleTicketsAsTenPull": true, "mixTicketsWithPyroxene": true }
   },
   "recruitPoint": {
     "perPull": 1,
@@ -50,11 +48,11 @@
     "recollectException": "리콜렉트 모집은 대상별 1회가 아니라 리콜렉트 기간 중 1회만 지급된다."
   },
   "duplicateRewards": [
-    { "rarity": 1, "isPickup": false, "eligma": 1,  "eleph": 1 },
+    { "rarity": 1, "isPickup": false, "eligma": 1, "eleph": 1 },
     { "rarity": 2, "isPickup": false, "eligma": 10, "eleph": 5 },
-    { "rarity": 2, "isPickup": true,  "eligma": 10, "eleph": 20 },
+    { "rarity": 2, "isPickup": true, "eligma": 10, "eleph": 20 },
     { "rarity": 3, "isPickup": false, "eligma": 50, "eleph": 30 },
-    { "rarity": 3, "isPickup": true,  "eligma": 50, "eleph": 100 }
+    { "rarity": 3, "isPickup": true, "eligma": 50, "eleph": 100 }
   ],
   "eligmaFragment": {
     "fragmentsPerStone": 10,
@@ -68,8 +66,8 @@
     "softPity": { "count": 100, "guaranteedRarity": 3, "pickupChance": 0.5, "verified": true },
     "hardPity": { "count": 200, "verified": true },
     "chargeTypes": [
-      { "id": "normal",  "name": "모집 스택", "appliesTo": ["pickup_normal"],          "verified": true },
-      { "id": "limited", "name": "특별 스택", "appliesTo": ["pickup_limited", "fes"],  "verified": true }
+      { "id": "normal", "name": "모집 스택", "appliesTo": ["pickup_normal"], "verified": true },
+      { "id": "limited", "name": "특별 스택", "appliesTo": ["pickup_limited", "fes"], "verified": true }
     ],
     "unconfirmedBanners": ["standard", "recollect", "encore"],
     "unconfirmedNote": "사전 안내에 없는 배너. 상시 모집의 존속과 스택 적립, 리콜렉트·앙코르가 쓰는 스택(또는 포인트)은 후속 공지로 확인한다. 확인 전까지 개편 후 계산은 '준비 중'.",
@@ -79,8 +77,16 @@
     "resetOnPickupObtained": true,
     "ticketsAccumulate": true,
     "ticketsNote": "개편 전에 보유한 1회·10회 모집 티켓도 개편 후 사용 가능하며 모집 스택이 쌓인다.",
-    "freePulls": { "accumulate": true, "verified": true, "sources": ["36"], "note": "무료 모집도 스택·모집 마일리지에 쌓인다 (5주년 무료 모집 200회, 기사 36). 플래너는 목표가 있는 기간에 그 목표를 데려오는 데 먼저 쓴다고 본다. 목표를 데려오고 남는 무료 모집은 스택에 넣지 않는다 — 중간에 픽업이 나오면 초기화되므로 이월량을 장담할 수 없다" },
-    "pointsAtSwitch": { "value": "unconfirmed", "assumed": "평소처럼 기간 종료 시 기동석 조각 1:1 변환. 스택으로 넘어가지 않는다고 가정" },
+    "freePulls": {
+      "accumulate": true,
+      "verified": true,
+      "sources": ["36"],
+      "note": "무료 모집도 스택·모집 마일리지에 쌓인다 (5주년 무료 모집 200회, 기사 36). 플래너는 목표가 있는 기간에 그 목표를 데려오는 데 먼저 쓴다고 본다. 목표를 데려오고 남는 무료 모집은 스택에 넣지 않는다 — 중간에 픽업이 나오면 초기화되므로 이월량을 장담할 수 없다"
+    },
+    "pointsAtSwitch": {
+      "value": "unconfirmed",
+      "assumed": "평소처럼 기간 종료 시 기동석 조각 1:1 변환. 스택으로 넘어가지 않는다고 가정"
+    },
     "mileage": {
       "name": "모집 마일리지",
       "perPull": 1,
@@ -102,6 +108,12 @@
     { "date": "2025-09-23", "server": "ko", "change": "아카이브 모집 조기 도입 / 픽업 ★3 초회 엘레프 100 지급 시작" },
     { "date": "2026-05-05", "server": "ko", "change": "리콜렉트 모집 첫 진행" },
     { "date": "2026-07-29", "server": "jp", "change": "모집 포인트 폐지 → 모집 차지(반천장) / 상시 모집 폐지" },
-    { "date": "2026-11-10", "server": "ko", "change": "모집 포인트 폐지 → 모집 스택·특별 스택(100 반천장·200 천장, 픽업 획득 시 초기화, 기간 간 이월) / 모집 마일리지 도입 / 아카이브 포인트 유지", "status": "announced", "sources": ["30"] }
+    {
+      "date": "2026-11-10",
+      "server": "ko",
+      "change": "모집 포인트 폐지 → 모집 스택·특별 스택(100 반천장·200 천장, 픽업 획득 시 초기화, 기간 간 이월) / 모집 마일리지 도입 / 아카이브 포인트 유지",
+      "status": "announced",
+      "sources": ["30"]
+    }
   ]
 }

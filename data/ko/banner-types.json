@@ -75,22 +75,106 @@
       "pickThroughObtainable": true,
       "rateGroups": {
         "default": [
-          { "id": "pickup_3s",  "label": "픽업 ★3",   "rarity": 3, "rate": 0.7,  "poolRef": "pickup",      "verified": true },
-          { "id": "other_3s",   "label": "기타 ★3",   "rarity": 3, "rate": 2.3,  "poolRef": "normal_3s",   "verified": true },
-          { "id": "all_2s",     "label": "모든 ★2",   "rarity": 2, "rate": 18.5, "poolRef": "normal_2s",   "verified": true },
-          { "id": "all_1s",     "label": "모든 ★1",   "rarity": 1, "rate": 78.5, "poolRef": "normal_1s",   "verified": true }
+          {
+            "id": "pickup_3s",
+            "label": "픽업 ★3",
+            "rarity": 3,
+            "rate": 0.7,
+            "poolRef": "pickup",
+            "verified": true
+          },
+          {
+            "id": "other_3s",
+            "label": "기타 ★3",
+            "rarity": 3,
+            "rate": 2.3,
+            "poolRef": "normal_3s",
+            "verified": true
+          },
+          {
+            "id": "all_2s",
+            "label": "모든 ★2",
+            "rarity": 2,
+            "rate": 18.5,
+            "poolRef": "normal_2s",
+            "verified": true
+          },
+          {
+            "id": "all_1s",
+            "label": "모든 ★1",
+            "rarity": 1,
+            "rate": 78.5,
+            "poolRef": "normal_1s",
+            "verified": true
+          }
         ],
         "withPickup2Star": [
-          { "id": "pickup_3s",  "label": "픽업 ★3",     "rarity": 3, "rate": 0.7,  "poolRef": "pickup",    "verified": true },
-          { "id": "other_3s",   "label": "기타 ★3",     "rarity": 3, "rate": 2.3,  "poolRef": "normal_3s", "verified": true },
-          { "id": "pickup_2s",  "label": "픽업 ★2",     "rarity": 2, "rate": 3.0,  "poolRef": "pickup",    "verified": false },
-          { "id": "other_2s",   "label": "픽업 외 ★2",  "rarity": 2, "rate": 15.5, "poolRef": "normal_2s", "verified": false },
-          { "id": "all_1s",     "label": "모든 ★1",     "rarity": 1, "rate": 78.5, "poolRef": "normal_1s", "verified": true }
+          {
+            "id": "pickup_3s",
+            "label": "픽업 ★3",
+            "rarity": 3,
+            "rate": 0.7,
+            "poolRef": "pickup",
+            "verified": true
+          },
+          {
+            "id": "other_3s",
+            "label": "기타 ★3",
+            "rarity": 3,
+            "rate": 2.3,
+            "poolRef": "normal_3s",
+            "verified": true
+          },
+          {
+            "id": "pickup_2s",
+            "label": "픽업 ★2",
+            "rarity": 2,
+            "rate": 3,
+            "poolRef": "pickup",
+            "verified": false
+          },
+          {
+            "id": "other_2s",
+            "label": "픽업 외 ★2",
+            "rarity": 2,
+            "rate": 15.5,
+            "poolRef": "normal_2s",
+            "verified": false
+          },
+          {
+            "id": "all_1s",
+            "label": "모든 ★1",
+            "rarity": 1,
+            "rate": 78.5,
+            "poolRef": "normal_1s",
+            "verified": true
+          }
         ],
         "tenthPull": [
-          { "id": "pickup_3s",  "label": "픽업 ★3", "rarity": 3, "rate": 0.7,  "poolRef": "pickup",    "verified": true },
-          { "id": "other_3s",   "label": "기타 ★3", "rarity": 3, "rate": 2.3,  "poolRef": "normal_3s", "verified": true },
-          { "id": "all_2s",     "label": "모든 ★2", "rarity": 2, "rate": 97.0, "poolRef": "normal_2s", "verified": true }
+          {
+            "id": "pickup_3s",
+            "label": "픽업 ★3",
+            "rarity": 3,
+            "rate": 0.7,
+            "poolRef": "pickup",
+            "verified": true
+          },
+          {
+            "id": "other_3s",
+            "label": "기타 ★3",
+            "rarity": 3,
+            "rate": 2.3,
+            "poolRef": "normal_3s",
+            "verified": true
+          },
+          {
+            "id": "all_2s",
+            "label": "모든 ★2",
+            "rarity": 2,
+            "rate": 97,
+            "poolRef": "normal_2s",
+            "verified": true
+          }
         ]
       },
       "notes": [
@@ -113,13 +197,48 @@
       "pickThroughObtainable": true,
       "rateGroups": {
         "default": [
-          { "id": "all_3s", "label": "모든 통상 + 동기간 특별 ★3", "rarity": 3, "rate": 3.0,  "poolRef": "standard_3s", "verified": true },
-          { "id": "all_2s", "label": "모든 ★2",                    "rarity": 2, "rate": 18.5, "poolRef": "normal_2s",   "verified": true },
-          { "id": "all_1s", "label": "모든 ★1",                    "rarity": 1, "rate": 78.5, "poolRef": "normal_1s",   "verified": true }
+          {
+            "id": "all_3s",
+            "label": "모든 통상 + 동기간 특별 ★3",
+            "rarity": 3,
+            "rate": 3,
+            "poolRef": "standard_3s",
+            "verified": true
+          },
+          {
+            "id": "all_2s",
+            "label": "모든 ★2",
+            "rarity": 2,
+            "rate": 18.5,
+            "poolRef": "normal_2s",
+            "verified": true
+          },
+          {
+            "id": "all_1s",
+            "label": "모든 ★1",
+            "rarity": 1,
+            "rate": 78.5,
+            "poolRef": "normal_1s",
+            "verified": true
+          }
         ],
         "tenthPull": [
-          { "id": "all_3s", "label": "모든 통상 + 동기간 특별 ★3", "rarity": 3, "rate": 3.0,  "poolRef": "standard_3s", "verified": true },
-          { "id": "all_2s", "label": "모든 ★2",                    "rarity": 2, "rate": 97.0, "poolRef": "normal_2s",   "verified": true }
+          {
+            "id": "all_3s",
+            "label": "모든 통상 + 동기간 특별 ★3",
+            "rarity": 3,
+            "rate": 3,
+            "poolRef": "standard_3s",
+            "verified": true
+          },
+          {
+            "id": "all_2s",
+            "label": "모든 ★2",
+            "rarity": 2,
+            "rate": 97,
+            "poolRef": "normal_2s",
+            "verified": true
+          }
         ]
       },
       "notes": [
@@ -142,10 +261,38 @@
       "pickThroughObtainable": false,
       "rateGroups": {
         "default": [
-          { "id": "pickup_3s", "label": "픽업 특별 ★3",                "rarity": 3, "rate": 0.7,  "poolRef": "pickup",    "verified": false },
-          { "id": "other_3s",  "label": "픽업 외 특별 + 모든 통상 ★3", "rarity": 3, "rate": 2.3,  "poolRef": "dynamic",   "verified": false },
-          { "id": "all_2s",    "label": "모든 ★2",                     "rarity": 2, "rate": 18.5, "poolRef": "normal_2s", "verified": false },
-          { "id": "all_1s",    "label": "모든 ★1",                     "rarity": 1, "rate": 78.5, "poolRef": "normal_1s", "verified": false }
+          {
+            "id": "pickup_3s",
+            "label": "픽업 특별 ★3",
+            "rarity": 3,
+            "rate": 0.7,
+            "poolRef": "pickup",
+            "verified": false
+          },
+          {
+            "id": "other_3s",
+            "label": "픽업 외 특별 + 모든 통상 ★3",
+            "rarity": 3,
+            "rate": 2.3,
+            "poolRef": "dynamic",
+            "verified": false
+          },
+          {
+            "id": "all_2s",
+            "label": "모든 ★2",
+            "rarity": 2,
+            "rate": 18.5,
+            "poolRef": "normal_2s",
+            "verified": false
+          },
+          {
+            "id": "all_1s",
+            "label": "모든 ★1",
+            "rarity": 1,
+            "rate": 78.5,
+            "poolRef": "normal_1s",
+            "verified": false
+          }
         ]
       },
       "obtainability": {
@@ -174,11 +321,46 @@
       "pickThroughObtainable": true,
       "rateGroups": {
         "default": [
-          { "id": "pickup_3s",     "label": "픽업 페스 ★3",    "rarity": 3, "rate": 0.7,  "poolRef": "pickup",    "verified": false },
-          { "id": "other_fes_3s",  "label": "픽업 외 페스 ★3", "rarity": 3, "rate": 0.9,  "poolRef": "fes_3s",    "verified": false },
-          { "id": "normal_3s",     "label": "모든 통상 ★3",    "rarity": 3, "rate": 4.4,  "poolRef": "normal_3s", "verified": false },
-          { "id": "all_2s",        "label": "모든 ★2",         "rarity": 2, "rate": 18.5, "poolRef": "normal_2s", "verified": false },
-          { "id": "all_1s",        "label": "모든 ★1",         "rarity": 1, "rate": 75.5, "poolRef": "normal_1s", "verified": false }
+          {
+            "id": "pickup_3s",
+            "label": "픽업 페스 ★3",
+            "rarity": 3,
+            "rate": 0.7,
+            "poolRef": "pickup",
+            "verified": false
+          },
+          {
+            "id": "other_fes_3s",
+            "label": "픽업 외 페스 ★3",
+            "rarity": 3,
+            "rate": 0.9,
+            "poolRef": "fes_3s",
+            "verified": false
+          },
+          {
+            "id": "normal_3s",
+            "label": "모든 통상 ★3",
+            "rarity": 3,
+            "rate": 4.4,
+            "poolRef": "normal_3s",
+            "verified": false
+          },
+          {
+            "id": "all_2s",
+            "label": "모든 ★2",
+            "rarity": 2,
+            "rate": 18.5,
+            "poolRef": "normal_2s",
+            "verified": false
+          },
+          {
+            "id": "all_1s",
+            "label": "모든 ★1",
+            "rarity": 1,
+            "rate": 75.5,
+            "poolRef": "normal_1s",
+            "verified": false
+          }
         ]
       },
       "notes": [
@@ -203,15 +385,64 @@
       "pickThroughObtainable": true,
       "rateGroups": {
         "default": [
-          { "id": "pickup_3s", "label": "픽업 아카이브 ★3",    "rarity": 3, "rate": 0.7,  "poolRef": "pickup",     "verified": true },
-          { "id": "other_3s",  "label": "픽업 외 아카이브 ★3", "rarity": 3, "rate": 2.3,  "poolRef": "archive_3s", "verified": true },
-          { "id": "all_2s",    "label": "모든 ★2",             "rarity": 2, "rate": 18.5, "poolRef": "normal_2s",  "verified": true },
-          { "id": "all_1s",    "label": "모든 ★1",             "rarity": 1, "rate": 78.5, "poolRef": "normal_1s",  "verified": true }
+          {
+            "id": "pickup_3s",
+            "label": "픽업 아카이브 ★3",
+            "rarity": 3,
+            "rate": 0.7,
+            "poolRef": "pickup",
+            "verified": true
+          },
+          {
+            "id": "other_3s",
+            "label": "픽업 외 아카이브 ★3",
+            "rarity": 3,
+            "rate": 2.3,
+            "poolRef": "archive_3s",
+            "verified": true
+          },
+          {
+            "id": "all_2s",
+            "label": "모든 ★2",
+            "rarity": 2,
+            "rate": 18.5,
+            "poolRef": "normal_2s",
+            "verified": true
+          },
+          {
+            "id": "all_1s",
+            "label": "모든 ★1",
+            "rarity": 1,
+            "rate": 78.5,
+            "poolRef": "normal_1s",
+            "verified": true
+          }
         ],
         "tenthPull": [
-          { "id": "pickup_3s", "label": "픽업 아카이브 ★3",    "rarity": 3, "rate": 0.7,  "poolRef": "pickup",     "verified": true },
-          { "id": "other_3s",  "label": "픽업 외 아카이브 ★3", "rarity": 3, "rate": 2.3,  "poolRef": "archive_3s", "verified": true },
-          { "id": "all_2s",    "label": "모든 ★2",             "rarity": 2, "rate": 97.0, "poolRef": "normal_2s",  "verified": true }
+          {
+            "id": "pickup_3s",
+            "label": "픽업 아카이브 ★3",
+            "rarity": 3,
+            "rate": 0.7,
+            "poolRef": "pickup",
+            "verified": true
+          },
+          {
+            "id": "other_3s",
+            "label": "픽업 외 아카이브 ★3",
+            "rarity": 3,
+            "rate": 2.3,
+            "poolRef": "archive_3s",
+            "verified": true
+          },
+          {
+            "id": "all_2s",
+            "label": "모든 ★2",
+            "rarity": 2,
+            "rate": 97,
+            "poolRef": "normal_2s",
+            "verified": true
+          }
         ]
       },
       "roster": {
@@ -241,10 +472,38 @@
       "pickThroughObtainable": true,
       "rateGroups": {
         "default": [
-          { "id": "pickup_3s", "label": "픽업 리콜렉트 ★3",              "rarity": 3, "rate": 0.7,  "poolRef": "pickup",    "verified": false },
-          { "id": "other_3s",  "label": "픽업 외 리콜렉트 + 모든 통상 ★3", "rarity": 3, "rate": 2.3, "poolRef": "dynamic",   "verified": false },
-          { "id": "all_2s",    "label": "모든 ★2",                        "rarity": 2, "rate": 18.5, "poolRef": "normal_2s", "verified": false },
-          { "id": "all_1s",    "label": "모든 ★1",                        "rarity": 1, "rate": 78.5, "poolRef": "normal_1s", "verified": false }
+          {
+            "id": "pickup_3s",
+            "label": "픽업 리콜렉트 ★3",
+            "rarity": 3,
+            "rate": 0.7,
+            "poolRef": "pickup",
+            "verified": false
+          },
+          {
+            "id": "other_3s",
+            "label": "픽업 외 리콜렉트 + 모든 통상 ★3",
+            "rarity": 3,
+            "rate": 2.3,
+            "poolRef": "dynamic",
+            "verified": false
+          },
+          {
+            "id": "all_2s",
+            "label": "모든 ★2",
+            "rarity": 2,
+            "rate": 18.5,
+            "poolRef": "normal_2s",
+            "verified": false
+          },
+          {
+            "id": "all_1s",
+            "label": "모든 ★1",
+            "rarity": 1,
+            "rate": 78.5,
+            "poolRef": "normal_1s",
+            "verified": false
+          }
         ]
       },
       "notes": [
@@ -267,10 +526,38 @@
       "pickThroughObtainable": false,
       "rateGroups": {
         "default": [
-          { "id": "pickup_3s", "label": "픽업 앙코르 ★3",              "rarity": 3, "rate": 0.7,  "poolRef": "pickup",    "verified": false },
-          { "id": "other_3s",  "label": "픽업 외 앙코르 + 모든 통상 ★3", "rarity": 3, "rate": 2.3, "poolRef": "dynamic",   "verified": false },
-          { "id": "all_2s",    "label": "모든 ★2",                      "rarity": 2, "rate": 18.5, "poolRef": "normal_2s", "verified": false },
-          { "id": "all_1s",    "label": "모든 ★1",                      "rarity": 1, "rate": 78.5, "poolRef": "normal_1s", "verified": false }
+          {
+            "id": "pickup_3s",
+            "label": "픽업 앙코르 ★3",
+            "rarity": 3,
+            "rate": 0.7,
+            "poolRef": "pickup",
+            "verified": false
+          },
+          {
+            "id": "other_3s",
+            "label": "픽업 외 앙코르 + 모든 통상 ★3",
+            "rarity": 3,
+            "rate": 2.3,
+            "poolRef": "dynamic",
+            "verified": false
+          },
+          {
+            "id": "all_2s",
+            "label": "모든 ★2",
+            "rarity": 2,
+            "rate": 18.5,
+            "poolRef": "normal_2s",
+            "verified": false
+          },
+          {
+            "id": "all_1s",
+            "label": "모든 ★1",
+            "rarity": 1,
+            "rate": 78.5,
+            "poolRef": "normal_1s",
+            "verified": false
+          }
         ]
       },
       "notes": ["일본 서버 2026-02-11 발표. 한국 미도입. 초기 픽업 대상 10명."]
@@ -290,10 +577,38 @@
       "pickThroughObtainable": true,
       "rateGroups": {
         "default": [
-          { "id": "pickup_3s", "label": "픽업 리미티드 대쉬 ★3", "rarity": 3, "rate": 0.7,  "poolRef": "pickup",    "verified": false },
-          { "id": "other_3s",  "label": "모든 통상 ★3",          "rarity": 3, "rate": 2.3,  "poolRef": "normal_3s", "verified": false },
-          { "id": "all_2s",    "label": "모든 ★2",               "rarity": 2, "rate": 18.5, "poolRef": "normal_2s", "verified": false },
-          { "id": "all_1s",    "label": "모든 ★1",               "rarity": 1, "rate": 78.5, "poolRef": "normal_1s", "verified": false }
+          {
+            "id": "pickup_3s",
+            "label": "픽업 리미티드 대쉬 ★3",
+            "rarity": 3,
+            "rate": 0.7,
+            "poolRef": "pickup",
+            "verified": false
+          },
+          {
+            "id": "other_3s",
+            "label": "모든 통상 ★3",
+            "rarity": 3,
+            "rate": 2.3,
+            "poolRef": "normal_3s",
+            "verified": false
+          },
+          {
+            "id": "all_2s",
+            "label": "모든 ★2",
+            "rarity": 2,
+            "rate": 18.5,
+            "poolRef": "normal_2s",
+            "verified": false
+          },
+          {
+            "id": "all_1s",
+            "label": "모든 ★1",
+            "rarity": 1,
+            "rate": 78.5,
+            "poolRef": "normal_1s",
+            "verified": false
+          }
         ]
       },
       "notes": ["일본 서버 2026-06 추가. 한국 미도입."]
@@ -313,12 +628,40 @@
       "pickThroughObtainable": true,
       "rateGroups": {
         "default": [
-          { "id": "launch_3s", "label": "출시 통상 ★3", "rarity": 3, "rate": 3.0,  "poolRef": "launch_3s", "verified": false },
-          { "id": "launch_2s", "label": "출시 통상 ★2", "rarity": 2, "rate": 18.5, "poolRef": "launch_2s", "verified": false },
-          { "id": "launch_1s", "label": "출시 통상 ★1", "rarity": 1, "rate": 78.5, "poolRef": "launch_1s", "verified": false }
+          {
+            "id": "launch_3s",
+            "label": "출시 통상 ★3",
+            "rarity": 3,
+            "rate": 3,
+            "poolRef": "launch_3s",
+            "verified": false
+          },
+          {
+            "id": "launch_2s",
+            "label": "출시 통상 ★2",
+            "rarity": 2,
+            "rate": 18.5,
+            "poolRef": "launch_2s",
+            "verified": false
+          },
+          {
+            "id": "launch_1s",
+            "label": "출시 통상 ★1",
+            "rarity": 1,
+            "rate": 78.5,
+            "poolRef": "launch_1s",
+            "verified": false
+          }
         ],
         "tenthPull": [
-          { "id": "launch_3s", "label": "출시 통상 ★3", "rarity": 3, "rate": 100.0, "poolRef": "launch_3s", "verified": false }
+          {
+            "id": "launch_3s",
+            "label": "출시 통상 ★3",
+            "rarity": 3,
+            "rate": 100,
+            "poolRef": "launch_3s",
+            "verified": false
+          }
         ]
       },
       "notes": [
