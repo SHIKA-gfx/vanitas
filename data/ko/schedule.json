@@ -537,9 +537,9 @@
       "start": "2027-02-23",
       "end": "2027-03-02",
       "status": "estimated",
-      "event": "누구를 위한 예술인가 ~위작과 미학의 행방~",
+      "event": "누구를 위한 예술인가 ~위작과 미학의 행방~(복각)",
       "banners": [{ "type": "pickup_normal", "students": ["miyo", "fuyu", "ritsu"] }],
-      "sources": ["40"]
+      "sources": ["41"]
     }
   ]
 }
