@@ -3,7 +3,8 @@
 	넓은 화면은 왼쪽 목록 맨 아래(variant="nav", 모든 화면), 모바일·태블릿은 홈 맨 아래(variant="block").
 
 	- 로그아웃 상태: "로그인" → 창에서 Google / 카카오
-	- 로그인 상태: 이름 첫 글자 + "계정" → 창에서 로그인한 제공자, 로그아웃, 계정 삭제(한 번 더 묻고)
+	- 로그인 상태: 사람 + 확인 표시 아이콘 + "계정" → 창에서 로그인한 제공자, 로그아웃, 계정 삭제(한 번 더 묻고)
+	  아이콘은 다른 단추처럼 선만 (16px, 선 1.75) — 처음의 남색 원 + 흰 글자는 혼자만 면이라 어울리지 않았다 (2026-11-15)
 	- ⑥-3 전에는 ?accounts=preview를 붙인 브라우저에서만 보인다 (account.ts ACCOUNTS_OPEN)
 
 	제공자 단추는 글자만 쓴다. 공식 로그인 단추 이미지(구글·카카오 디자인 가이드)를 받아 오면 그때 바꾼다.
@@ -17,7 +18,7 @@
 	import { localizeHref } from '$lib/paraglide/runtime';
 	import { m } from '$lib/paraglide/messages.js';
 	import { account } from '$lib/account.svelte';
-	import { accountsVisible, initialOf, type Provider } from '$lib/account';
+	import { accountsVisible, type Provider } from '$lib/account';
 
 	let { variant = 'block' }: { variant?: 'nav' | 'block' } = $props();
 
@@ -40,13 +41,14 @@
 	});
 
 	const visible = $derived(preview || account.user !== null);
-	const initial = $derived(account.user ? initialOf(account.user) : null);
 	const providerLine = $derived.by(() => {
 		switch (account.user?.provider) {
 			case 'google':
 				return m.account_signed_in_google();
 			case 'kakao':
 				return m.account_signed_in_kakao();
+			case 'email':
+				return m.account_signed_in_email();
 			default:
 				return m.account_signed_in();
 		}
@@ -117,29 +119,27 @@
 			class="{SKEW} {variant === 'nav' ? 'min-h-10 w-full' : 'mx-3 min-h-11 shadow-e1'}"
 		>
 			<span class="inline-flex skew-x-30 items-center gap-2">
-				{#if account.user}
-					<span
-						aria-hidden="true"
-						class="inline-flex size-5 items-center justify-center rounded-full bg-navy text-[0.6875rem] text-white"
-						>{initial ?? '·'}</span
-					>
-					{m.account_button()}
-				{:else}
-					<svg
-						class="size-4"
-						viewBox="0 0 16 16"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.75"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						aria-hidden="true"
-					>
+				<svg
+					class="size-4"
+					viewBox="0 0 16 16"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.75"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+				>
+					{#if account.user}
+						<!-- 로그인함: 사람 + 확인 표시 -->
+						<circle cx="6.5" cy="5.5" r="2.75" />
+						<path d="M1.75 14a4.75 4.75 0 0 1 9.5 0" />
+						<path d="M10.5 7l1.75 1.75L15 5.75" />
+					{:else}
 						<circle cx="8" cy="5.5" r="2.75" />
 						<path d="M2.75 14a5.25 5.25 0 0 1 10.5 0" />
-					</svg>
-					{m.account_sign_in()}
-				{/if}
+					{/if}
+				</svg>
+				{account.user ? m.account_button() : m.account_sign_in()}
 			</span>
 		</button>
 	</div>
