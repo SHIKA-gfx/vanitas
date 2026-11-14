@@ -459,7 +459,8 @@ datasets (path → json)      admins ──▶ auth.users      change_log (트�
   ① DB를 읽어 내보내고(= 무료 프로젝트가 일주일 비활성으로 멈추는 것을 막는다, 빌드와 같은 `data:export`) ② `validate.py`를 돌리고 ③ `data/`가 바뀌었으면 브랜치 `data/db-snapshot`에
   "data: DB 스냅샷 (날짜)" PR을 만들거나 갱신한다(브랜치는 늘 main + 스냅샷 커밋 하나). DB와 main이 같아지면 열린 PR을 닫는다. Merge는 사람이 한다
   - 레포 설정 Actions → General → "Allow GitHub Actions to create and approve pull requests"를 켠다. 레포 Secrets(Actions)에 `PUBLIC_SUPABASE_URL`·`PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-  - `GITHUB_TOKEN`으로 만든 PR에는 다른 워크플로(빌드 검사·데이터 검사)가 돌지 않는다 → 검사는 이 작업 안에서 하고 결과를 PR 본문에 적는다
+  - 봇(`github-actions[bot]`)이 만든 PR의 다른 워크플로(빌드 검사·데이터 검사)는 쓰기 권한이 있는 사람이 **승인해야 돈다** (2026-06-11 GitHub 변경, Actions 목록에 "Action required").
+    스냅샷 PR은 우리 작업이 DB에서 내보낸 것이므로 승인해 돌리고, 통과하면 Merge한다. `validate.py`는 이 작업 안에서도 돌려 결과를 PR 본문에 적는다 (2026-11-14 첫 스냅샷 #86에서 확인)
   - DB를 못 읽거나 `validate.py` 오류가 있으면 작업이 실패한다 → GitHub가 메일로 알린다. 멈췄으면 대시보드에서 다시 켠다
   - 스냅샷 PR을 Merge해도 사이트는 바뀌지 않는다(이미 DB로 빌드된다). 레포를 DB와 맞춰 두어 되돌리기(`json`)를 안전하게 한다
   - 공개 레포의 예약 작업은 레포 활동이 60일 없으면 GitHub가 끈다 — 발표 뒤 오래 쉬면 확인
