@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { getSchedule } from '$lib/data';
-import { listPlannerChoices, planFromData, type PlannerQuery } from './planner-adapter';
+import { getBannerType, getGameConfig, getSchedule } from '$lib/data';
+import type { PlannerGoal } from './planner';
+import {
+	goalPullsRange,
+	listPlannerChoices,
+	planFromData,
+	type PlannerChoice,
+	type PlannerQuery
+} from './planner-adapter';
 
 /** 수급 없음 — 보유분만으로 계산해 결과를 손으로 셀 수 있게 한다 */
 const NO_INCOME: PlannerQuery['income'] = {
@@ -161,5 +168,79 @@ describe('planFromData', () => {
 	it('수급 입력이 잘못되면 그 칸을 알려준다', () => {
 		const r = planFromData(query({ income: { ...NO_INCOME, apPurchasesPerDay: -1 } }));
 		expect(r).toEqual({ kind: 'invalid_income', field: 'apPurchasesPerDay' });
+	});
+});
+
+describe('목표 종류 (v0.3, docs/007 10장)', () => {
+	const choices = listPlannerChoices(TODAY).flatMap((p) => p.choices);
+	const targetOf = (c: PlannerChoice, goal?: PlannerGoal) => ({
+		recruitId: c.recruitId,
+		studentId: c.studentId,
+		...(goal ? { goal } : {})
+	});
+	const firstOutcome = (q: PlannerQuery) => {
+		const r = planFromData(q, { alternatives: false });
+		if (r.kind !== 'ok') throw new Error(r.kind);
+		return r.result.outcomes[0];
+	};
+
+	it('픽업 학생이 여럿인 배너는 확정만 고른다 (반천장 규칙 검증 필요), 한 명이면 세 종류', () => {
+		const recruits = getSchedule().recruits;
+		for (const c of choices) {
+			const banner = recruits
+				.find((r) => r.id === c.recruitId)!
+				.banners.find((b) => b.type === c.bannerType && b.students.includes(c.studentId))!;
+			expect(c.pickupCount).toBe(banner.students.length);
+			if (banner.students.length > 1) {
+				expect(c.goalKinds).toEqual(['pity']);
+				expect(c.goalLock).toBe('multi_pickup');
+			} else {
+				expect(c.goalKinds).toEqual(['pity', 'half', 'pulls']);
+				expect(c.goalLock).toBeNull();
+			}
+		}
+	});
+
+	it('1회 확률이 확인된 값인지는 배너 종류의 픽업 그룹을 따른다 (아니면 화면이 "추정 확률")', () => {
+		for (const c of choices) {
+			const groups = getBannerType(c.bannerType).rateGroups.default ?? [];
+			const group = groups.find((g) => g.poolRef === 'pickup')!;
+			expect(c.rateVerified).toBe(group.verified);
+		}
+	});
+
+	it('반천장까지를 넘긴다 — 스택 0에서 반천장까지, 도전', () => {
+		const single = choices.find((c) => c.goalLock === null)!;
+		const o = firstOutcome(query({ gems: 99999, targets: [targetOf(single, { kind: 'half' })] }));
+		expect(o).toMatchObject({
+			kind: 'attempt',
+			goal: 'half',
+			stackStart: 0,
+			pulls: getGameConfig().chargeSystem.softPity.count
+		});
+	});
+
+	it('확정만 고를 수 있는 목표에 다른 종류가 오면 확정으로 계산한다', () => {
+		const multi = choices.find((c) => c.goalLock === 'multi_pickup');
+		if (!multi) return; // 지금 미래시에 그런 배너가 없으면 볼 것이 없다
+		const o = firstOutcome(query({ gems: 99999, targets: [targetOf(multi, { kind: 'half' })] }));
+		expect(o).toMatchObject({ kind: 'secured', goal: 'pity' });
+	});
+
+	it('틀린 연 수(0, 소수)는 확정으로 계산한다 — 저장·공유된 값이 낡아도 멈추지 않는다', () => {
+		const single = choices.find((c) => c.goalLock === null)!;
+		for (const n of [0, 2.5, -3]) {
+			const o = firstOutcome(
+				query({ gems: 99999, targets: [targetOf(single, { kind: 'pulls', pulls: n })] })
+			);
+			expect(o).toMatchObject({ kind: 'secured', goal: 'pity' });
+		}
+	});
+
+	it('N연의 범위는 1 ~ (천장 − 1), 천장은 game-config', () => {
+		expect(goalPullsRange()).toEqual({
+			min: 1,
+			max: getGameConfig().chargeSystem.hardPity.count - 1
+		});
 	});
 });

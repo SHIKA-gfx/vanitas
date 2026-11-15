@@ -241,3 +241,34 @@ describe('fillShortfall — 다른 목표와의 관계', () => {
 		for (const i of [0, 1]) expect(filler(i)).toEqual(fillShortfall(q, i));
 	});
 });
+
+describe('fillShortfall — 확률 목표 (v0.3, docs/007 10-2)', () => {
+	const half = { ...FES, goal: { kind: 'half' as const } };
+
+	it('확률 목표도 메운다 — 계획에 들면(도전) 멈춘다', () => {
+		const q = query({ gems: 3000, targets: [half] });
+		expect(outcomeOf(q, 0)).toMatchObject({ kind: 'short', goal: 'half' });
+		const fill = fillShortfall(q, 0)!;
+		expect(fill.securedAt).toBe(fill.steps.length - 1);
+		expect(fill.remaining).toBe(0);
+		const levers = fill.steps.map((s) => s.lever);
+		expect(outcomeOf({ ...q, income: levers.reduce(apply, NOTHING) }, 0).kind).toBe('attempt');
+		const butLast = levers.slice(0, -1).reduce(apply, NOTHING);
+		expect(outcomeOf({ ...q, income: butLast }, 0)).toMatchObject({
+			kind: 'short',
+			shortfallGems: fill.steps.at(-2)?.remainingAfter ?? 0
+		});
+	});
+
+	it('반천장까지는 확정보다 덜 바꿔도 된다 (같은 사람·같은 목표)', () => {
+		const q = query({ gems: 3000, targets: [half] });
+		const pity = fillShortfall(query({ gems: 3000, targets: [FES] }), 0)!;
+		const fill = fillShortfall(q, 0)!;
+		expect(fill.steps.length).toBeLessThanOrEqual(pity.steps.length);
+		expect(outcomeOf(q, 0)).toMatchObject({ kind: 'short' });
+		const shortHalf = outcomeOf(q, 0);
+		const shortPity = outcomeOf(query({ gems: 3000, targets: [FES] }), 0);
+		if (shortHalf.kind === 'short' && shortPity.kind === 'short')
+			expect(shortHalf.shortfallGems).toBeLessThan(shortPity.shortfallGems);
+	});
+});
