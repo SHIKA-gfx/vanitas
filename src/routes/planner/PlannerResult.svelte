@@ -1,6 +1,7 @@
 <!--
 	플래너 결과판 (Panel e2) — 요약 한 줄 + 내 목표(우선순위) + 대안 + 안내.
 	판정 색 (2026-10-24 결정, 디자인 문서 5-18): 전원 확보 → 확보, 한 명이라도 부족·불가 → 부족, 목표 없음 → 색 없음.
+	목표 종류 (2026-11-15, docs/007 10-3): 파랑은 모든 목표가 확보일 때만. 부족·불가 없이 도전 목표가 섞이면 색 없음 + "도전".
 	판정 규칙은 planner.ts에 있다 — 여기서 조건을 새로 만들지 않는다.
 -->
 <script lang="ts">
@@ -11,18 +12,35 @@
 	import Badge from '$lib/components/Badge.svelte';
 	import TargetList, { type TargetItem } from './TargetList.svelte';
 	import type { PlannerChoicePeriod, PlannerOutcome } from '$lib/calc/planner-adapter';
+	import type { PlannerGoal, TargetOutcome } from '$lib/calc/planner';
 	import { parseTargetKey, type TargetKey } from './target-key';
+	import { goalOf, type GoalValues } from './goal';
 
 	interface Props {
 		outcome: PlannerOutcome;
 		targets: TargetKey[];
+		goals: GoalValues;
 		periods: PlannerChoicePeriod[];
 		onreorder: (from: number, to: number) => void;
 		onremove: (index: number) => void;
+		ongoal: (index: number, goal: PlannerGoal) => void;
+		maxPulls: number;
+		defaultPulls: number;
 		actions?: Snippet;
 	}
 
-	let { outcome, targets, periods, onreorder, onremove, actions }: Props = $props();
+	let {
+		outcome,
+		targets,
+		goals,
+		periods,
+		onreorder,
+		onremove,
+		ongoal,
+		maxPulls,
+		defaultPulls,
+		actions
+	}: Props = $props();
 
 	const choiceOf = (key: TargetKey) => {
 		const { recruitId, studentId } = parseTargetKey(key);
@@ -34,11 +52,32 @@
 		studentId;
 
 	const result = $derived(outcome.kind === 'ok' ? outcome.result : null);
-	const firstShort = $derived(result ? result.outcomes.findIndex((o) => o.kind !== 'secured') : -1);
+	const isProblem = (o: TargetOutcome) => o.kind === 'short' || o.kind === 'unavailable';
+	/** 첫 번째로 계획에 못 든 목표 (부족·불가). 없으면 -1 */
+	const firstShort = $derived(result ? result.outcomes.findIndex(isProblem) : -1);
+	/** 판정: 모두 확보 / 부족·불가가 있음 / 부족 없이 도전이 섞임 */
+	const verdict = $derived(
+		!result || result.outcomes.length === 0
+			? null
+			: firstShort !== -1
+				? 'shortfall'
+				: result.attemptCount > 0
+					? 'attempt'
+					: 'secured'
+	);
+	/** 확률 목표(반천장·N연)를 하나라도 골랐는가 — 계산 기준에 한 줄 더한다 */
+	const anyGoal = $derived(targets.some((k) => goalOf(goals[k], maxPulls).kind !== 'pity'));
+	/** 대안으로 늘어나는 목표 중 도전(천장까지 닿지 않는) 목표가 있는가 */
+	const gainsAttempt = (ids: string[]) =>
+		ids.some((id) => {
+			const o = result?.outcomes.find((x) => x.id === id);
+			return o !== undefined && o.kind !== 'unavailable' && !o.guaranteed;
+		});
 	/** 내 목표 줄에 보여줄 값 (TargetList) — 계산 결과와 고른 학생 정보를 한 줄로 묶는다 */
 	const items = $derived<TargetItem[]>(
 		(result?.outcomes ?? []).map((o, i) => {
 			const { period, choice } = choiceOf(targets[i]);
+			const goal = goalOf(goals[targets[i]], maxPulls);
 			return {
 				key: targets[i],
 				name: choice?.student.name.ko ?? nameOf(o.id),
@@ -46,21 +85,24 @@
 				ja: choice?.student.name.ja,
 				kind: o.kind,
 				shortfallGems: o.kind === 'short' ? o.shortfallGems : undefined,
-				ended: o.kind === 'unavailable' ? o.reason === 'period_ended' : undefined,
+				reason: o.kind === 'unavailable' ? o.reason : undefined,
 				start: period?.recruit.start,
 				stackName: choice?.stack.name,
 				probability: o.kind !== 'unavailable' ? o.probabilityBeforePity : null,
-				stackStart: o.kind !== 'unavailable' ? o.stackStart : undefined
+				stackStart: o.kind !== 'unavailable' ? o.stackStart : undefined,
+				goal: choice?.goalKinds.includes(goal.kind) ? goal : { kind: 'pity' },
+				goalKinds: choice?.goalKinds,
+				goalLock: choice?.goalLock,
+				pulls: o.kind !== 'unavailable' ? o.pulls : undefined,
+				goalProbability: o.kind !== 'unavailable' ? o.probability : null,
+				guaranteed: o.kind !== 'unavailable' ? o.guaranteed : undefined,
+				rateVerified: choice?.rateVerified
 			};
 		})
 	);
 
 	const tone: PanelTone = $derived(
-		!result || result.outcomes.length === 0
-			? 'neutral'
-			: firstShort === -1
-				? 'secured'
-				: 'shortfall'
+		verdict === 'secured' ? 'secured' : verdict === 'shortfall' ? 'shortfall' : 'neutral'
 	);
 </script>
 
@@ -83,17 +125,36 @@
 		<p
 			class="flex flex-wrap items-center gap-2 text-[1.375rem] leading-snug font-bold text-ink md:text-2xl"
 		>
-			<Badge tone={firstShort === -1 ? 'secured' : 'shortfall'}>
-				{firstShort === -1 ? m.planner_badge_secured() : m.planner_badge_short()}
-			</Badge>
-			{m.planner_summary({
-				total: formatInt(r.outcomes.length),
-				secured: formatInt(r.securedCount)
-			})}
+			{#if verdict === 'secured'}
+				<Badge tone="secured">{m.planner_badge_secured()}</Badge>
+			{:else if verdict === 'shortfall'}
+				<Badge tone="shortfall">{m.planner_badge_short()}</Badge>
+			{:else}
+				<Badge>{m.planner_badge_attempt()}</Badge>
+			{/if}
+			{#if r.attemptCount === 0}
+				{m.planner_summary({
+					total: formatInt(r.outcomes.length),
+					secured: formatInt(r.securedCount)
+				})}
+			{:else if r.securedCount === 0}
+				{m.planner_summary_attempt_only({
+					total: formatInt(r.outcomes.length),
+					attempt: formatInt(r.attemptCount)
+				})}
+			{:else}
+				{m.planner_summary_mixed({
+					total: formatInt(r.outcomes.length),
+					secured: formatInt(r.securedCount),
+					attempt: formatInt(r.attemptCount)
+				})}
+			{/if}
 		</p>
 		<p class="mt-1 text-ink">
-			{#if firstShort === -1}
+			{#if verdict === 'secured'}
 				{m.planner_summary_all()}
+			{:else if verdict === 'attempt'}
+				{m.planner_summary_all_planned()}
 			{:else}
 				{@const o = r.outcomes[firstShort]}
 				{#if o.kind === 'short'}
@@ -106,7 +167,9 @@
 					{m.planner_rank({ rank: formatInt(firstShort + 1) })}
 					{nameOf(o.id)} — {o.reason === 'period_ended'
 						? m.planner_target_ended()
-						: m.planner_target_unknown()}
+						: o.reason === 'half_passed'
+							? m.planner_target_half_passed()
+							: m.planner_target_unknown()}
 				{/if}
 			{/if}
 		</p>
@@ -119,17 +182,20 @@
 				>{formatInt(items.length)}</span
 			>
 		</h3>
-		<TargetList {items} {onreorder} {onremove} />
+		<TargetList {items} {onreorder} {onremove} {ongoal} {maxPulls} {defaultPulls} />
 
 		{#if r.alternatives.length > 0}
 			<h3 class="mt-5 mb-2 text-sm text-navy">{m.planner_alternative_title()}</h3>
 			<ul class="flex flex-col gap-1 text-sm text-ink">
 				{#each r.alternatives as alt (alt.plannedIds.join())}
+					{@const words = {
+						dropped: alt.droppedIds.map(nameOf).join(', ') || '-',
+						gained: alt.gainedIds.map(nameOf).join(', ')
+					}}
 					<li>
-						{m.planner_alternative({
-							dropped: alt.droppedIds.map(nameOf).join(', ') || '-',
-							gained: alt.gainedIds.map(nameOf).join(', ')
-						})}
+						{gainsAttempt(alt.gainedIds)
+							? m.planner_alternative_planned(words)
+							: m.planner_alternative(words)}
 					</li>
 				{/each}
 			</ul>
@@ -152,6 +218,7 @@
 				</summary>
 				<div class="mt-1 flex flex-col gap-1">
 					<p>{m.planner_note_worst_case()}</p>
+					{#if anyGoal}<p>{m.planner_note_goal()}</p>{/if}
 					{#if outcome.mileageAssumed}<p>{m.planner_note_mileage()}</p>{/if}
 					{#if outcome.freePullsIgnored.length > 0}<p>{m.planner_note_free_pulls()}</p>{/if}
 					{#if outcome.result.periods.some((p) => p.freePulls > 0)}

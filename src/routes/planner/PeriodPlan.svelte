@@ -6,6 +6,7 @@
 	- 그 기간 목표가 모두 확보 → 옅은 파랑 + "확보"
 	- 하나라도 확보하지 못함(넘기기 포함) → 옅은 주황 + "부족"
 	색만으로 말하지 않도록 배지가 늘 함께 있다 (2-4). 바탕 농도는 결과판과 같은 대비 한계 안 (파랑 8%·주황 12%)
+	- 목표 종류 (2026-11-15, docs/007 10-3): 부족·불가 없이 도전 목표가 섞이면 색 없는 테두리 칸 + "도전" (파랑은 모두 확보일 때만)
 
 	부족분 메우기 (2026-10-25, docs/005 9장): "부족" 줄 안에 부족 목표마다 "메우는 방법" 접기 (FillPlan).
 	한 줄에 부족 목표가 여럿이면 접기 이름에 학생 이름을 붙인다
@@ -27,6 +28,12 @@
 
 	let { outcome, periods, fill }: Props = $props();
 
+	/** 그 목표가 계획에 들면 도전인가 (정한 연 수가 천장까지 닿지 않는다) */
+	const attemptOf = (index: number) => {
+		const o = outcome.result.outcomes[index];
+		return o !== undefined && o.kind !== 'unavailable' && !o.guaranteed;
+	};
+
 	const nameOf = (periodId: string, studentId: string) =>
 		periods.find((p) => p.recruit.id === periodId)?.choices.find((c) => c.studentId === studentId)
 			?.student.name.ko ?? studentId;
@@ -47,7 +54,12 @@
 					recruit,
 					spend: outcome.result.periods.find((p) => p.periodId === recruit.id),
 					targets,
-					secured: targets.length > 0 && targets.every((o) => o.kind === 'secured'),
+					/** 모두 확보 / 부족·불가가 있음 / 부족 없이 도전이 섞임 */
+					verdict: targets.every((o) => o.kind === 'secured')
+						? ('secured' as const)
+						: targets.some((o) => o.kind === 'short' || o.kind === 'unavailable')
+							? ('shortfall' as const)
+							: ('attempt' as const),
 					/** 이 기간의 부족 목표 (목표 순서 번호) */
 					short: outcome.result.outcomes.flatMap((o, i) =>
 						o.periodId === recruit.id && o.kind === 'short' ? [i] : []
@@ -59,11 +71,13 @@
 </script>
 
 <ol class="flex flex-col gap-2 font-num">
-	{#each rows as { recruit, spend, targets, secured, short } (recruit.id)}
+	{#each rows as { recruit, spend, targets, verdict, short } (recruit.id)}
 		<li
-			class="flex flex-col gap-1 rounded-lg px-3 py-3 {secured
+			class="flex flex-col gap-1 rounded-lg px-3 py-3 {verdict === 'secured'
 				? 'bg-secured/8'
-				: 'bg-shortfall/12'}"
+				: verdict === 'shortfall'
+					? 'bg-shortfall/12'
+					: 'border border-navy/15 bg-white/60'}"
 		>
 			<div class="flex flex-wrap items-center gap-2 text-sm">
 				<span class="text-ink">{formatDate(recruit.start)}</span>
@@ -72,10 +86,12 @@
 			</div>
 			{#if spend}
 				<p class="flex flex-wrap items-center gap-2 font-bold text-ink">
-					{#if secured}
+					{#if verdict === 'secured'}
 						<Badge tone="secured">{m.planner_badge_secured()}</Badge>
-					{:else}
+					{:else if verdict === 'shortfall'}
 						<Badge tone="shortfall">{m.planner_badge_short()}</Badge>
+					{:else}
+						<Badge>{m.planner_badge_attempt()}</Badge>
 					{/if}
 					{m.planner_period_pull({
 						pulls: formatInt(spend.pulls),
@@ -119,7 +135,9 @@
 								? nameOf(recruit.id, outcome.result.outcomes[index].id)
 								: undefined}
 							fill={() => fill(index)}
+							attempt={attemptOf(index)}
 							{labelOf}
+							{attemptOf}
 						/>
 					{/each}
 				</div>
