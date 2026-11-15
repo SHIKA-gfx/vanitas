@@ -7,6 +7,8 @@
 	- 판정 문법은 5-18·5-20 그대로: 확보되는 단계에 "확보" 배지, 다 바꿔도 모자라면 "부족" 배지. 색만으로 말하지 않는다
 	- 단계는 쌓인다 (앞 단계를 모두 한 상태에서 다음 단계). 왼쪽 세로 선이 그 이어짐을 보여준다
 	- 우선순위는 그대로: 이 목표가 확보되며 밀려나는 뒤 순위 목표는 "대신 부족"으로 그 부족분과 함께 알린다
+	- 목표 종류 (2026-11-15, docs/007 10-3): 반천장·N연 목표는 계획에 드는 단계에 "도전" 배지 + "계획에 들어요" (확보가 아니다).
+	  함께 계획에 드는 다른 목표도 확보와 도전을 나눠 적는다
 -->
 <script lang="ts">
 	import { resolve } from '$app/paths';
@@ -25,9 +27,13 @@
 		fill: () => ShortfallFill | null;
 		/** 목표 순서 번호 → "N순위 이름" (함께 확보·대신 부족) */
 		labelOf: (index: number) => string;
+		/** 이 목표가 계획에 들면 도전인가 (반천장·N연이 천장까지 닿지 않는다) */
+		attempt?: boolean;
+		/** 다른 목표가 계획에 들면 도전인가 — "함께 확보"와 "함께 도전"을 나눈다 */
+		attemptOf?: (index: number) => boolean;
 	}
 
-	let { name, fill, labelOf }: Props = $props();
+	let { name, fill, labelOf, attempt = false, attemptOf = () => false }: Props = $props();
 
 	let open = $state(false);
 	const result = $derived(open ? fill() : null);
@@ -88,6 +94,8 @@
 			{#if result.steps.length > 0}
 				<ol class="flex flex-col border-l-2 border-navy/15">
 					{#each result.steps as step, i (i)}
+						{@const alsoSecured = step.alsoSecured.filter((j) => !attemptOf(j))}
+						{@const alsoAttempt = step.alsoSecured.filter((j) => attemptOf(j))}
 						<li class="flex flex-col gap-1 py-1.5 pl-3">
 							<p class="flex items-baseline justify-between gap-3 text-sm text-ink">
 								<span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
@@ -98,17 +106,27 @@
 							</p>
 							{#if result.securedAt === i}
 								<p class="flex flex-wrap items-center gap-2 text-sm font-bold text-ink">
-									<Badge tone="secured">{m.planner_badge_secured()}</Badge>
-									{m.planner_fill_secured_here()}
+									{#if attempt}
+										<Badge>{m.planner_badge_attempt()}</Badge>
+										{m.planner_fill_planned_here()}
+									{:else}
+										<Badge tone="secured">{m.planner_badge_secured()}</Badge>
+										{m.planner_fill_secured_here()}
+									{/if}
 								</p>
 							{:else}
 								<p class="text-xs text-navy">
 									{m.planner_fill_remaining({ gems: formatInt(step.remainingAfter) })}
 								</p>
 							{/if}
-							{#if step.alsoSecured.length > 0}
+							{#if alsoSecured.length > 0}
 								<p class="text-xs text-navy">
-									{m.planner_fill_also_secured({ names: step.alsoSecured.map(labelOf).join(', ') })}
+									{m.planner_fill_also_secured({ names: alsoSecured.map(labelOf).join(', ') })}
+								</p>
+							{/if}
+							{#if alsoAttempt.length > 0}
+								<p class="text-xs text-navy">
+									{m.planner_fill_also_attempt({ names: alsoAttempt.map(labelOf).join(', ') })}
 								</p>
 							{/if}
 							{#each step.alsoLost as lost (lost.index)}

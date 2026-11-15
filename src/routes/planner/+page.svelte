@@ -14,6 +14,8 @@
 	- 결과판 색: 전원 확보면 확보(파랑), 한 명이라도 부족·불가면 부족(주황), 목표가 없으면 색 없음
 	- 수급 조건은 수급 계산기의 저장값을 그대로 읽는다 (income-settings.ts). 플래너에서는 바꾸지 않는다
 	- 공유 링크에는 보낸 사람의 수급 조건이 실린다 (2026-10-25). 받은 사람이 "이 값으로 저장"하면 수급 계산기 값도 바뀐다
+	- 목표 종류 (v0.3, 2026-11-15, docs/007 10장): 목표마다 확정 / 반천장 / N연. 저장·공유는 새 칸 goals(링크 gm) —
+	  판 번호·tg 모양은 그대로라 옛 저장값·옛 링크는 모두 확정으로 읽힌다. 결과 띠·결과판의 파랑은 모두 확보일 때만
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
@@ -32,7 +34,13 @@
 	} from '$lib/data';
 	import { formatInt } from '$lib/format';
 	import { gameToday } from '$lib/game-date';
-	import { listPlannerChoices, planFromData, type PlannerQuery } from '$lib/calc/planner-adapter';
+	import {
+		goalPullsRange,
+		listPlannerChoices,
+		planFromData,
+		type PlannerQuery
+	} from '$lib/calc/planner-adapter';
+	import type { PlannerGoal, PlannerGoalKind } from '$lib/calc/planner';
 	import { createShortfallFiller } from '$lib/calc/planner-fill';
 	import Panel from '$lib/components/Panel.svelte';
 	import NumberField from '$lib/components/NumberField.svelte';
@@ -64,6 +72,15 @@
 		targetKey,
 		type TargetKey
 	} from './target-key';
+	import {
+		DEFAULT_GOAL_PULLS,
+		goalOf,
+		goalValue,
+		isGoalValues,
+		keepGoals,
+		normalizeGoals,
+		type GoalValues
+	} from './goal';
 
 	const ap = getApConfig();
 	const today = gameToday(new Date(), ap.purchase.resetTime, ap.purchase.resetTimezone);
@@ -81,6 +98,16 @@
 
 	let targets = $state<TargetKey[]>([]);
 	let reserveGems = $state(0);
+
+	/** 목표 종류: 목표 키 → "half" 또는 "<N>". 확정은 적지 않는다 (goal.ts) */
+	let goals = $state<GoalValues>({});
+	/** N연의 범위 1 ~ (천장 − 1) — 천장은 game-config */
+	const maxPulls = goalPullsRange().max;
+	/** 목표마다 고를 수 있는 종류 (픽업 학생이 여럿인 배너는 확정만). 고를 수 없는 목표(끝난 기간)는 확정만 */
+	const kindsByKey = new Map<TargetKey, readonly PlannerGoalKind[]>(
+		periods.flatMap((p) => p.choices.map((c) => [targetKey(c.recruitId, c.studentId), c.goalKinds]))
+	);
+	const kindsOf = (key: TargetKey) => kindsByKey.get(key) ?? (['pity'] as const);
 
 	/*
 	 * 남은 무료 모집 (2026-11-10): 무료 모집이 있는 기간이 진행 중일 때만 묻는다 — 이미 돌린 사람이 있어서.
@@ -100,21 +127,30 @@
 
 	const saved = persistSection(
 		'planner',
-		() => ({ targets, reserveGems, freeLeft }),
+		() => ({ targets, reserveGems, freeLeft, goals }),
 		(v) => {
 			// 일정이 바로잡혀 기간 id가 바뀌어도 목표를 잃지 않게 새 id로 잇는다 (previousIds, 2026-11-10)
 			targets = normalizeTargetKeys(v.targets, allKeys, (id) => resolveRecruitId(id));
 			reserveGems = v.reserveGems;
 			freeLeft = v.freeLeft;
+			// 목표 종류도 같은 방식으로 잇고, 목표에 없는 키·틀린 값·고를 수 없는 종류는 뺀다 (docs/007 10-4)
+			goals = normalizeGoals(v.goals, targets, (id) => resolveRecruitId(id), kindsOf, maxPulls);
 		},
-		() => ({ targets: [] as TargetKey[], reserveGems: 0, freeLeft: {} as Record<string, number> }),
+		() => ({
+			targets: [] as TargetKey[],
+			reserveGems: 0,
+			freeLeft: {} as Record<string, number>,
+			goals: {} as GoalValues
+		}),
 		{
 			targets: isTargetKeyList,
 			reserveGems: isInt(0),
 			freeLeft: isRecordOf(
 				Object.keys(freeTotals),
 				(k, v) => Number.isInteger(v) && (v as number) >= 0 && (v as number) <= freeTotals[k]
-			)
+			),
+			// 칸 검사는 형식만 — 항목 하나가 틀려도 칸 전체를 버리지 않게, 거르기는 위의 normalizeGoals
+			goals: isGoalValues
 		},
 		// 공유 링크: 목표(우선순위 순) + 보유 재화 + 보낸 사람의 수급 조건 (2026-10-25 결정).
 		// 수급 조건은 수급 계산기와 같은 짧은 이름을 쓰고, 종료 날짜(d)는 싣지 않는다
@@ -122,7 +158,9 @@
 			fields: [
 				{ key: 'targets', param: 'tg', kind: 'list' },
 				{ key: 'reserveGems', param: 'rs', kind: 'int' },
-				{ key: 'freeLeft', param: 'fr', kind: 'map-int' }
+				{ key: 'freeLeft', param: 'fr', kind: 'map-int' },
+				// 목표 종류 (2026-11-15): 키.값을 쉼표로 — gm=2026-11-17-fes-5-5th~rio.half,…~kokoro.50
+				{ key: 'goals', param: 'gm', kind: 'map-str' }
 			],
 			user: [
 				'gems',
@@ -155,7 +193,7 @@
 
 	const query = $derived<PlannerQuery>({
 		today,
-		targets: targets.map(parseTargetKey),
+		targets: targets.map((key) => ({ ...parseTargetKey(key), goal: goalOf(goals[key], maxPulls) })),
 		gems: res.gems,
 		singleTickets: res.singleTickets,
 		tenPullTickets: res.tenPullTickets,
@@ -193,15 +231,29 @@
 		if (getSavedStore().sharedView) mobileTab = 'plan';
 	});
 
-	/** 고르기 탭 아래 결과 한 줄 띠: 목표 수·확보 수·첫 번째로 모자란 목표의 부족 청휘석 */
+	/**
+	 * 고르기 탭 아래 결과 한 줄 띠: 목표 수·확보 수·도전 수·첫 번째로 모자란 목표의 부족 청휘석.
+	 * 판정은 결과판과 같다 — 모두 확보면 확보, 부족·불가가 있으면 부족, 그 밖(도전이 섞임)은 도전
+	 */
 	const strip = $derived.by(() => {
 		if (outcome.kind !== 'ok' || outcome.result.outcomes.length === 0) return null;
 		const r = outcome.result;
-		const first = r.outcomes.findIndex((o) => o.kind !== 'secured');
 		const total = formatInt(r.outcomes.length);
-		if (first === -1) return { tone: 'secured' as const, text: m.planner_strip_all({ total }) };
+		if (r.securedCount === r.outcomes.length)
+			return { tone: 'secured' as const, text: m.planner_strip_all({ total }) };
+		// 도전이 있고 확보가 0명이면 "0명 확보"를 빼고 "목표 2명 · 2명 도전" (도전이 없으면 지금 문구 그대로)
+		const head =
+			r.attemptCount === 0
+				? m.planner_strip({ total, secured: formatInt(r.securedCount) })
+				: [
+						r.securedCount > 0
+							? m.planner_strip({ total, secured: formatInt(r.securedCount) })
+							: m.planner_strip_total({ total }),
+						m.planner_strip_attempt({ count: formatInt(r.attemptCount) })
+					].join(' · ');
+		const first = r.outcomes.findIndex((o) => o.kind === 'short' || o.kind === 'unavailable');
+		if (first === -1) return { tone: 'neutral' as const, text: head };
 		const o = r.outcomes[first];
-		const head = m.planner_strip({ total, secured: formatInt(r.securedCount) });
 		return {
 			tone: 'shortfall' as const,
 			text:
@@ -221,6 +273,7 @@
 
 	function toggle(key: TargetKey) {
 		targets = targets.includes(key) ? targets.filter((k) => k !== key) : [...targets, key];
+		goals = keepGoals(goals, targets);
 	}
 	/** 우선순위 바꾸기: from 자리의 목표를 to 자리로 (끌기·▲▼ 모두). 저장 형식은 그대로 — 배열 순서가 우선순위 */
 	function reorder(from: number, to: number) {
@@ -232,6 +285,15 @@
 	}
 	function remove(index: number) {
 		targets = targets.filter((_, i) => i !== index);
+		goals = keepGoals(goals, targets);
+	}
+	/** 목표 종류 바꾸기. 확정은 적지 않는다 — 옛 링크·저장값과 같은 모양 */
+	function setGoal(index: number, goal: PlannerGoal) {
+		const key = targets[index];
+		if (!key) return;
+		const value = goalValue(goal);
+		const rest = Object.fromEntries(Object.entries(goals).filter(([k]) => k !== key));
+		goals = value === null ? rest : { ...rest, [key]: value };
 	}
 </script>
 
@@ -261,7 +323,17 @@
 
 	<!-- 오른쪽 열: 답 (결과판 → 기간별 계획 → 잔고) -->
 	<div class="flex flex-col gap-6 md:col-start-2 md:row-span-2 md:row-start-2 {onTab('plan')}">
-		<PlannerResult {outcome} {targets} {periods} onreorder={reorder} onremove={remove}>
+		<PlannerResult
+			{outcome}
+			{targets}
+			{goals}
+			{periods}
+			onreorder={reorder}
+			onremove={remove}
+			ongoal={setGoal}
+			{maxPulls}
+			defaultPulls={DEFAULT_GOAL_PULLS}
+		>
 			{#snippet actions()}<ShareButton url={saved.shareUrl} />{/snippet}
 		</PlannerResult>
 
@@ -467,7 +539,11 @@
 			class="fixed inset-x-2.5 bottom-(--tabbar-space) z-[9] flex min-h-12 items-center gap-2 rounded-xl border border-white bg-surface/96 px-3 py-2 text-left shadow-e1 focus-visible:outline-2 focus-visible:outline-brand-strong md:hidden"
 		>
 			<Badge tone={strip.tone}
-				>{strip.tone === 'secured' ? m.planner_badge_secured() : m.planner_badge_short()}</Badge
+				>{strip.tone === 'secured'
+					? m.planner_badge_secured()
+					: strip.tone === 'shortfall'
+						? m.planner_badge_short()
+						: m.planner_badge_attempt()}</Badge
 			>
 			{#key strip.text}
 				<span

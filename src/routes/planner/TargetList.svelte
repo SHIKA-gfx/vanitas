@@ -8,21 +8,42 @@
 	- 한 번 누르기 대안과 키보드: ▲▼ (WCAG 2.2 2.5.7). 끌기 손잡이는 마우스·터치 전용이라 초점을 받지 않는다
 	- 옮기면 "이름, N순위"를 화면 낭독기에 알린다. 새 목표는 아래에서 들어오고, 빼면 사라진다
 	- 화면 가장자리에서 끌면 아주 조금씩만 스크롤한다 (스크롤을 가로채지 않는다)
+
+	목표 종류 (v0.3, docs/007 10-3, 2026-11-15)
+	- 줄 맨 아래에 종류 고르기(GoalPicker): 확정 / 반천장 / N연. 확정만 고를 수 있는 목표는 까닭 한 줄
+	- 배지: 확보(파랑)는 천장까지 닿는 목표에만. 정한 만큼만 쓰고 계획에 든 목표는 "도전"(테두리) — 파랑은 확정을 뜻한다 (5-18)
+	- 확률 줄: 확정은 천장 전에 나올 확률, 반천장·N연은 그 연 수 안에 나올 확률. 1회 확률이 미확인이면 "추정 확률"
 -->
 <script lang="ts" module>
+	import type { PlannerGoal, PlannerGoalKind } from '$lib/calc/planner';
+
 	export interface TargetItem {
 		key: string;
 		name: string;
 		provisional: boolean;
 		ja?: string | null;
-		/** 계산 결과 종류 (planner.ts TargetOutcome). 'attempt'(도전)는 목표 종류를 고르는 화면(⑦-3)부터 나온다 */
+		/** 계산 결과 종류 (planner.ts TargetOutcome) */
 		kind: 'secured' | 'attempt' | 'short' | 'unavailable';
 		shortfallGems?: number;
-		ended?: boolean;
+		/** 불가인 까닭 */
+		reason?: 'period_ended' | 'unknown_period' | 'half_passed';
 		start?: string;
 		stackName?: string;
+		/** 천장 전(199연까지)에 나올 확률 — 확정 목표의 확률 줄 */
 		probability?: number | null;
 		stackStart?: number;
+		/** 고른 목표 종류 */
+		goal: PlannerGoal;
+		/** 고를 수 있는 종류. 하나뿐이면 고르기 대신 까닭(goalLock), 없으면(끝난 기간 등) 둘 다 없다 */
+		goalKinds?: readonly PlannerGoalKind[];
+		goalLock?: 'multi_pickup' | 'unknown_rate' | null;
+		/** 이 목표에 쓰는 연 수와 그 안에 나올 확률 */
+		pulls?: number;
+		goalProbability?: number | null;
+		/** 천장까지 닿는 연 수 — 계획에 들면 확보 */
+		guaranteed?: boolean;
+		/** 1회 확률이 확인된 값인가. 아니면 확률 옆에 "추정 확률" */
+		rateVerified?: boolean;
 	}
 </script>
 
@@ -35,14 +56,50 @@
 	import { formatInt, formatMonthDay, formatPercent } from '$lib/format';
 	import { reducedMotion } from '$lib/motion';
 	import Badge from '$lib/components/Badge.svelte';
+	import GoalPicker from './GoalPicker.svelte';
 
 	interface Props {
 		items: TargetItem[];
 		onreorder: (from: number, to: number) => void;
 		onremove: (index: number) => void;
+		/** 목표 종류 바꾸기 */
+		ongoal: (index: number, goal: PlannerGoal) => void;
+		/** N연의 최대 (천장 − 1)와 처음 고를 때의 연 수 */
+		maxPulls: number;
+		defaultPulls: number;
 	}
 
-	let { items, onreorder, onremove }: Props = $props();
+	let { items, onreorder, onremove, ongoal, maxPulls, defaultPulls }: Props = $props();
+
+	const UNAVAILABLE_TEXT = {
+		period_ended: m.planner_target_ended,
+		unknown_period: m.planner_target_unknown,
+		half_passed: m.planner_target_half_passed
+	} as const;
+
+	/** 확률 줄의 앞부분: 확정은 천장 전, 반천장·N연은 그 연 수 안 (천장까지 닿는 N연은 확정과 같다는 안내) */
+	function chanceText(item: TargetItem): string | null {
+		const p = item.goalProbability;
+		if (item.goal.kind === 'pulls' && item.guaranteed)
+			return m.planner_target_pulls_pity({ pulls: formatInt(item.goal.pulls) });
+		if (item.goal.kind === 'half' && p != null)
+			return m.planner_target_half({
+				pulls: formatInt(item.pulls ?? 0),
+				probability: formatPercent(p)
+			});
+		if (item.goal.kind === 'pulls' && p != null)
+			return m.planner_target_pulls({
+				pulls: formatInt(item.pulls ?? 0),
+				probability: formatPercent(p)
+			});
+		if (item.goal.kind === 'pity' && item.probability != null)
+			return m.planner_target_before_pity({ probability: formatPercent(item.probability) });
+		return null;
+	}
+	/** 확률을 말하는 줄인가 (천장까지 닿는 N연 안내는 확률이 아니다) */
+	const showsChance = (item: TargetItem) =>
+		!(item.goal.kind === 'pulls' && item.guaranteed) &&
+		(item.goal.kind === 'pity' ? item.probability != null : item.goalProbability != null);
 
 	/** 순위별 바탕 (Tailwind가 찾도록 통째로). 왼쪽이 진하고 오른쪽으로 절반쯤 옅어진다 */
 	const TINT = [
@@ -233,6 +290,8 @@
 						{/if}
 						{#if item.kind === 'secured'}
 							<Badge tone="secured">{m.planner_badge_secured()}</Badge>
+						{:else if item.kind === 'attempt'}
+							<Badge>{m.planner_badge_attempt()}</Badge>
 						{:else if item.kind === 'short'}
 							<Badge tone="shortfall">{m.planner_badge_short()}</Badge>
 						{:else}
@@ -269,17 +328,46 @@
 						· <span class="text-ink"
 							>{m.planner_target_short({ gems: formatInt(item.shortfallGems) })}</span
 						>
-					{:else if item.kind === 'unavailable'}
-						{item.ended ? m.planner_target_ended() : m.planner_target_unknown()}
+					{:else if item.kind === 'unavailable' && item.reason}
+						{#if item.start}·{/if}
+						<span class={item.reason === 'half_passed' ? 'text-ink' : ''}
+							>{UNAVAILABLE_TEXT[item.reason]()}</span
+						>
 					{/if}
 				</p>
-				{#if item.kind !== 'unavailable' && item.probability != null}
-					<p class="text-xs text-navy">
-						{m.planner_target_before_pity({ probability: formatPercent(item.probability) })}
-						· {m.planner_target_stack({
-							name: item.stackName ?? '',
-							stack: formatInt(item.stackStart ?? 0)
-						})}
+				{#if item.kind !== 'unavailable'}
+					{@const chance = chanceText(item)}
+					{#if chance}
+						<p class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-navy">
+							<span>
+								{chance}
+								· {m.planner_target_stack({
+									name: item.stackName ?? '',
+									stack: formatInt(item.stackStart ?? 0)
+								})}
+							</span>
+							{#if showsChance(item) && item.rateVerified === false}
+								<Badge>{m.pity_badge_estimated()}</Badge>
+							{/if}
+						</p>
+					{/if}
+				{/if}
+				{#if item.goalKinds && item.goalKinds.length > 1}
+					<div class="mt-1.5">
+						<GoalPicker
+							name={item.name}
+							goal={item.goal}
+							kinds={item.goalKinds}
+							{maxPulls}
+							{defaultPulls}
+							onchange={(goal) => ongoal(i, goal)}
+						/>
+					</div>
+				{:else if item.goalLock}
+					<p class="mt-1 text-xs text-navy">
+						{item.goalLock === 'multi_pickup'
+							? m.planner_goal_locked_multi()
+							: m.planner_goal_locked_rate()}
 					</p>
 				{/if}
 			</div>
