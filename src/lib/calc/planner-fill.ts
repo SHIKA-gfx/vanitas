@@ -14,7 +14,7 @@
  * - 매 단계, 남은 방법 중 효과가 가장 큰 것을 하나 골라 누적한다. 효과 = 이 목표의 픽업에 더 쓸 수 있게 되는 청휘석
  *   (뽑는 날 이후 가장 낮은 잔고의 증가 — planner.ts가 비교하는 값 — + 그날까지 받는 10회 모집 티켓을 청휘석으로 환산).
  *   효과가 0인 방법은 고르지 않는다
- * - 그 목표가 확보되면 멈춘다. 무료를 다 써도 모자라면 과금을 같은 방식으로 더하고, 그래도 모자라면 남은 부족분을 알린다
+ * - 그 목표가 계획에 들면 멈춘다 (확정 목표는 확보, 확률 목표는 도전 — docs/007 10-2). 무료를 다 써도 모자라면 과금을 같은 방식으로 더하고, 그래도 모자라면 남은 부족분을 알린다
  * - 우선순위는 그대로 둔다: 이 목표가 확보되며 뒤 순위 목표가 밀려나면 그 목표와 새 부족분을 함께 알린다 (사용자 예시, docs/005 9장)
  * - 정액 상품은 그 픽업이 끝날 때까지 필요한 구매 횟수까지만 늘린다. 확보되는 단계라면 확보되는 가장 적은 횟수로 줄인다
  * - 다시 돌릴 때는 대안 전수 탐색을 끄고(`alternatives: false`), 같은 수급 조건의 수급 계산은 한 번만 한다
@@ -31,7 +31,7 @@ import {
 	type PlannerOutcome,
 	type PlannerQuery
 } from './planner-adapter';
-import type { TargetOutcome } from './planner';
+import { isPlanned, type TargetOutcome } from './planner';
 
 /** 바꾸는 수급 조건 하나. 화면이 문구를 고를 수 있게 이름·라벨을 함께 싣는다 */
 export type FillLever =
@@ -55,19 +55,19 @@ export interface FillStep {
 	gainGems: number;
 	/** 그 픽업까지 더 받는 10회 모집 티켓 (장) */
 	gainTickets: number;
-	/** 여기까지 바꿨을 때 이 목표의 부족 청휘석 (0 = 확보) */
+	/** 여기까지 바꿨을 때 이 목표의 부족 청휘석 (0 = 계획에 듦: 확보 또는 도전) */
 	remainingAfter: number;
-	/** 이 단계에서 새로 확보되는 다른 목표 (query.targets 번호, 0 = 1순위) */
+	/** 이 단계에서 새로 계획에 드는(확보·도전) 다른 목표 (query.targets 번호, 0 = 1순위) */
 	alsoSecured: number[];
-	/** 이 단계에서 대신 확보하지 못하게 되는 다른 목표와 그 부족 청휘석 — 이 목표가 먼저 확보되며 밀려난다 */
+	/** 이 단계에서 대신 계획에서 빠지는 다른 목표와 그 부족 청휘석 — 이 목표가 먼저 계획에 들며 밀려난다 */
 	alsoLost: { index: number; shortfallGems: number }[];
 }
 
 export interface ShortfallFill {
 	steps: FillStep[];
-	/** 확보되는 단계 (steps 번호). 다 바꿔도 모자라면 null */
+	/** 계획에 드는 단계 (steps 번호) — 확정 목표는 확보, 확률 목표는 도전. 다 바꿔도 모자라면 null */
 	securedAt: number | null;
-	/** 다 바꾼 뒤에도 남는 부족 청휘석 (확보되면 0) */
+	/** 다 바꾼 뒤에도 남는 부족 청휘석 (계획에 들면 0) */
 	remaining: number;
 }
 
@@ -205,10 +205,10 @@ function paidCandidates(
 	});
 }
 
-/** 부족 청휘석 (확보면 0, 불가면 null) */
+/** 부족 청휘석 (계획에 들면 0 — 확보·도전, 불가면 null) */
 function shortOf(o: TargetOutcome | undefined): number | null {
 	if (!o) return null;
-	if (o.kind === 'secured') return 0;
+	if (isPlanned(o)) return 0;
 	if (o.kind === 'short') return o.shortfallGems;
 	return null;
 }
@@ -280,10 +280,10 @@ export function createShortfallFiller(
 				gainTickets: after.tickets - before.tickets,
 				remainingAfter: shortOf(now[targetIndex]) ?? 0,
 				alsoSecured: now.flatMap((o, i) =>
-					i !== targetIndex && o.kind === 'secured' && prev[i]?.kind === 'short' ? [i] : []
+					i !== targetIndex && isPlanned(o) && prev[i]?.kind === 'short' ? [i] : []
 				),
 				alsoLost: now.flatMap((o, i) =>
-					i !== targetIndex && o.kind === 'short' && prev[i]?.kind === 'secured'
+					i !== targetIndex && o.kind === 'short' && isPlanned(prev[i])
 						? [{ index: i, shortfallGems: o.shortfallGems }]
 						: []
 				)

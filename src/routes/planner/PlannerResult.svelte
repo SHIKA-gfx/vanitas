@@ -124,7 +124,7 @@
 		{#if r.alternatives.length > 0}
 			<h3 class="mt-5 mb-2 text-sm text-navy">{m.planner_alternative_title()}</h3>
 			<ul class="flex flex-col gap-1 text-sm text-ink">
-				{#each r.alternatives as alt (alt.securedIds.join())}
+				{#each r.alternatives as alt (alt.plannedIds.join())}
 					<li>
 						{m.planner_alternative({
 							dropped: alt.droppedIds.map(nameOf).join(', ') || '-',

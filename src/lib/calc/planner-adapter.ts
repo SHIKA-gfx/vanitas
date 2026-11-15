@@ -5,6 +5,7 @@
  * - planner.ts는 날짜 문자열·JSON을 모르고, 이 파일은 배정 규칙을 모른다
  * - 수급은 수급 계산기 입력을 그대로 받아 calculateIncome으로 계산한다 (2026-10-24 결정)
  * - 날짜는 오늘을 0으로 하는 일 수로 바꾼다
+ * - 목표 종류(docs/007 10장)는 고를 수 있는 목표에만 넘긴다 — 픽업 학생이 여럿인 배너·1회 확률을 모르는 목표는 확정으로
  */
 
 import {
@@ -25,7 +26,14 @@ import {
 	type IncomeInput,
 	type IncomeOutcome
 } from './income-adapter';
-import { planPickups, type PlanOptions, type PlannerResult, type PlannerTarget } from './planner';
+import {
+	planPickups,
+	type PlanOptions,
+	type PlannerGoal,
+	type PlannerGoalKind,
+	type PlannerResult,
+	type PlannerTarget
+} from './planner';
 
 /** 마일리지 보상인 "10회 모집 티켓" 1장의 연차 (gacha-adapter와 같은 값) */
 export const TEN_PULL_TICKET_PULLS = 10;
@@ -39,8 +47,8 @@ export type PlannerIncomeInput = Omit<
 export interface PlannerQuery {
 	/** 오늘 게임 날짜 */
 	today: string;
-	/** 목표 — 배열 순서가 우선순위 */
-	targets: { recruitId: string; studentId: string }[];
+	/** 목표 — 배열 순서가 우선순위. goal이 없으면 확정 */
+	targets: { recruitId: string; studentId: string; goal?: PlannerGoal }[];
 	gems: number;
 	singleTickets: number;
 	tenPullTickets: number;
@@ -65,6 +73,38 @@ export interface PlannerChoice {
 	student: Student;
 	bannerType: string;
 	stack: ChargeType;
+	/** 이 배너의 픽업 학생 수 */
+	pickupCount: number;
+	/** 1회 확률이 확인된 값인가 (banner-types.json의 픽업 그룹 verified). 아니면 화면이 "추정 확률" */
+	rateVerified: boolean;
+	/** 고를 수 있는 목표 종류. 첫 번째가 기본(확정) */
+	goalKinds: PlannerGoalKind[];
+	/**
+	 * 확정만 고를 수 있는 까닭 (docs/007 10-2).
+	 * multi_pickup: 픽업 학생이 여럿인 배너 — 반천장 50%가 "픽업 중 하나"인지, 학생별 확률이 얼마인지 확인 전 (검증 필요)
+	 * unknown_rate: 1회 확률을 모른다 — 확률로 노리는 목표의 답을 낼 수 없다
+	 */
+	goalLock: 'multi_pickup' | 'unknown_rate' | null;
+}
+
+/** 확률 목표(반천장까지·N연까지)를 고를 수 없는 배너·목표의 까닭. 없으면 null */
+function goalLockOf(pickupCount: number, rate: number | null): PlannerChoice['goalLock'] {
+	if (pickupCount > 1) return 'multi_pickup';
+	if (rate === null) return 'unknown_rate';
+	return null;
+}
+
+/** 목표 그룹에서 1회 확률 (0~1) — 픽업 그룹이 아니면 모른다 */
+function pickupRate(bannerType: string, server: ServerId) {
+	const group = defaultTargetGroup(getBannerType(bannerType, server));
+	return group?.poolRef === 'pickup'
+		? { rate: group.rate / 100, verified: group.verified }
+		: { rate: null, verified: false };
+}
+
+/** "N연까지" 목표의 연 수 범위 — 1 ~ (천장 − 1). 천장은 game-config (docs/007 10-3) */
+export function goalPullsRange(server: ServerId = 'ko'): { min: number; max: number } {
+	return { min: 1, max: getGameConfig(server).chargeSystem.hardPity.count - 1 };
 }
 
 export interface PlannerChoicePeriod {
@@ -109,12 +149,18 @@ export function listPlannerChoices(today: string, server: ServerId = 'ko'): Plan
 		choices: recruit.banners.flatMap((b) => {
 			const rule = getPityRule(b.type, recruit.start, server);
 			if (rule.kind !== 'charge') return [];
-			return b.students.map((studentId) => ({
+			const { rate, verified } = pickupRate(b.type, server);
+			const goalLock = goalLockOf(b.students.length, rate);
+			return b.students.map((studentId): PlannerChoice => ({
 				recruitId: recruit.id,
 				studentId,
 				student: getStudent(studentId, server),
 				bannerType: b.type,
-				stack: rule.chargeType
+				stack: rule.chargeType,
+				pickupCount: b.students.length,
+				rateVerified: verified,
+				goalKinds: goalLock ? ['pity'] : ['pity', 'half', 'pulls'],
+				goalLock
 			}));
 		})
 	}));
@@ -144,6 +190,17 @@ export interface PlanFromDataOptions extends PlanOptions {
 	income?: IncomeOutcome;
 }
 
+/**
+ * 목표 종류를 그 목표가 고를 수 있는 것으로. 고를 수 없는 종류·틀린 연 수는 확정으로 본다 —
+ * 저장·공유된 값은 화면이 불러올 때 거르지만, 계산은 어떤 값이 와도 멈추지 않게
+ */
+function allowedGoal(goal: PlannerGoal | undefined, choice: PlannerChoice): PlannerGoal {
+	if (!goal || !choice.goalKinds.includes(goal.kind)) return { kind: 'pity' };
+	if (goal.kind === 'pulls' && !(Number.isInteger(goal.pulls) && goal.pulls >= 1))
+		return { kind: 'pity' };
+	return goal;
+}
+
 export function planFromData(
 	query: PlannerQuery,
 	options: PlanFromDataOptions = {}
@@ -166,18 +223,18 @@ export function planFromData(
 		return ownedTicketPulls + receivedTickets * TEN_PULL_TICKET_PULLS;
 	});
 
-	// 2. 목표 — 기간·배너를 찾아 스택 종류와 1회 확률을 붙인다
+	// 2. 목표 — 기간·배너를 찾아 스택 종류와 1회 확률, 고를 수 있는 목표 종류를 붙인다
 	const choices = listPlannerChoices(query.today, server).flatMap((p) => p.choices);
-	const targets: PlannerTarget[] = query.targets.map(({ recruitId, studentId }) => {
+	const targets: PlannerTarget[] = query.targets.map(({ recruitId, studentId, goal }) => {
 		const choice = choices.find((c) => c.recruitId === recruitId && c.studentId === studentId);
 		// 고를 수 없는 목표(끝난 기간 등)는 없는 기간으로 넘겨 planner가 unavailable로 돌려주게 한다
 		if (!choice) return { id: studentId, periodId: recruitId, stackType: '', rate: null };
-		const group = defaultTargetGroup(getBannerType(choice.bannerType, server));
 		return {
 			id: studentId,
 			periodId: recruitId,
 			stackType: choice.stack.id,
-			rate: group?.poolRef === 'pickup' ? group.rate / 100 : null
+			rate: pickupRate(choice.bannerType, server).rate,
+			goal: allowedGoal(goal, choice)
 		};
 	});
 
