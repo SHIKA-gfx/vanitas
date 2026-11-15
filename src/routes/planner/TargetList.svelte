@@ -15,7 +15,8 @@
 		name: string;
 		provisional: boolean;
 		ja?: string | null;
-		kind: 'secured' | 'short' | 'unavailable';
+		/** 계산 결과 종류 (planner.ts TargetOutcome). 'attempt'(도전)는 목표 종류를 고르는 화면(⑦-3)부터 나온다 */
+		kind: 'secured' | 'attempt' | 'short' | 'unavailable';
 		shortfallGems?: number;
 		ended?: boolean;
 		start?: string;

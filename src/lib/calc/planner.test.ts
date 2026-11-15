@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { planPickups, spendInPeriod, type PlannerInput, type PlannerTarget } from './planner';
+import { chargeProbAtLeastOne } from './gacha';
+import {
+	goalPulls,
+	isPlanned,
+	planPickups,
+	spendInPeriod,
+	type PlannerGoal,
+	type PlannerInput,
+	type PlannerTarget
+} from './planner';
 
 const RULE = { half: 100, halfPickupChance: 0.5, full: 200 };
 const MILEAGE = { ticketAt: [70, 130, 150, 170, 270, 330, 350, 370], pullsPerTicket: 10 };
@@ -12,12 +21,23 @@ const PERIODS = [
 	{ id: 'p3', startDay: 14, endDay: 21 }
 ];
 
-const target = (id: string, periodId: string, stackType: string): PlannerTarget => ({
+const target = (
+	id: string,
+	periodId: string,
+	stackType: string,
+	goal?: PlannerGoal
+): PlannerTarget => ({
 	id,
 	periodId,
 	stackType,
-	rate: 0.007
+	rate: 0.007,
+	...(goal ? { goal } : {})
 });
+
+/** 마일리지 티켓 없이 — 연 수 × 120개로 손으로 센다 */
+const NO_MILEAGE = { ticketAt: [], pullsPerTicket: 10 };
+const HALF: PlannerGoal = { kind: 'half' };
+const pulls = (n: number): PlannerGoal => ({ kind: 'pulls', pulls: n });
 
 function input(over: Partial<PlannerInput>): PlannerInput {
 	return {
@@ -308,18 +328,30 @@ describe('planPickups — 우선순위와 대안', () => {
 	it('더 많이 확보하는 조합을 대안으로 보여준다', () => {
 		const r = planPickups(abc);
 		expect(r.alternatives[0]).toEqual({
-			securedIds: ['B', 'C'],
+			plannedIds: ['B', 'C'],
 			droppedIds: ['A'],
 			gainedIds: ['B', 'C']
 		});
 	});
 
-	it('계획·대안은 모두 실제로 가능한 조합이다 (무작위 검사)', () => {
+	it('계획·대안은 모두 실제로 가능한 조합이다 (무작위 검사, 목표 종류 섞음)', () => {
 		let seed = 7;
 		const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+		const randomGoal = (): PlannerGoal | undefined => {
+			const x = rand();
+			if (x < 0.4) return undefined;
+			if (x < 0.7) return HALF;
+			return pulls(1 + Math.floor(rand() * 199));
+		};
+		const plannedOf = (r: ReturnType<typeof planPickups>) => r.securedCount + r.attemptCount;
 		for (let k = 0; k < 60; k++) {
 			const targets = Array.from({ length: 1 + Math.floor(rand() * 5) }, (_, i) =>
-				target(`t${i}`, `p${1 + Math.floor(rand() * 3)}`, rand() < 0.5 ? 'normal' : 'limited')
+				target(
+					`t${i}`,
+					`p${1 + Math.floor(rand() * 3)}`,
+					rand() < 0.5 ? 'normal' : 'limited',
+					randomGoal()
+				)
 			);
 			const base = input({
 				targets,
@@ -327,22 +359,212 @@ describe('planPickups — 우선순위와 대안', () => {
 				gemsByDay: Array.from({ length: 30 }, (_, d) => 5000 + d * Math.floor(rand() * 2000))
 			});
 			const r = planPickups(base);
-			const secured = r.outcomes.filter((o) => o.kind === 'secured').map((o) => o.id);
-			// 계획만 다시 넣으면 전부 확보된다
+			const planned = r.outcomes.filter(isPlanned).map((o) => o.id);
+			// 계획에 든 목표만 다시 넣으면 전부 계획에 든다
 			const again = planPickups({
 				...base,
-				targets: targets.filter((t) => secured.includes(t.id))
+				targets: targets.filter((t) => planned.includes(t.id))
 			});
-			expect(again.securedCount).toBe(secured.length);
+			expect(plannedOf(again)).toBe(planned.length);
+			expect(plannedOf(r)).toBe(planned.length);
 			expect(Math.min(...r.balance)).toBeGreaterThanOrEqual(0);
+			// 확보는 천장까지 닿는 목표, 도전은 닿지 않는 목표
+			for (const o of r.outcomes) {
+				if (o.kind === 'secured') expect(o.pulls).toBe(o.pullsToPity);
+				if (o.kind === 'attempt') expect(o.pulls).toBeLessThan(o.pullsToPity);
+			}
 			for (const alt of r.alternatives) {
-				expect(alt.securedIds.length).toBeGreaterThan(r.securedCount);
+				expect(alt.plannedIds.length).toBeGreaterThan(plannedOf(r));
 				const only = planPickups({
 					...base,
-					targets: targets.filter((t) => alt.securedIds.includes(t.id))
+					targets: targets.filter((t) => alt.plannedIds.includes(t.id))
 				});
-				expect(only.securedCount).toBe(alt.securedIds.length);
+				expect(plannedOf(only)).toBe(alt.plannedIds.length);
 			}
 		}
+	});
+});
+
+describe('planPickups — 목표 종류 (v0.3, docs/007 10장)', () => {
+	it('반천장까지: 스택 0에서 100연 = 12,000개, 결과는 도전 + 반천장 50%를 넣은 확률', () => {
+		const one = (gems: number) =>
+			planPickups(
+				input({
+					targets: [target('a', 'p1', 'normal', HALF)],
+					gemsByDay: flat(gems),
+					mileage: NO_MILEAGE
+				})
+			);
+		const r = one(12000);
+		expect(r.outcomes[0]).toMatchObject({
+			kind: 'attempt',
+			goal: 'half',
+			stackStart: 0,
+			pullsToPity: 200,
+			pulls: 100,
+			guaranteed: false
+		});
+		const o = r.outcomes[0];
+		if (o.kind === 'attempt') {
+			// 99연은 0.7%, 100연째(반천장)는 50% — 1 − 0.993^99 × 0.5
+			expect(o.probability).toBeCloseTo(0.750572, 6);
+			expect(o.probability).toBe(chargeProbAtLeastOne(0.007, 0, 100, RULE));
+		}
+		expect(r.periods[0]).toMatchObject({ pulls: 100, gemPulls: 100, targetIds: ['a'] });
+		expect([r.securedCount, r.attemptCount]).toEqual([0, 1]);
+		expect(one(11999).outcomes[0]).toMatchObject({ kind: 'short', shortfallGems: 1, pulls: 100 });
+	});
+
+	it('반천장까지: 지금 스택 40이면 60연', () => {
+		const r = planPickups(
+			input({
+				targets: [target('a', 'p1', 'normal', HALF)],
+				stacks: { normal: 40, limited: 0 },
+				gemsByDay: flat(99999)
+			})
+		);
+		expect(r.outcomes[0]).toMatchObject({ kind: 'attempt', stackStart: 40, pulls: 60 });
+		const o = r.outcomes[0];
+		if (o.kind === 'attempt') expect(o.probability).toBeCloseTo(0.669649, 6);
+	});
+
+	it('N연까지: 정한 연 수를 다 쓰고, 같은 종류의 다음 목표는 0에서 (마지막 연에 나온다고 본다)', () => {
+		const r = planPickups(
+			input({
+				targets: [target('a', 'p1', 'normal', pulls(50)), target('b', 'p2', 'normal')],
+				stacks: { normal: 30, limited: 0 },
+				gemsByDay: flat(99999),
+				mileage: NO_MILEAGE
+			})
+		);
+		expect(r.outcomes[0]).toMatchObject({
+			kind: 'attempt',
+			goal: 'pulls',
+			stackStart: 30,
+			pulls: 50
+		});
+		const o = r.outcomes[0];
+		// 30 + 50 = 80 — 반천장 앞이라 1 − 0.993^50
+		if (o.kind === 'attempt') expect(o.probability).toBeCloseTo(0.296179, 6);
+		// 못 뽑아 스택 80이 이월된다고 보지 않는다
+		expect(r.outcomes[1]).toMatchObject({ kind: 'secured', stackStart: 0, pulls: 200 });
+		expect(r.periods.map((p) => p.gemPulls)).toEqual([50, 200]);
+	});
+
+	it('N연이 천장까지 닿으면 확정과 같다 — 확보, 확률 1', () => {
+		const r = planPickups(
+			input({
+				targets: [target('a', 'p1', 'normal', pulls(50))],
+				stacks: { normal: 160, limited: 0 },
+				gemsByDay: flat(99999)
+			})
+		);
+		expect(r.outcomes[0]).toMatchObject({
+			kind: 'secured',
+			goal: 'pulls',
+			pulls: 40,
+			pullsToPity: 40,
+			guaranteed: true,
+			probability: 1
+		});
+		expect([r.securedCount, r.attemptCount]).toEqual([1, 0]);
+	});
+
+	it('반천장을 이미 지난 반천장 목표는 불가 — 뽑지 않고 스택을 그대로 넘긴다', () => {
+		const r = planPickups(
+			input({
+				targets: [target('a', 'p1', 'normal', HALF), target('b', 'p2', 'normal')],
+				stacks: { normal: 120, limited: 0 },
+				gemsByDay: flat(99999)
+			})
+		);
+		expect(r.outcomes[0]).toEqual({
+			kind: 'unavailable',
+			id: 'a',
+			periodId: 'p1',
+			reason: 'half_passed'
+		});
+		// 넘긴 픽업처럼 스택 120이 다음 목표로
+		expect(r.outcomes[1]).toMatchObject({ kind: 'secured', stackStart: 120, pulls: 80 });
+		expect(r.periods.map((p) => p.periodId)).toEqual(['p2']);
+		expect([r.securedCount, r.attemptCount]).toEqual([1, 0]);
+		// 불가 목표를 넣은 조합은 대안이 아니다
+		expect(r.alternatives).toEqual([]);
+	});
+
+	it('앞 날짜의 같은 종류 목표가 계획에 들면 스택이 0이 되어 반천장까지 도전한다 (그 목표가 뒤 순위여도)', () => {
+		const r = planPickups(
+			input({
+				// 1순위 a(p2, 반천장까지) / 2순위 b(p1, 확정). 지금 스택 120
+				targets: [target('a', 'p2', 'normal', HALF), target('b', 'p1', 'normal')],
+				stacks: { normal: 120, limited: 0 },
+				gemsByDay: flat(99999)
+			})
+		);
+		expect(r.outcomes[0]).toMatchObject({ kind: 'attempt', stackStart: 0, pulls: 100 });
+		expect(r.outcomes[1]).toMatchObject({ kind: 'secured', stackStart: 120, pulls: 80 });
+		// b가 없으면 a는 불가
+		const alone = planPickups(
+			input({
+				targets: [target('a', 'p2', 'normal', HALF)],
+				stacks: { normal: 120, limited: 0 },
+				gemsByDay: flat(99999)
+			})
+		);
+		expect(alone.outcomes[0]).toMatchObject({ kind: 'unavailable', reason: 'half_passed' });
+	});
+
+	it('1회 확률을 모르면 확률을 비운다', () => {
+		const r = planPickups(
+			input({
+				targets: [{ ...target('a', 'p1', 'normal', HALF), rate: null }],
+				gemsByDay: flat(99999)
+			})
+		);
+		expect(r.outcomes[0]).toMatchObject({ kind: 'attempt', probability: null });
+	});
+
+	it('대안도 실제로 가능한 조합이다 — 도전 목표가 섞인 대안 (무작위 검사, 잔고 고정)', () => {
+		// 위의 무작위 검사는 잔고가 날마다 늘어 대안이 거의 나오지 않는다 → 잔고를 고정해 대안이 나오는 묶음을 만든다
+		let seed = 11;
+		const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+		const plannedOf = (r: ReturnType<typeof planPickups>) => r.securedCount + r.attemptCount;
+		let checked = 0;
+		for (let k = 0; k < 60; k++) {
+			const targets = Array.from({ length: 2 + Math.floor(rand() * 5) }, (_, i) => {
+				const periodId = `p${1 + Math.floor(rand() * 3)}`;
+				const stack = rand() < 0.5 ? 'normal' : 'limited';
+				const x = rand();
+				const goal = x < 0.4 ? undefined : x < 0.7 ? HALF : pulls(1 + Math.floor(rand() * 199));
+				return target(`t${i}`, periodId, stack, goal);
+			});
+			const base = input({
+				targets,
+				gemsByDay: flat(6000 + Math.floor(rand() * 30000)),
+				stacks: { normal: Math.floor(rand() * 200), limited: Math.floor(rand() * 200) }
+			});
+			const r = planPickups(base);
+			for (const alt of r.alternatives) {
+				expect(alt.plannedIds.length).toBeGreaterThan(plannedOf(r));
+				const only = planPickups({
+					...base,
+					targets: targets.filter((t) => alt.plannedIds.includes(t.id))
+				});
+				expect(plannedOf(only)).toBe(alt.plannedIds.length);
+				checked += 1;
+			}
+		}
+		expect(checked).toBeGreaterThan(0);
+	});
+
+	it('goalPulls — 종류와 시작 스택으로 쓰는 연 수', () => {
+		expect(goalPulls(undefined, 30, RULE)).toBe(170);
+		expect(goalPulls({ kind: 'pity' }, 30, RULE)).toBe(170);
+		expect(goalPulls(HALF, 30, RULE)).toBe(70);
+		expect(goalPulls(HALF, 100, RULE)).toBeNull();
+		expect(goalPulls(pulls(50), 30, RULE)).toBe(50);
+		expect(goalPulls(pulls(199), 30, RULE)).toBe(170);
+		expect(() => goalPulls(pulls(0), 0, RULE)).toThrow();
+		expect(() => goalPulls(pulls(1.5), 0, RULE)).toThrow();
 	});
 });
