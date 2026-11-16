@@ -1,0 +1,42 @@
+-- 스토리 길잡이 데이터 문서 (docs/008 6-3). datasets에 ko/story.json 행 하나를 넣는다.
+--
+-- 왜 마이그레이션인가: 관리자 화면의 save_dataset은 있는 문서만 바꾸고 새 문서를 더하지 않는다 (docs/006 6-3-3).
+-- 표·제약·권한은 그대로다 — datasets.path 검사가 이미 ko/story.json을 받고, 표로 뺀 칸이 없어 자리 표시 검사도 없다.
+--
+-- 실행 순서 (중요): 빌드의 내보내기(scripts/data-export.ts)는 레포 data/와 DB의 문서 목록이 다르면 멈춘다.
+--   1. 이 PR을 Merge하기 직전에 Supabase SQL Editor에서 이 파일을 실행한다
+--   2. 바로 Merge한다 (그사이 관리자 화면에서 저장하지 않는다 — 저장마다 배포가 일어나 빌드가 실패한다.
+--      실패해도 운영 사이트는 직전 배포에 남는다, docs/006 6-4)
+--   3. PR 미리보기 빌드가 실행 전에 실패했다면 다시 돌린다
+--
+-- 문서 내용은 레포 data/ko/story.json과 같다 (빈 목록 + meta). 키 순서를 지키려고 json으로 넣는다 (docs/006 결정 E).
+-- 이미 있으면 아무것도 하지 않는다 (두 번 실행해도 안전).
+
+insert into public.datasets (path, data)
+values ('ko/story.json', $story${
+  "meta": {
+    "id": "story",
+    "server": "ko",
+    "description": "스토리 길잡이(/extra/story)의 읽는 순서 지도와 스포일러 안전 사전 (레포 docs/008 6장). 순서·공개일은 사실 정보 + 출처, 사전 설명은 운영자가 직접 쓴 글.",
+    "verifiedAt": "2026-11-16",
+    "sources": [],
+    "notes": [
+      "칸은 늘 모두 둔다 — 모르면 빈 글자·빈 목록·0. 관리자 화면이 칸을 더하거나 빼지 못해서다.",
+      "volumes: 메인 스토리의 권. main의 volume이 이 id를 가리킨다.",
+      "main: 메인 스토리 장 (진행도 단위). 줄 순서가 곧 진행 순서다 — 진행도는 '이 장까지 봤다'로 저장된다. 같은 권의 장은 이어서, 장 번호는 1부터.",
+      "events: 이벤트 스토리. readAfter는 '먼저 읽으면 좋은' 단위 id, 근거는 readAfterSources.",
+      "id: 메인은 main-<권>-<장>(예: main-v1-c1), 이벤트는 event-<영문 이름>. 소문자·숫자·하이픈. 저장된 진행도가 가리키므로 만든 뒤 바꾸지 않는다.",
+      "releasedKr: 한국 서버 첫 공개일 YYYY-MM-DD (복각 아님). 모르면 빈 글자.",
+      "chronoKey: 작중 시간 정렬 키. 100 단위로 띄워 끼워 넣기 쉽게. 날짜를 지어내지 않는다. chronoCertainty가 unknown이면 0 → '작중 시점 미확인' 묶음.",
+      "chronoCertainty: stated = 게임 안·공지로 확인 (chronoSources 필수), inferred = 정황 추정 (화면에 '추정'), unknown = 모름.",
+      "replayable: 지금 게임 안에서 다시 볼 수 있는지 — 확인 전에는 unknown.",
+      "entries: 사전 항목. 설명은 덮어쓰기가 아니라 덧붙이는 블록 — 블록의 after 단위를 읽었으면 보인다. 첫 블록의 after가 처음 등장(그 전에는 목록에도 없다), 첫 블록 name 필수, 그 뒤 블록 name은 이름이 바뀔 때만 (빈 글자 = 그대로). related는 다른 항목 id.",
+      "나무위키 문장을 옮기지 않는다 (CC BY-NC-SA — 우리 데이터 라이선스와 섞을 수 없다). 대사 인용·게임 이미지 금지 (docs/008 7장)."
+    ]
+  },
+  "volumes": [],
+  "main": [],
+  "events": [],
+  "entries": []
+}$story$::json)
+on conflict (path) do nothing;
