@@ -34,9 +34,13 @@
 <main
 	class="relative -mb-(--tabbar-space) flex min-h-screen flex-col overflow-hidden pb-(--tabbar-space) md:block lg:mb-0 lg:pb-0"
 >
-	<!-- 데스크톱은 화면 높이 안에서 위아래 가운데. 모바일은 위에서부터 (하단 탭바가 있어서) -->
+	<!--
+		데스크톱은 화면 높이 안에서 위아래 가운데. 모바일은 위에서부터 (하단 탭바가 있어서).
+		태블릿(md~lg)은 탭바가 있어 main이 아래에 탭바 높이만큼 여백을 더한다 → 여기서 그만큼 빼야 main이 화면 높이와 같아지고,
+		맨 아래 묶음(계정·백업)이 탭바 바로 위에 온다 (2026-11-16 — 화면 높이를 다 쓰면 페이지가 탭바만큼 길어져 묶음이 탭바 뒤로 들어갔다)
+	-->
 	<div
-		class="relative mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 pt-10 pb-6 md:min-h-screen md:justify-center md:pb-36 lg:py-10"
+		class="relative mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 pt-10 pb-6 md:min-h-[calc(100vh-var(--tabbar-space))] md:justify-center md:pb-36 lg:min-h-screen lg:py-10"
 	>
 		<!-- 데스크톱 -->
 		<div class="hidden md:block">
