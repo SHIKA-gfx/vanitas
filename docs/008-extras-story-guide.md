@@ -1,6 +1,6 @@
 # 008. 부가기능 허브와 스토리 길잡이
 
-> 작성: 2026-11-16 · 상태: 설계 확정(#97) → 새 판 감지(#98) → **허브(이 PR, 4장)** → 스토리 데이터 틀 → 로직 → 화면 → `v0.4.0`
+> 작성: 2026-11-16 · 상태: 설계 확정(#97) → 새 판 감지(#98) → 허브(#99, 4장) → **스토리 데이터 틀(이 PR, 6장)** → 로직 → 화면 → `v0.4.0`
 > 관련: `docs/006`(DB·관리자, 6-3-3 데이터 문서 편집), `docs/007`(로그인 저장, 10-4 옛 탭), `src/lib/state/`(브라우저 저장), `vanitas-design.md`(5-19 누름 효과·모션 규칙)
 > 기한: 기말 발표 **2026-12-07**. **12-01 전후 기능 동결**, 마지막 주는 발표 준비·안정화.
 
@@ -26,7 +26,7 @@
 
 ### 1-2. 하지 않는 것 (MVP 밖)
 
-- 인연·그룹·미니 스토리 — 단위 수가 많다. 데이터의 `kind`로 자리만 열어 둔다
+- 인연·그룹·미니 스토리 — 단위 수가 많다. 더할 때는 `main`·`events`처럼 목록을 하나 더 둔다 (6-2)
 - 일본어판 콘텐츠 — UI 문구만 Paraglide, 콘텐츠는 한국어만
 - 줄거리 요약 — 분량·저작권 부담. 사전 설명까지만
 - 게임 이미지·대사 인용 — 넥슨 IP 가이드 문의 답변 전 (7장)
@@ -150,75 +150,82 @@ export const extras: Extra[] = [ /* story 하나 (D9) */ ];
 - 순서·공개일·선행 관계는 **사실 정보 + 출처 + 확실성**. 확실하지 않으면 `inferred`, 화면에 "추정"
 - 사전 설명은 **운영자가 직접 쓴 글** (7장)
 
-### 6-2. 문서 모양
+### 6-2. 문서 모양 (`src/lib/story/types.ts`, 2026-11-16 데이터 틀에서 고침)
+
+관리자 화면의 편집기는 **칸을 더하거나 빼지 못하고, 숫자 칸을 비우지 못하고, 줄 더하기는 마지막 줄 복사**다(`docs/006` 6-3-3).
+그래서 처음 초안(선택 칸이 있는 `units` 하나)을 아래처럼 바꿨다.
+
+| 초안 | 바꾼 것 | 까닭 |
+|---|---|---|
+| `units` 하나에 `kind: 'main' \| 'event'` | **목록 넷**: `volumes`(권) · `main`(장) · `events` · `entries` | 종류마다 칸이 달라 한 표에 두면 빈 칸이 생긴다. 메인은 **목록 순서 = 진행 순서**라 `mainOrder`가 없어도 된다 |
+| 있을 수도 없을 수도 있는 칸(`chrono?`, `readAfter?` …) | **칸은 늘 모두 있다.** 모르면 빈 글자·빈 목록·`0` | 편집기가 칸을 더하지 못한다 |
+| `chrono: { key, note, certainty, sources }` | 평평하게 `chronoKey`·`chronoNote`·`chronoCertainty`(`unknown` 추가)·`chronoSources` | 표 한 줄로 고친다. `unknown`이면 키 `0` → "작중 시점 미확인" 묶음 |
+| `kind`(사전 종류) | `entryType` | 편집기의 선택지 표(ENUMS)는 칸 이름으로 찾는다 — `kind`는 다른 문서에도 있다 |
+| `firstAppears` + 첫 블록 `after` | **첫 블록의 `after`가 처음 등장** (칸 하나 뺌) | 둘은 늘 같아야 해서 어긋날 일만 생긴다 |
+| `name?` (블록) | `name` — 빈 글자 = 이름 그대로 | 칸은 늘 모두 있다 |
 
 ```ts
 interface StoryDoc {
-  meta: { description: string; verifiedAt: string; sources: string[] }; // 다른 문서와 같은 meta
-  units: StoryUnit[];
-  entries: StoryEntry[];
-}
-
-type UnitId = string; // 'main-v1-c1', 'event-<slug>'
-
-interface StoryUnit {
-  id: UnitId;
-  kind: 'main' | 'event';             // 이후 'bond' 등을 더할 자리
-  title: string;                      // 한국 서버 표기
-  volume?: string;                    // main만: 권 id ('v1', 'final' 등)
-  chapter?: number;                   // main만: 권 안의 장 번호 (진행도 단위, D5)
-  releasedKr?: string;                // YYYY-MM-DD, 한국 서버 첫 공개일 (복각 아님)
-  mainOrder?: number;                 // main만: 메인 진행 순서 (진행도 포인터)
-  chrono?: {
-    key: number;                      // 작중 시간 정렬 키 (100 단위로 띄워 끼워 넣기 쉽게). 날짜를 지어내지 않는다
-    note?: string;                    // "Vol.3 2장과 3장 사이"
-    certainty: 'stated' | 'inferred'; // stated = 게임 안·공지로 확인
-    sources: string[];
-  };
-  readAfter?: UnitId[];               // "먼저 읽으면 좋아요". 근거 필요
-  readAfterSources?: string[];
-  replayable?: 'yes' | 'no' | 'unknown'; // 지금 게임에서 다시 볼 수 있는지 — 검증 전에는 unknown
-  sources: string[];
-  verified: boolean;
-}
-
-interface StoryEntry {
-  id: string;
-  kind: 'person' | 'group' | 'place' | 'term';
-  firstAppears: UnitId;               // 이 단위를 읽기 전에는 목록에도 없다
-  blocks: {
-    after: UnitId;                    // 이 단위를 읽었으면 보인다
-    name?: string;                    // 이름 자체가 스포일러면 블록별로 바꾼다
-    text: string;                     // 직접 쓴 설명. 대사 인용 금지
-  }[];                                // 덮어쓰기가 아니라 덧붙이기. 첫 블록 after === firstAppears, 첫 블록은 name 필수
-  related?: string[];                 // 상대 항목이 보일 때만 링크
-  sources: string[];
-  verified: boolean;
+  meta: { id; server; description; verifiedAt; sources: string[]; notes: string[] }; // notes = 칸 쓰는 법 (관리자 "문서 정보"에 보인다)
+  volumes: { id; title; sources: string[]; verified: boolean }[];
+  main: {                 // 목록 순서 = 진행 순서. 같은 권은 이어서, 권 안의 장 번호는 늘어난다
+    id; title; volume; chapter: number;               // id 예: main-v1-c1
+    releasedKr;           // 한국 서버 첫 공개일 YYYY-MM-DD, 모르면 ''
+    chronoKey: number;    // 작중 순서 키 (100 단위로 띄운다). 날짜를 지어내지 않는다
+    chronoCertainty: 'unknown' | 'stated' | 'inferred';
+    chronoNote; chronoSources: string[];
+    replayable: 'unknown' | 'yes' | 'no';           // 지금 게임에서 다시 볼 수 있는지 — 확인 전 unknown
+    sources: string[]; verified: boolean;
+  }[];
+  events: {               // main과 같은 칸에서 volume·chapter 대신 readAfter·readAfterSources
+    id; title; releasedKr; chronoKey; chronoCertainty; chronoNote; chronoSources;
+    readAfter: string[];  // "먼저 읽으면 좋아요" — 메인·이벤트 id
+    readAfterSources: string[]; replayable; sources; verified;
+  }[];
+  entries: {
+    id; entryType: 'person' | 'group' | 'place' | 'term';
+    blocks: { after; name; text }[];  // 덧붙이는 블록. 첫 블록 after = 처음 등장, 첫 블록 name 필수
+    related: string[]; sources: string[]; verified: boolean;
+  }[];
 }
 ```
 
-- `chrono`가 없는 단위 = "작중 시점 미확인" 묶음
+- id는 소문자·숫자·하이픈. **메인·이벤트는 한 이름 공간**(진행도·블록·먼저 읽기가 함께 가리킨다). 저장된 진행도가 가리키므로 만든 뒤 바꾸지 않는다
 - 이벤트는 순서 없이 읽으므로 블록마다 조건을 따로 두고, 조건을 만족한 블록을 모두 보인다
 
-### 6-3. DB에 넣기
+### 6-3. DB에 넣기 (`supabase/migrations/20261117000000_story_dataset.sql`)
 
 - `datasets.path` 검사(`^(sources\.json|(shared|ko|ja)/[a-z0-9-]+\.json)$`)는 `ko/story.json`을 이미 받는다. 표로 뺄 자리가 없어 검사 제약은 그대로
-- **`save_dataset`은 새 문서를 더하지 않는다**(`docs/006` 6-3-3) → 새 마이그레이션이 `ko/story.json` 행을 넣는다 (`meta` + 빈 `units`·`entries`)
+- **`save_dataset`은 새 문서를 더하지 않는다**(`docs/006` 6-3-3) → 마이그레이션이 행을 넣는다 (`meta` + 빈 목록 넷, 레포 파일과 같은 값·키 순서). `on conflict do nothing` — 두 번 실행해도 안전.
+  SQL Editor로 넣으면 변경 기록의 `actor`가 비어 남는다 (원래 그렇다)
 - **빌드의 내보내기는 레포 `data/`와 DB `datasets`의 파일 목록이 다르면 멈춘다** (`scripts/data-export.ts`). 그래서:
   - 순서: PR이 준비되면 **마이그레이션을 SQL Editor로 실행 → 바로 Merge**. 그사이 관리자 저장(재배포)은 하지 않는다 — 운영 사이트는 실패한 빌드 전 배포에 남는다(`docs/006` 6-4)
   - PR 미리보기 빌드는 마이그레이션 전에 실패한다 → 실행 뒤 다시 돌린다
-- 관리자 "문서" 탭: `doc-sections.ts`에 묶음 "스토리 길잡이"(`units`·`entries`, `meta`는 "문서 정보"), `DocPath`·`SITE_FILES`에 `ko/story.json`. 긴 설명을 칸으로 고치기 불편하면 JSON 원문으로 — 데이터 틀 단계에서 실제로 써 보고 정한다
 - 사이트는 스토리 화면에서만 `story.json`을 읽는다 (다른 화면 번들에 넣지 않는다)
 
-### 6-4. `validate.py` 검사
+**관리자 "문서" 탭** (`src/routes/admin/doc-sections.ts`) — 묶음 "스토리 길잡이"(아이콘 `story`): **읽는 순서**(`volumes`·`main`·`events`, 표) / **사전**(`entries`, 카드). `meta`는 "문서 정보"의 "스토리 (story.json)" — 칸 쓰는 법 메모(`notes`)가 거기 보인다.
+편집기에 더한 것 (다른 문서에는 영향 없음):
 
-- id 중복 없음, `readAfter`·`related`·`after`·`firstAppears`가 실제 id를 가리킴
-- `main`은 `volume`·`chapter`·`mainOrder` 필수, `mainOrder` 중복 없음
-- `readAfter`가 순환하지 않음
-- 각 항목의 첫 블록 `after === firstAppears`, 첫 블록에 `name`
-- `chrono.certainty === 'stated'`이면 `chrono.sources` 비어 있지 않음
-- `sources` id가 `sources.json`에 있음
-- 관리자 화면의 저장 전 검사는 같은 `validate.py`를 브라우저에서 돌리므로(`build-check.ts`) 따로 옮기지 않는다
+| 무엇 | 어떻게 |
+|---|---|
+| 빈 목록에 첫 줄 | `ROW_TEMPLATES`("문서 경로:칸") — 빈 목록이면 "＋ 첫 줄 만들기". 문서 경로는 `DocEditor`가 context로 내려 준다. 틀은 `types.ts` 타입으로 칸을 모두 갖춘다 |
+| 사전 항목·설명 블록 더하기 | 카드 목록에 틀이 있으면 **"＋ 빈 줄 더하기"** (긴 설명까지 복사되지 않게). 표(권·장·이벤트)는 그대로 마지막 줄 복사 — 권·출처를 다시 적지 않게 |
+| 설명 블록 | `CARD_KEYS`(`blocks`) — 표로 보일 수 있어도 카드. 항목을 펼치면 블록도 펼쳐져 있다 |
+| 긴 설명 | `LONG_TEXT_KEYS`(`text`) — 비어 있어도 여러 줄 칸, 한 줄을 다 쓴다 |
+| 고르는 칸 | `ENUMS`에 `chronoCertainty`·`replayable`·`entryType` (validate.py와 같은 목록) |
+| 칸 이름 | 맨 위 칸은 `TOP_LABELS`("메인 스토리 권·장", "이벤트 스토리", "사전 항목"), 그 밖은 `KEY_LABELS` |
+
+### 6-4. `validate.py` `check_story`
+
+- **칸이 모두 있고 형이 맞는가** (글자·정수·참/거짓·글자 목록). 모르는 칸은 경고
+- id: 형식, 겹침 (메인·이벤트 한 이름 공간, 권·사전은 따로)
+- 메인: 권이 `volumes`에 있음, 장 번호 1부터, **같은 권은 목록에서 이어서**, 권 안에서 장 번호가 늘어남
+- 메인·이벤트: 제목, 한국 공개일 형식(또는 빈 글자), 확실성 값 — `unknown`이면 키 `0`, 아니면 키 > 0, `stated`면 작중 순서 출처 필수. 다시 보기 값
+- 이벤트: 먼저 읽기가 있는 id·자기 자신 아님·**근거(출처) 필수**·**돌고 돌지 않음**
+- 사전: 종류 값, 블록 1개 이상, 블록 `after`가 메인·이벤트 id, 첫 블록 이름, 설명이 빈 글자 아님, 관련 항목이 있는 id·자기 자신 아님
+- 모든 출처 id가 `sources.json`에 있음 (`meta.sources` 포함)
+- 확인 전(`verified: false`) 줄 수는 경고 한 줄 (`--strict`면 오류)
+- 관리자 화면의 저장 전 검사는 같은 `validate.py`를 브라우저에서 돌리므로(`build-check.ts`) 따로 옮기지 않는다. 일부러 틀린 고정 데이터로 25가지 오류가 모두 잡히는 것을 확인했다 (2026-11-16)
 
 ## 7. 저작권·IP (화면 "정보와 출처"에도)
 
@@ -230,16 +237,16 @@ interface StoryEntry {
 ## 8. 로직 (`src/lib/story/`, 순수 TS, 테스트 먼저)
 
 ```ts
-// 읽은 단위 집합: 메인 포인터 이하 전부 + 읽은 이벤트
-export function readSet(units: StoryUnit[], save: StorySave): Set<UnitId>;
+// 읽은 단위 집합: 메인 포인터까지(목록 순서) 전부 + 읽은 이벤트
+export function readSet(doc: StoryDoc, save: StorySave): Set<UnitId>;
 
-// 항목이 보이는지, 보이는 블록, 보일 이름(열린 블록 중 마지막 name)
+// 항목이 보이는지, 보이는 블록, 보일 이름(열린 블록 중 마지막 name이 빈 글자가 아닌 것)
 export function visibleEntry(entry: StoryEntry, read: Set<UnitId>):
   { name: string; blocks: { text: string }[] } | null;
 
-// release = releasedKr 오름차순(같으면 mainOrder), chrono = chrono.key 오름차순, 키 없음은 따로
-export function orderUnits(units: StoryUnit[], by: 'release' | 'chrono'):
-  { ordered: StoryUnit[]; unknown: StoryUnit[] };
+// release = releasedKr 오름차순(빈 글자는 뒤, 같으면 메인 목록 순서), chrono = chronoKey 오름차순, unknown은 따로
+export function orderUnits(doc: StoryDoc, by: 'release' | 'chrono'):
+  { ordered: (MainUnit | EventUnit)[]; unknown: (MainUnit | EventUnit)[] };
 ```
 
 - 블록 "가장 최근" = 블록 배열 순서 (작성자가 이야기 진행 순으로 쓴다)
