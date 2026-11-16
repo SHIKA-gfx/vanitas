@@ -1,7 +1,16 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ALL_SECTIONS, DOC_GROUPS, TABLED, TOP_LABELS } from './doc-sections';
+import { tableColumns } from './doc-edit';
+import {
+	ALL_SECTIONS,
+	CARD_KEYS,
+	DOC_GROUPS,
+	ENUMS,
+	ROW_TEMPLATES,
+	TABLED,
+	TOP_LABELS
+} from './doc-sections';
 
 /** 레포 data/*.json 전부 (테스트는 레포 루트에서 돈다) */
 function repoFiles(): Record<string, Record<string, unknown>> {
@@ -16,7 +25,7 @@ function repoFiles(): Record<string, Record<string, unknown>> {
 describe('데이터 문서 묶음', () => {
 	const files = repoFiles();
 
-	it('문서 10개의 맨 위 칸은 모두 꼭 한 묶음에 들어간다 ($schema와 표로 뺀 칸은 빼고)', () => {
+	it('문서(11개)의 맨 위 칸은 모두 꼭 한 묶음에 들어간다 ($schema와 표로 뺀 칸은 빼고)', () => {
 		const seen = new Map<string, string>();
 		for (const s of ALL_SECTIONS) {
 			for (const k of s.keys) {
@@ -52,5 +61,29 @@ describe('데이터 문서 묶음', () => {
 	it('맨 위 칸 이름 바꾸기는 묶음에 있는 칸만', () => {
 		const shown = new Set(ALL_SECTIONS.flatMap((s) => s.keys.map((k) => `${s.path}:${k}`)));
 		for (const k of Object.keys(TOP_LABELS)) expect(shown.has(k), k).toBe(true);
+	});
+
+	it('빈 목록 틀: 스토리 문서의 목록 칸마다 있고, 표 칸은 표로·카드 칸은 카드로 보인다', () => {
+		const story = files['ko/story.json'];
+		for (const [k, v] of Object.entries(story)) {
+			if (Array.isArray(v)) expect(ROW_TEMPLATES[`ko/story.json:${k}`], k).toBeDefined();
+		}
+		for (const k of ['volumes', 'main', 'events']) {
+			expect(tableColumns([ROW_TEMPLATES[`ko/story.json:${k}`]]), k).not.toBeNull();
+		}
+		expect(CARD_KEYS.has('blocks')).toBe(true);
+		expect(Object.keys(ROW_TEMPLATES['ko/story.json:entries'])).toContain('blocks');
+	});
+
+	it('틀의 고르는 칸은 선택지에 있는 값으로 시작한다', () => {
+		for (const [where, row] of Object.entries(ROW_TEMPLATES)) {
+			for (const [k, v] of Object.entries(row)) {
+				if (ENUMS[k])
+					expect(
+						ENUMS[k].map((o) => o.value),
+						`${where} ${k}`
+					).toContain(v);
+			}
+		}
 	});
 });

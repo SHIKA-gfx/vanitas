@@ -2,13 +2,15 @@
  * 데이터 문서 편집의 차림 (docs/006 6-3-3, ④-4).
  *
  * 문서(파일) 단위가 아니라 **계산기별 묶음**으로 보여 준다. 한 묶음은 문서 하나의 맨 위 칸 몇 개다.
- * 문서 10개의 맨 위 칸은 모두 어느 묶음엔가 꼭 한 번 들어간다 (doc-sections.test.ts가 지킨다) —
+ * 문서(11개)의 맨 위 칸은 모두 어느 묶음엔가 꼭 한 번 들어간다 (doc-sections.test.ts가 지킨다) —
  * 데이터 파일에 새 칸이 생기면 여기에 넣어야 테스트가 통과한다.
  * 정식 표로 뺀 배열(미래시·학생·출처)은 각 탭에서 고친다.
  *
  * 어느 계산기가 무엇을 쓰는지는 src/lib/calc/*-adapter.ts의 조회 함수 기준 (2026-11-14).
  */
 import type { NavIconName } from '$lib/icons/NavIcon.svelte';
+import type { EventUnit, MainUnit, StoryEntry, StoryVolume } from '$lib/story/types';
+import type { JsonObject } from './doc-edit';
 
 export type DocPath =
 	| 'ko/schedule.json'
@@ -20,6 +22,7 @@ export type DocPath =
 	| 'ko/students.json'
 	| 'shared/level-table.json'
 	| 'shared/cafe-ranks.json'
+	| 'ko/story.json'
 	| 'sources.json';
 
 export interface DocSection {
@@ -168,6 +171,30 @@ export const DOC_GROUPS: DocGroup[] = [
 		]
 	},
 	{
+		// 부가기능 스토리 길잡이 (docs/008 6장). 칸 설명은 문서 정보의 "스토리 (story.json)" 메모에
+		id: 'story',
+		title: '스토리 길잡이',
+		icon: 'story',
+		sections: [
+			{
+				id: 'story-order',
+				title: '읽는 순서',
+				description:
+					'메인 스토리 권·장과 이벤트 스토리 — 한국 공개일, 작중 순서, 먼저 읽으면 좋은 스토리. 메인은 줄 순서가 진행 순서',
+				path: 'ko/story.json',
+				keys: ['volumes', 'main', 'events']
+			},
+			{
+				id: 'story-entries',
+				title: '사전',
+				description:
+					'인물·조직·장소·용어. 설명 블록은 그 스토리를 읽은 사람에게만 보인다. 직접 쓴 글만 (나무위키·대사 인용 금지)',
+				path: 'ko/story.json',
+				keys: ['entries']
+			}
+		]
+	},
+	{
 		id: 'meta',
 		title: '문서 정보',
 		icon: null,
@@ -192,7 +219,8 @@ export const DOC_GROUPS: DocGroup[] = [
 			meta('shared/cafe-ranks.json', '카페 랭크 (cafe-ranks.json)', '설명·확인일·출처'),
 			meta('ko/game-config.json', '모집 규칙 (game-config.json)', '설명·확인일·출처'),
 			meta('ko/banner-types.json', '배너 종류 (banner-types.json)', '설명·확인일·출처'),
-			meta('ko/pool-sizes.json', '풀 크기 (pool-sizes.json)', '설명·확인일·출처')
+			meta('ko/pool-sizes.json', '풀 크기 (pool-sizes.json)', '설명·확인일·출처'),
+			meta('ko/story.json', '스토리 (story.json)', '설명·확인일·출처, 칸 쓰는 법 메모')
 		]
 	}
 ];
@@ -214,7 +242,11 @@ export const TABLED: Readonly<Record<string, string>> = {
 
 /** 문서의 맨 위 칸 중 KEY_LABELS의 이름이 맞지 않는 것 ("문서 경로:키") — 수급원 문서의 sources는 출처가 아니다 */
 export const TOP_LABELS: Readonly<Record<string, string>> = {
-	'ko/income-sources.json:sources': '수급원'
+	'ko/income-sources.json:sources': '수급원',
+	'ko/story.json:volumes': '메인 스토리 권',
+	'ko/story.json:main': '메인 스토리 장',
+	'ko/story.json:events': '이벤트 스토리',
+	'ko/story.json:entries': '사전 항목'
 };
 
 export const KEY_LABELS: Readonly<Record<string, string>> = {
@@ -452,7 +484,24 @@ export const KEY_LABELS: Readonly<Record<string, string>> = {
 	maxProduction: '최대 생산',
 	secondCafe: '2호점',
 	producesAp: 'AP 생산',
-	ranks: '랭크'
+	ranks: '랭크',
+	title: '제목',
+	// 스토리 길잡이 (story.json)
+	volume: '권',
+	chapter: '장',
+	releasedKr: '한국 공개일',
+	chronoKey: '작중 순서 키',
+	chronoCertainty: '작중 순서 확실성',
+	chronoNote: '작중 위치 메모',
+	chronoSources: '작중 순서 출처',
+	replayable: '지금 다시 보기',
+	readAfter: '먼저 읽으면 좋아요',
+	readAfterSources: '먼저 읽기 출처',
+	entryType: '사전 종류',
+	blocks: '설명 블록',
+	after: '이 스토리를 읽으면',
+	text: '설명',
+	related: '관련 항목'
 };
 
 /** 고를 수 있는 값이 정해진 칸 (validate.py의 허용 목록과 같다). 표 안에서는 괄호 앞 이름만 보인다 (enumShort) */
@@ -473,7 +522,81 @@ export const ENUMS: Readonly<Record<string, readonly { value: string; label: str
 	unit: [
 		{ value: 'pyroxene', label: '청휘석 (pyroxene)' },
 		{ value: 'tenPullTicket', label: '10회 모집권 (tenPullTicket)' }
+	],
+	// 스토리 길잡이 — validate.py check_story와 같은 목록
+	chronoCertainty: [
+		{ value: 'unknown', label: '모름 (unknown)' },
+		{ value: 'stated', label: '공식 확인 (stated)' },
+		{ value: 'inferred', label: '추정 (inferred)' }
+	],
+	replayable: [
+		{ value: 'unknown', label: '확인 전 (unknown)' },
+		{ value: 'yes', label: '볼 수 있음 (yes)' },
+		{ value: 'no', label: '볼 수 없음 (no)' }
+	],
+	entryType: [
+		{ value: 'person', label: '인물 (person)' },
+		{ value: 'group', label: '조직 (group)' },
+		{ value: 'place', label: '장소 (place)' },
+		{ value: 'term', label: '용어 (term)' }
 	]
+};
+
+/** 늘 여러 줄 칸으로 고치는 글자 칸 (비어 있어도) — 사전 설명 */
+export const LONG_TEXT_KEYS: ReadonlySet<string> = new Set(['text']);
+
+/** 칸이 모두 원시값이라 표로 보일 수 있어도 카드로 고칠 목록 — 긴 설명이 든 사전 블록 */
+export const CARD_KEYS: ReadonlySet<string> = new Set(['blocks']);
+
+/**
+ * 빈 목록에 첫 줄을 만들 틀 ("문서 경로:칸"). 줄 더하기는 마지막 줄 복사라 빈 목록에는 줄을 더할 수 없다.
+ * 타입으로 칸을 모두 갖추게 한다 (src/lib/story/types.ts — 칸은 늘 모두 있다)
+ */
+const STORY_VOLUME: StoryVolume = { id: '', title: '', sources: [], verified: false };
+// 키 순서 = 표의 열 순서 (펼침 없이 칸을 하나씩 적는다)
+const STORY_MAIN: MainUnit = {
+	id: '',
+	title: '',
+	volume: '',
+	chapter: 1,
+	releasedKr: '',
+	chronoKey: 0,
+	chronoCertainty: 'unknown',
+	chronoNote: '',
+	chronoSources: [],
+	replayable: 'unknown',
+	sources: [],
+	verified: false
+};
+const STORY_EVENT: EventUnit = {
+	id: '',
+	title: '',
+	releasedKr: '',
+	chronoKey: 0,
+	chronoCertainty: 'unknown',
+	chronoNote: '',
+	chronoSources: [],
+	readAfter: [],
+	readAfterSources: [],
+	replayable: 'unknown',
+	sources: [],
+	verified: false
+};
+const STORY_BLOCK = { after: '', name: '', text: '' };
+const STORY_ENTRY: StoryEntry = {
+	id: '',
+	entryType: 'person',
+	blocks: [STORY_BLOCK],
+	related: [],
+	sources: [],
+	verified: false
+};
+export const ROW_TEMPLATES: Readonly<Record<string, JsonObject>> = {
+	'ko/story.json:volumes': STORY_VOLUME as unknown as JsonObject,
+	'ko/story.json:main': STORY_MAIN as unknown as JsonObject,
+	'ko/story.json:events': STORY_EVENT as unknown as JsonObject,
+	'ko/story.json:entries': STORY_ENTRY as unknown as JsonObject,
+	'ko/story.json:blocks': STORY_BLOCK
 };
 
 /** 표 안의 고르기 칸에 보일 짧은 이름: "공지 (announced)" → "공지" */
@@ -485,7 +608,8 @@ export function enumShort(label: string): string {
 export function itemTitle(item: unknown, index: number): string {
 	if (item && typeof item === 'object' && !Array.isArray(item)) {
 		const o = item as Record<string, unknown>;
-		for (const k of ['label', 'name', 'nameKo', 'id', 'kind', 'date', 'system']) {
+		// title·after: 스토리 길잡이 (이벤트·사전 블록 — 블록은 이름이 바뀔 때만 name이 있다)
+		for (const k of ['label', 'name', 'nameKo', 'id', 'kind', 'date', 'system', 'title', 'after']) {
 			if (typeof o[k] === 'string' && o[k]) return `${o[k]}`;
 		}
 	}

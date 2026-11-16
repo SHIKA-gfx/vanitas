@@ -200,7 +200,7 @@ export interface DatasetVersion {
 	updated_at: string;
 }
 
-/** 문서 10개 (경로 순) */
+/** 문서 11개 (경로 순) */
 export async function loadDatasets(sb: SupabaseClient): Promise<DatasetVersion[]> {
 	const { data, error } = await sb.from('datasets').select('path, data, updated_at').order('path');
 	if (error) fail('datasets', error);

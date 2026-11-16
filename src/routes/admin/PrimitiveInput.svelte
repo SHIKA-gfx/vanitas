@@ -1,10 +1,10 @@
 <!--
 	문서 편집의 원시값 칸 하나 (doc-edit.ts readPrimitive). 처음 값의 형을 지킨다:
 	숫자 → 숫자 칸(숫자가 아니면 빨간 테두리, 데이터는 그대로), 참/거짓 → 체크, 정해진 값(ENUMS) → 고르기,
-	긴 글자 → 여러 줄, 빈칸(null) → 비우면 null. compact는 표 안의 칸
+	긴 글자·LONG_TEXT_KEYS(사전 설명) → 여러 줄, 빈칸(null) → 비우면 null. compact는 표 안의 칸
 -->
 <script lang="ts">
-	import { ENUMS, enumShort } from './doc-sections';
+	import { ENUMS, LONG_TEXT_KEYS, enumShort } from './doc-sections';
 	import { getInvalidSet } from './doc-context';
 	import { readPrimitive, type Json } from './doc-edit';
 
@@ -30,7 +30,10 @@
 			? ENUMS[enumKey]
 			: null
 	);
-	const long = $derived(typeof value === 'string' && (value.length > 48 || value.includes('\n')));
+	const long = $derived(
+		typeof value === 'string' &&
+			(value.length > 48 || value.includes('\n') || LONG_TEXT_KEYS.has(enumKey))
+	);
 	let invalid = $state(false);
 
 	function setInvalid(on: boolean) {

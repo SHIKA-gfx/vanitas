@@ -19,7 +19,7 @@
 	import FieldRow from './FieldRow.svelte';
 	import type { DatasetVersion } from './admin-data';
 	import { diffChecks, runBuildCheck, type CheckDiff } from './build-check';
-	import { provideInvalidSet } from './doc-context';
+	import { provideDocPath, provideInvalidSet } from './doc-context';
 	import {
 		changedPaths,
 		copyOf,
@@ -50,6 +50,7 @@
 	}));
 	let draft = $state(copyOf(start.original));
 	const invalid = provideInvalidSet();
+	provideDocPath(start.path);
 	let mode = $state<'form' | 'json'>('form');
 	let jsonText = $state('');
 	let jsonError = $state<string | null>(null);
