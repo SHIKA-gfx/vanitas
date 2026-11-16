@@ -1,6 +1,7 @@
 <!--
 	묶음이 든 목록 (수급원·배너 종류처럼 줄마다 모양이 큰 것). 줄마다 접힌 카드 — 펼친 카드만 그린다.
-	순서 ▲▼, 빼기 ✕, 더하기는 마지막 줄 복사
+	순서 ▲▼, 빼기 ✕, 더하기는 마지막 줄 복사. 줄 틀(template)이 있으면 빈 줄 — 사전 항목·설명 블록은
+	긴 설명까지 복사되면 지우는 일이 더 많다 (2026-11-16)
 -->
 <script lang="ts">
 	import ObjectFields from './ObjectFields.svelte';
@@ -8,7 +9,12 @@
 	import { copyOf, isObject, type Json } from './doc-edit';
 	import { itemTitle } from './doc-sections';
 
-	let { items, label, depth = 0 }: { items: Json[]; label: string; depth?: number } = $props();
+	let {
+		items,
+		label,
+		depth = 0,
+		template
+	}: { items: Json[]; label: string; depth?: number; template?: Json } = $props();
 	let open = $state<Record<number, boolean>>({});
 
 	function move(i: number, d: -1 | 1) {
@@ -74,8 +80,8 @@
 		type="button"
 		class="self-start px-1 text-xs font-bold text-brand-strong hover:text-ink focus-visible:outline-2 focus-visible:outline-brand-strong"
 		onclick={() => {
-			items.push(copyOf(items[items.length - 1]));
+			items.push(copyOf(template ?? items[items.length - 1]));
 			open = { [items.length - 1]: true };
-		}}>＋ 줄 더하기 (마지막 줄 복사)</button
+		}}>{template ? '＋ 빈 줄 더하기' : '＋ 줄 더하기 (마지막 줄 복사)'}</button
 	>
 </div>

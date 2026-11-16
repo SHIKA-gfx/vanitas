@@ -75,7 +75,7 @@
 	let studentEdit = $state<{ original: Student | null }>();
 	let sourceEdit = $state<{ id: string | null }>();
 	let docEdit = $state<{ section: DocSection }>();
-	/** 문서 10개 — 문서 탭을 처음 열 때 읽는다 */
+	/** 문서 11개 — 문서 탭을 처음 열 때 읽는다 */
 	let docs = $state<DatasetVersion[] | null>(null);
 	let docsError = $state<string | null>(null);
 

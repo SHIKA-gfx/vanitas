@@ -7,7 +7,7 @@ CI(GitHub Actions)에서 실행해, 미검증 값이나 계산이 깨진 데이�
 사용: python3 validate.py [--strict]
   --strict : verified:false 항목이 있으면 실패 처리 (배포 직전용)
 """
-import json, sys, pathlib, datetime
+import json, sys, pathlib, datetime, re
 
 ROOT = pathlib.Path(__file__).parent / "data"
 errors, warnings = [], []
@@ -432,7 +432,8 @@ def check_sources():
     src = load("sources.json")["sources"]    
     for rel in ["shared/level-table.json", "shared/cafe-ranks.json",
                 "ko/game-config.json", "ko/banner-types.json", "ko/ap-config.json",
-                "ko/income-sources.json", "ko/schedule.json", "ko/students.json"]:
+                "ko/income-sources.json", "ko/schedule.json", "ko/students.json",
+                "ko/story.json"]:
         d = load(rel)
         for sid in d["meta"].get("sources", []):
             if sid.isdigit() and sid not in src:
@@ -725,6 +726,193 @@ def check_income_log():
           f"검산 불일치 {mismatch}건")
 
 # ---------------------------------------------------------------- 실행
+# ---------------------------------------------------------------- 스토리 길잡이 (docs/008 6장)
+# 칸은 늘 모두 있다 (관리자 화면이 칸을 더하거나 빼지 못한다) — 모르면 빈 글자·빈 목록·0.
+# 고르는 칸의 값은 src/routes/admin/doc-sections.ts ENUMS와 같다
+STORY_ID = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+STORY_CERTAINTY = {"unknown", "stated", "inferred"}
+STORY_REPLAYABLE = {"unknown", "yes", "no"}
+STORY_ENTRY_TYPES = {"person", "group", "place", "term"}
+# 칸 이름 → 형 (str / int / bool / list = 글자 목록 / dict = 묶음 목록 — 사전 블록, 따로 검사)
+STORY_FIELDS = {
+    "volumes": {"id": str, "title": str, "sources": list, "verified": bool},
+    "main": {"id": str, "title": str, "volume": str, "chapter": int, "releasedKr": str,
+             "chronoKey": int, "chronoCertainty": str, "chronoNote": str, "chronoSources": list,
+             "replayable": str, "sources": list, "verified": bool},
+    "events": {"id": str, "title": str, "releasedKr": str, "chronoKey": int,
+               "chronoCertainty": str, "chronoNote": str, "chronoSources": list,
+               "readAfter": list, "readAfterSources": list, "replayable": str,
+               "sources": list, "verified": bool},
+    "entries": {"id": str, "entryType": str, "blocks": dict, "related": list,
+                "sources": list, "verified": bool},
+}
+STORY_BLOCK_FIELDS = {"after": str, "name": str, "text": str}
+
+
+def _story_row(where, row, fields):
+    """칸이 모두 있고 형이 맞는가. 아니면 오류를 내고 False"""
+    if not isinstance(row, dict):
+        err(f"story: {where} 줄이 묶음이 아님")
+        return False
+    ok = True
+    for k, t in fields.items():
+        if k not in row:
+            err(f"story: {where} 칸 {k} 없음 (칸은 늘 모두 둔다)")
+            ok = False
+            continue
+        v = row[k]
+        if t is list:
+            good = isinstance(v, list) and all(isinstance(x, str) for x in v)
+        elif t is dict:
+            good = isinstance(v, list)
+        else:
+            good = isinstance(v, t) and not (t is int and isinstance(v, bool))
+        if not good:
+            want = {str: "글자", int: "정수", bool: "참/거짓", list: "글자 목록", dict: "묶음 목록"}[t]
+            err(f"story: {where} {k}의 형이 틀림 ({want}이어야 함)")
+            ok = False
+    for k in row:
+        if k not in fields:
+            warn(f"story: {where} 모르는 칸 {k}")
+    return ok
+
+
+def check_story(strict):
+    d = load("ko/story.json")
+    src = load("sources.json")["sources"]
+    lists = {}
+    for key in STORY_FIELDS:
+        v = d.get(key)
+        if not isinstance(v, list):
+            err(f"story: {key} 목록 없음")
+            v = []
+        lists[key] = [r for i, r in enumerate(v)
+                      if _story_row(f"{key}[{i}]", r, STORY_FIELDS[key])]
+    volumes, main, events, entries = (lists[k] for k in ("volumes", "main", "events", "entries"))
+
+    def sources_exist(where, ids):
+        for sid in ids:
+            if sid not in src:
+                err(f"story: {where} 출처 [{sid}]가 sources.json에 없음")
+
+    def unique_ids(key, rows, seen):
+        for r in rows:
+            rid = r["id"]
+            if not STORY_ID.match(rid):
+                err(f"story: {key} id '{rid}' — 소문자·숫자·하이픈만 (예: main-v1-c1)")
+            elif rid in seen:
+                err(f"story: id '{rid}' 겹침 ({seen[rid]}, {key})")
+            seen[rid] = key
+
+    vol_ids = {}
+    unique_ids("volumes", volumes, vol_ids)
+    unit_ids = {}  # 메인·이벤트는 진행도·블록이 함께 가리키므로 한 이름 공간
+    unique_ids("main", main, unit_ids)
+    unique_ids("events", events, unit_ids)
+
+    for v in volumes:
+        if not v["title"].strip():
+            err(f"story: 권 {v['id']} 제목이 비어 있음")
+        sources_exist(f"권 {v['id']}", v["sources"])
+
+    # 메인: 목록 순서가 진행 순서 — 같은 권은 이어서, 권 안의 장 번호는 늘어난다
+    done_vols, prev = set(), None
+    for u in main:
+        tag = f"메인 {u['id']}"
+        if u["volume"] not in vol_ids:
+            err(f"story: {tag} 권 '{u['volume']}'이 volumes에 없음")
+        if u["chapter"] < 1:
+            err(f"story: {tag} 장 번호는 1부터")
+        if prev and u["volume"] != prev["volume"]:
+            done_vols.add(prev["volume"])
+            if u["volume"] in done_vols:
+                err(f"story: {tag} 권 '{u['volume']}'의 장이 목록에서 떨어져 있음 (같은 권은 이어서)")
+        if prev and u["volume"] == prev["volume"] and u["chapter"] <= prev["chapter"]:
+            err(f"story: {tag} 장 번호가 앞 줄({prev['chapter']}장)보다 커야 함 (목록 순서 = 진행 순서)")
+        prev = u
+
+    def check_unit(tag, u):
+        if not u["title"].strip():
+            err(f"story: {tag} 제목이 비어 있음")
+        if u["releasedKr"]:
+            try:
+                datetime.date.fromisoformat(u["releasedKr"])
+            except ValueError:
+                err(f"story: {tag} 한국 공개일 '{u['releasedKr']}' — YYYY-MM-DD 또는 빈 글자")
+        c = u["chronoCertainty"]
+        if c not in STORY_CERTAINTY:
+            err(f"story: {tag} 작중 순서 확실성 '{c}' — {sorted(STORY_CERTAINTY)}")
+        elif c == "unknown" and u["chronoKey"] != 0:
+            err(f"story: {tag} 작중 순서를 모르면(unknown) 키는 0")
+        elif c != "unknown" and u["chronoKey"] <= 0:
+            err(f"story: {tag} 작중 순서 키가 0 — 모르면 확실성을 unknown으로")
+        if c == "stated" and not u["chronoSources"]:
+            err(f"story: {tag} 작중 순서가 공식 확인(stated)이면 작중 순서 출처가 있어야 함")
+        if u["replayable"] not in STORY_REPLAYABLE:
+            err(f"story: {tag} 다시 보기 '{u['replayable']}' — {sorted(STORY_REPLAYABLE)}")
+        sources_exist(tag, u["sources"] + u["chronoSources"])
+
+    for u in main:
+        check_unit(f"메인 {u['id']}", u)
+    for u in events:
+        tag = f"이벤트 {u['id']}"
+        check_unit(tag, u)
+        for ref in u["readAfter"]:
+            if ref == u["id"]:
+                err(f"story: {tag} 먼저 읽기에 자기 자신")
+            elif ref not in unit_ids:
+                err(f"story: {tag} 먼저 읽기 '{ref}'가 메인·이벤트에 없음")
+        if u["readAfter"] and not u["readAfterSources"]:
+            err(f"story: {tag} 먼저 읽으면 좋아요에는 근거(먼저 읽기 출처)가 있어야 함")
+        sources_exist(tag, u["readAfterSources"])
+
+    # 먼저 읽기 순환 (이벤트끼리만 — 메인은 먼저 읽기가 없다)
+    graph = {u["id"]: [r for r in u["readAfter"] if r in unit_ids and r != u["id"]] for u in events}
+    state = {}
+
+    def visit(n, path):
+        state[n] = 1
+        for m in graph.get(n, []):
+            if state.get(m) == 1:
+                err(f"story: 먼저 읽기가 돌고 돎 — {' → '.join(path + [m])}")
+            elif state.get(m) is None:
+                visit(m, path + [m])
+        state[n] = 2
+
+    for n in graph:
+        if state.get(n) is None:
+            visit(n, [n])
+
+    entry_ids = {}
+    unique_ids("entries", entries, entry_ids)
+    for e in entries:
+        tag = f"사전 {e['id']}"
+        if e["entryType"] not in STORY_ENTRY_TYPES:
+            err(f"story: {tag} 사전 종류 '{e['entryType']}' — {sorted(STORY_ENTRY_TYPES)}")
+        if not e["blocks"]:
+            err(f"story: {tag} 설명 블록이 없음 (첫 블록이 처음 등장)")
+        for i, b in enumerate(e["blocks"]):
+            if not _story_row(f"사전 {e['id']} 블록 {i + 1}", b, STORY_BLOCK_FIELDS):
+                continue
+            if b["after"] not in unit_ids:
+                err(f"story: {tag} 블록 {i + 1}의 '{b['after']}'가 메인·이벤트에 없음")
+            if i == 0 and not b["name"].strip():
+                err(f"story: {tag} 첫 블록에는 이름이 있어야 함")
+            if not b["text"].strip():
+                err(f"story: {tag} 블록 {i + 1} 설명이 비어 있음")
+        for r in e["related"]:
+            if r == e["id"]:
+                err(f"story: {tag} 관련 항목에 자기 자신")
+            elif r not in entry_ids:
+                err(f"story: {tag} 관련 항목 '{r}'가 사전에 없음")
+        sources_exist(tag, e["sources"])
+
+    unverified = sum(1 for k in lists for r in lists[k] if not r["verified"])
+    if unverified:
+        (err if strict else warn)(f"story: 확인 전(verified: false) {unverified}줄")
+    print(f"  story: 권 {len(volumes)} · 메인 {len(main)} · 이벤트 {len(events)} · 사전 {len(entries)}")
+
+
 def main():
     strict = "--strict" in sys.argv
     print(f"VANITAS 데이터 검증{' (strict)' if strict else ''}\n" + "-" * 52)
@@ -737,6 +925,7 @@ def main():
     check_ap()
     check_income_sources(strict)
     check_schedule()
+    check_story(strict)
     check_sources()
     check_income_log()
     print("-" * 52)
