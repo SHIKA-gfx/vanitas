@@ -29,7 +29,8 @@ export type AnalyticsEvent =
 	| 'backup-create'
 	| 'backup-import'
 	| 'reset'
-	| 'reset-undo';
+	| 'reset-undo'
+	| 'extra-open';
 
 /** 이벤트 하나를 보낸다. 통계 스크립트가 없거나 실패해도 화면에는 영향이 없다 */
 export function track(event: AnalyticsEvent, data?: Record<string, string>) {

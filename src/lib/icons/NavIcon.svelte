@@ -1,10 +1,10 @@
 <!--
-	내비게이션 아이콘 4종 (디자인 문서 6장). 24px 격자, 선 굵기 2, 좌표는 정수 기준.
+	기능 아이콘 (디자인 문서 6장): 계산기 4종 + 부가기능·스토리 길잡이 (2026-11-16, docs/008 4장). 24px 격자, 선 굵기 2, 좌표는 정수 기준.
 	색은 부모의 CSS color가 정한다 (currentColor).
 	라벨과 항상 함께 쓰므로 기본은 aria-hidden. 아이콘만 단독으로 쓸 때만 label을 넘긴다.
 -->
 <script lang="ts" module>
-	export type NavIconName = 'planner' | 'pity' | 'level' | 'gem';
+	export type NavIconName = 'planner' | 'pity' | 'level' | 'gem' | 'extra' | 'story';
 </script>
 
 <script lang="ts">
@@ -50,5 +50,12 @@
 	{:else if name === 'gem'}
 		<!-- 청휘석 수급 계산기: 육각형 (내부 선 없음) -->
 		<path d="M12 3l8 5v8l-8 5-8-5V8z" />
+	{:else if name === 'extra'}
+		<!-- 부가기능: 네 갈래 반짝임 (계산기 밖의 즐길 거리) -->
+		<path d="M12 3c1 5 3 7 9 9-6 2-8 4-9 9-1-5-3-7-9-9 6-2 8-4 9-9z" />
+	{:else if name === 'story'}
+		<!-- 스토리 길잡이: 펼친 책 -->
+		<path d="M3 5c3-1 6-1 9 1 3-2 6-2 9-1v14c-3-1-6-1-9 1-3-2-6-2-9-1z" />
+		<path d="M12 6v14" />
 	{/if}
 </svg>

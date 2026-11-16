@@ -4,6 +4,7 @@
 	- 모바일: 맨 위 원(심볼) + 워드마크 띠, 그 아래 타일 1열
 	배경은 레이아웃이 까는 싯딤의 상자 배경 (5-19, 모든 화면 공통). 홈의 "대담함의 한 곳"은 가운데 원.
 	타일 목록은 내비게이션과 같은 src/lib/nav.ts를 쓴다 (순서·준비 상태·아이콘이 늘 같다).
+	부가기능 허브(/extra, docs/008 4-2)로 가는 길: 데스크톱은 가운데 원, 모바일은 타일 아래 한 줄 카드 (결정 D2)
 -->
 <script lang="ts">
 	import Seo from '$lib/components/Seo.svelte';
@@ -12,6 +13,7 @@
 	import { localizeHref } from '$lib/paraglide/runtime';
 	import { m } from '$lib/paraglide/messages.js';
 	import { sections } from '$lib/nav';
+	import { EXTRA_HUB_PATH, extras } from '$lib/extras';
 	import NavIcon from '$lib/icons/NavIcon.svelte';
 	import VanitasSymbol from '$lib/components/VanitasSymbol.svelte';
 	import HomeFrame from './HomeFrame.svelte';
@@ -94,6 +96,23 @@
 					</li>
 				{/each}
 			</ul>
+			<!--
+				부가기능 (2026-11-16, 결정 D2): 계산기 타일과 구분되게 낮은 한 줄 + 흰색 70% (데스크톱 타일의 쉬는 상태와 같은 농도).
+				설명 자리에는 허브에 있는 콘텐츠 이름을 잇는다 — 콘텐츠가 늘면 저절로 늘어난다
+			-->
+			<a
+				href={href(EXTRA_HUB_PATH)}
+				class="flex min-h-14 items-center gap-3 rounded-xl border border-navy/60 bg-surface/70 px-4 py-2 hover:bg-surface focus-visible:outline-2 focus-visible:outline-brand-strong"
+			>
+				<span class="flex shrink-0" style:view-transition-name="vt-icon-extra">
+					<NavIcon name="extra" size={24} class="text-brand-strong" />
+				</span>
+				<span class="font-bold text-ink">{m.extra_title()}</span>
+				<span class="min-w-0 flex-1 truncate text-sm text-navy">
+					{extras.map((e) => e.title()).join(' · ')}
+				</span>
+				<span aria-hidden="true" class="text-xl leading-none text-navy">›</span>
+			</a>
 		</div>
 	</div>
 	<!--
