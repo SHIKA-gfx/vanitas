@@ -17,6 +17,7 @@
 	import SharedViewBar from '$lib/components/SharedViewBar.svelte';
 	import BackupImportBar from '$lib/components/BackupImportBar.svelte';
 	import AccountSync from '$lib/components/AccountSync.svelte';
+	import UpdateBar from '$lib/components/UpdateBar.svelte';
 	import SiteFooter from '$lib/components/SiteFooter.svelte';
 	import { m } from '$lib/paraglide/messages.js';
 	import { provideUserState } from '$lib/state/user-state.svelte';
@@ -146,6 +147,7 @@
 	<SharedViewBar />
 	<BackupImportBar />
 	<AccountSync />
+	<UpdateBar />
 </div>
 
 <div style="display:none">

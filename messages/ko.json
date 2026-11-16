@@ -411,5 +411,8 @@
 	"sync_use_device": "이 기기 값 쓰기",
 	"sync_use_account": "계정 값 쓰기",
 	"sync_later": "나중에 고르기",
-	"footer_privacy": "개인정보 처리방침"
+	"footer_privacy": "개인정보 처리방침",
+	"update_ready": "VANITAS가 새로 바뀌었어요. 새로 고침하면 바뀐 데이터와 기능으로 볼 수 있어요.",
+	"update_reload": "새로 고침",
+	"update_later": "나중에"
 }
