@@ -1,7 +1,7 @@
 <!--
 	스토리 길잡이 — 읽는 순서 (docs/008 5장). 공개순 ↔ 작중 시간순, 메인은 "여기까지 봤어요", 이벤트는 읽음 체크.
 	제목·날짜는 스포일러가 아니라고 보고 진행도와 상관없이 모두 보인다 (서버가 그린 HTML에도 들어간다, 8-1).
-	불확실한 정보는 감추지 않고 표시한다: 확인 전(verified: false), 작중순에서 추정(inferred), 날짜·시점 미확인 묶음
+	불확실한 정보는 감추지 않고 표시한다: 확인 전(verified: false), 작중순에서 추정(inferred — 모두 추정이면 목록 위 한 줄), 날짜·시점 미확인 묶음
 -->
 <script lang="ts">
 	import { m } from '$lib/paraglide/messages.js';
@@ -31,6 +31,19 @@
 
 	const sorted = $derived(orderUnits(doc, order));
 	const volumeTitle = $derived(Object.fromEntries(doc.volumes.map((v) => [v.id, v.title])));
+	/** 장이 하나뿐인 권(프롤로그 등)은 "N장"을 붙이지 않는다 */
+	const singleChapter = $derived(
+		new Set(
+			doc.volumes
+				.filter((v) => doc.main.filter((u) => u.volume === v.id).length === 1)
+				.map((v) => v.id)
+		)
+	);
+	/**
+	 * 작중순이 모두 추정이면 카드마다 배지를 달지 않고 목록 위 한 줄로 알린다 (2026-11-16 — 82개 카드가 모두 "순서 추정"이면 소음).
+	 * 공식 확인(stated)과 섞이면 추정인 카드에만 배지
+	 */
+	const allInferred = $derived(sorted.ordered.every((u) => u.chronoCertainty === 'inferred'));
 </script>
 
 {#snippet card(unit: StoryUnit, n: number | null)}
@@ -43,7 +56,7 @@
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
 				<Badge>{isMain(unit) ? m.story_kind_main() : m.story_kind_event()}</Badge>
 				<span class="font-bold text-ink">{unit.title}</span>
-				{#if order === 'chrono' && unit.chronoCertainty === 'inferred'}
+				{#if order === 'chrono' && unit.chronoCertainty === 'inferred' && !allInferred}
 					<Badge>{m.story_chrono_inferred()}</Badge>
 				{/if}
 				{#if !unit.verified}
@@ -52,10 +65,12 @@
 			</div>
 			<p class="text-xs text-navy">
 				{#if isMain(unit)}
-					{m.story_volume_chapter({
-						volume: volumeTitle[unit.volume] ?? '',
-						chapter: unit.chapter
-					})}
+					{singleChapter.has(unit.volume)
+						? (volumeTitle[unit.volume] ?? '')
+						: m.story_volume_chapter({
+								volume: volumeTitle[unit.volume] ?? '',
+								chapter: unit.chapter
+							})}
 					·
 				{/if}
 				{unit.releasedKr
@@ -127,6 +142,9 @@
 				{ value: 'chrono', label: m.story_sort_chrono() }
 			]}
 		/>
+		{#if order === 'chrono' && allInferred && sorted.ordered.length > 0}
+			<p class="text-xs text-navy">{m.story_chrono_all_inferred()}</p>
+		{/if}
 		<ol class="flex flex-col gap-2">
 			{#each sorted.ordered as unit, i (unit.id)}
 				<li>{@render card(unit, i + 1)}</li>
