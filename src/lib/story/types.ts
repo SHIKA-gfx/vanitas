@@ -45,7 +45,10 @@ interface UnitBase {
 	verified: boolean;
 }
 
-/** 메인 스토리 장 (진행도 단위, 결정 D5). 배열 순서가 진행 순서 */
+/**
+ * 메인 스토리 장 (진행도 단위, 결정 D5). 배열 순서가 진행(읽는) 순서 — 권 순서와 다를 수 있어
+ * 같은 권의 장이 떨어져 있어도 된다. 권 안에서 장 번호는 늘어난다 (docs/008 6-2)
+ */
 export interface MainUnit extends UnitBase {
 	/** StoryVolume.id */
 	volume: string;

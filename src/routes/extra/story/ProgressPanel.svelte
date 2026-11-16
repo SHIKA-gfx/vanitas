@@ -1,6 +1,7 @@
 <!--
 	스토리 길잡이의 진행도 판 (docs/008 5장, 결정 D5): 메인 스토리 [권 ▾] [장 ▾]까지 봤어요.
 	권을 고르면 그 권의 첫 장으로 — 더 적게 보이는 쪽이 스포일러에 안전하다. "아직 안 봤어요"는 진행도 없음.
+	메인 목록은 읽는 순서(권 순서가 아니다, docs/008 6-2)라, 고른 장보다 앞의 장을 모두 본 것으로 친다는 것을 늘 알린다
 	이벤트는 읽는 순서에서 체크한다 (여기에는 개수만)
 -->
 <script lang="ts">
@@ -62,6 +63,7 @@
 					events: eventsRead
 				})}
 			</p>
+			<p class="text-xs text-navy">{m.story_main_hint()}</p>
 			<p class="text-xs text-navy">{m.story_events_hint()}</p>
 		</div>
 	</div>

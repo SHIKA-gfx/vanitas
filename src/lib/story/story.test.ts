@@ -200,6 +200,25 @@ describe('진행도 고르기', () => {
 		);
 	});
 
+	it('같은 권의 장이 목록에서 떨어져 있어도 — 권 안 장 순서대로 고르고, 읽음은 목록 순서로 센다', () => {
+		// 읽는 순서: 1권 1장 → 2권 1장 → 1권 2장 (실제로 1부 Vol.1 3장은 Final 뒤에 읽는다)
+		const split: StoryDoc = {
+			...doc,
+			main: [main('a1', 'v1', 1), main('b1', 'v2', 1), main('a2', 'v1', 2)],
+			events: [],
+			entries: []
+		};
+		expect(
+			volumesWithChapters(split).map((v) => [v.volume.id, v.chapters.map((c) => c.id)])
+		).toEqual([
+			['v1', ['a1', 'a2']],
+			['v2', ['b1']]
+		]);
+		expect([...readSet(split, save('a2'))].sort()).toEqual(['a1', 'a2', 'b1']);
+		expect([...readSet(split, save('a1'))]).toEqual(['a1']);
+		expect(mainProgress(split, save('a2'))).toEqual({ read: 3, total: 3 });
+	});
+
 	it('몇 장까지 봤는지', () => {
 		expect(mainProgress(doc, save('m3'))).toEqual({ read: 3, total: 4 });
 		expect(mainProgress(doc, EMPTY_SAVE)).toEqual({ read: 0, total: 4 });

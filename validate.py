@@ -815,21 +815,19 @@ def check_story(strict):
             err(f"story: 권 {v['id']} 제목이 비어 있음")
         sources_exist(f"권 {v['id']}", v["sources"])
 
-    # 메인: 목록 순서가 진행 순서 — 같은 권은 이어서, 권 안의 장 번호는 늘어난다
-    done_vols, prev = set(), None
+    # 메인: 목록 순서가 읽는 순서(진행도 기준). 메인 장은 권 순서대로 나오지 않아(예: 1부 Vol.1 3장은 Final 뒤)
+    # 같은 권의 장이 목록에서 떨어져 있어도 된다 (2026-11-16 결정, docs/008 6-2). 권 안에서 장 번호는 늘어나야 한다
+    last_chapter = {}
     for u in main:
         tag = f"메인 {u['id']}"
         if u["volume"] not in vol_ids:
             err(f"story: {tag} 권 '{u['volume']}'이 volumes에 없음")
         if u["chapter"] < 1:
             err(f"story: {tag} 장 번호는 1부터")
-        if prev and u["volume"] != prev["volume"]:
-            done_vols.add(prev["volume"])
-            if u["volume"] in done_vols:
-                err(f"story: {tag} 권 '{u['volume']}'의 장이 목록에서 떨어져 있음 (같은 권은 이어서)")
-        if prev and u["volume"] == prev["volume"] and u["chapter"] <= prev["chapter"]:
-            err(f"story: {tag} 장 번호가 앞 줄({prev['chapter']}장)보다 커야 함 (목록 순서 = 진행 순서)")
-        prev = u
+        before = last_chapter.get(u["volume"])
+        if before is not None and u["chapter"] <= before:
+            err(f"story: {tag} 장 번호가 같은 권의 앞 장({before}장)보다 커야 함 (목록 순서 = 읽는 순서)")
+        last_chapter[u["volume"]] = u["chapter"]
 
     def check_unit(tag, u):
         if not u["title"].strip():
