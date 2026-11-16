@@ -9,9 +9,11 @@
 	interface Props {
 		label: string;
 		checked: boolean;
+		/** 보이는 라벨이 목록에서 되풀이될 때(예: 줄마다 "읽었어요") 화면 낭독기에 줄 이름 */
+		ariaLabel?: string;
 	}
 
-	let { label, checked = $bindable(false) }: Props = $props();
+	let { label, checked = $bindable(false), ariaLabel }: Props = $props();
 </script>
 
 <label class="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm text-ink xl:min-h-8">
@@ -19,6 +21,7 @@
 		<input
 			type="checkbox"
 			bind:checked
+			aria-label={ariaLabel}
 			class="peer size-[1.125rem] cursor-pointer appearance-none rounded border-[1.5px] border-navy/30 bg-slot shadow-[inset_0_1px_2px_rgb(42_66_91/0.12)] transition-colors checked:border-brand-strong checked:bg-brand-strong checked:shadow-[0_0_0_3px_rgb(18_136_248/0.15),0_4px_10px_-4px_rgb(10_111_214/0.8)] hover:border-navy/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-strong"
 		/>
 		<svg
