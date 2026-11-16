@@ -31,7 +31,6 @@ export const extras: Extra[] = [
 		title: m.extra_story_title,
 		summary: m.extra_story_summary,
 		icon: 'story',
-		// 스토리 화면(docs/008 11장 6단계)이 들어오는 PR에서 true로
-		ready: false
+		ready: true
 	}
 ];
