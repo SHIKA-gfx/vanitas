@@ -75,6 +75,22 @@ describe('SavedStore', () => {
 		expect(JSON.parse(map.get(STORAGE_KEY)!).sections.levelup).toEqual({ level: 60 });
 	});
 
+	it('다른 탭이 그사이 쓴 묶음을 덮지 않는다', () => {
+		const map = fakeStorage({ version: 1, sections: { planner: { reserveGems: 0 } } });
+		const a = new SavedStore(createUserState());
+		const b = new SavedStore(createUserState());
+		a.read('planner'); // 두 탭 모두 같은 값을 읽고 시작
+		b.read('planner');
+		b.write('story', { mainUpTo: null });
+		a.write('planner', { reserveGems: 300 });
+		const saved = JSON.parse(map.get(STORAGE_KEY)!).sections;
+		expect(saved.story).toEqual({ mainUpTo: null });
+		expect(saved.planner).toEqual({ reserveGems: 300 });
+		// 내보내기(백업·계정 올리기)는 저장소의 지금 값 — 다른 탭이 나중에 고친 묶음도 낡은 사본이 아니라 새 값으로
+		expect(b.exportFile().sections.planner).toEqual({ reserveGems: 300 });
+		expect(a.exportFile().sections.story).toEqual({ mainUpTo: null });
+	});
+
 	it('저장소가 막혀 있어도 오류 없이 동작한다', () => {
 		vi.stubGlobal('window', {
 			get localStorage(): Storage {

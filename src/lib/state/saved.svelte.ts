@@ -6,6 +6,8 @@
 // - 공유 값(UserState)은 레이아웃이, 계산기별 입력은 각 페이지가 persistSection으로 저장한다.
 // - 입력이 바뀌면 바로 저장한다. 서버로는 아무것도 보내지 않는다 — 로그인했으면 계정 맞추기(sync.svelte.ts)가
 //   onLocalWrite로 알아채고 따로 올린다 (docs/007 4장).
+// - 쓸 때·내보낼 때마다 저장소를 다시 읽어 그 묶음만 바꾼다 → 탭 여러 개가 서로 다른 묶음을 고쳐도 지워지지 않는다 (2026-11-16).
+//   같은 묶음을 두 탭에서 고치면 나중에 쓴 쪽이 남는다.
 //
 // 공유 링크 (2026-10-02, 기획 B안)
 // - 공유 링크로 열면 링크의 값으로 계산해서 보여주고, 저장은 멈춘다 (sharedView, paused).
@@ -90,13 +92,24 @@ export class SavedStore {
 	write(section: string, value: unknown) {
 		this.#open();
 		if (!this.#storage || this.paused) return;
-		this.#file = withSection(this.#file, section, value);
+		// 저장소의 지금 값에 이 묶음만 바꿔 쓴다 — 같은 사이트를 연 다른 탭이 그사이 쓴 묶음을
+		// 이 탭이 처음 읽은 낡은 사본으로 덮지 않게 (예: 플래너 탭을 연 채 다른 탭에서 스토리 진행도를 정함, docs/008 3장)
 		try {
+			this.#file = withSection(this.#stored(), section, value);
 			this.#storage.setItem(STORAGE_KEY, JSON.stringify(this.#file));
 		} catch {
 			// 저장 공간이 꽉 찼거나 막혔다. 계산은 계속된다
 		}
 		this.#notify();
+	}
+
+	/** 저장소의 지금 값 (다른 탭이 쓴 것까지). 읽지 못하면 이 탭의 사본 */
+	#stored(): SaveFile {
+		try {
+			return this.#storage ? parseSaveFile(this.#storage.getItem(STORAGE_KEY)) : this.#file;
+		} catch {
+			return this.#file;
+		}
 	}
 
 	/** 이 기기에 저장할 때마다 부른다 (계정 맞추기). 해제 함수를 돌려준다 */
@@ -189,6 +202,7 @@ export class SavedStore {
 	/** 지금 저장된 전체 (공유 값은 화면의 최신 값으로) */
 	exportFile(): SaveFile {
 		this.#open();
+		this.#file = this.#stored();
 		return withSection(this.#file, 'user', this.userFlat());
 	}
 
