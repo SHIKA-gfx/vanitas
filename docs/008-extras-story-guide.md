@@ -1,6 +1,6 @@
 # 008. 부가기능 허브와 스토리 길잡이
 
-> 작성: 2026-11-16 · 상태: 설계 확정(#97) → 새 판 감지(#98) → 허브(#99, 4장) → **스토리 데이터 틀(이 PR, 6장)** → 로직 → 화면 → `v0.4.0`
+> 작성: 2026-11-16 · 상태: 설계 확정(#97) → 새 판 감지(#98) → 허브(#99, 4장) → 스토리 데이터 틀(#101, 6장) → **로직(이 PR, 8장)** → 화면 → `v0.4.0`
 > 관련: `docs/006`(DB·관리자, 6-3-3 데이터 문서 편집), `docs/007`(로그인 저장, 10-4 옛 탭), `src/lib/state/`(브라우저 저장), `vanitas-design.md`(5-19 누름 효과·모션 규칙)
 > 기한: 기말 발표 **2026-12-07**. **12-01 전후 기능 동결**, 마지막 주는 발표 준비·안정화.
 
@@ -234,24 +234,25 @@ interface StoryDoc {
 - 공개일·순서 같은 사실 정보는 출처를 `sources.json`에 (공식 공지 = `official`, 커뮤니티 = `community`)
 - 페이지 아래 "비공식 팬 콘텐츠, 설명은 운영자가 직접 작성" 고지
 
-## 8. 로직 (`src/lib/story/`, 순수 TS, 테스트 먼저)
+## 8. 로직 (`src/lib/story/story.ts`, 순수 TS)
 
-```ts
-// 읽은 단위 집합: 메인 포인터까지(목록 순서) 전부 + 읽은 이벤트
-export function readSet(doc: StoryDoc, save: StorySave): Set<UnitId>;
+무엇을 보여도 되는가는 **읽은 단위 집합** 하나로 정한다. 화면은 이 함수들의 결과만 그린다.
 
-// 항목이 보이는지, 보이는 블록, 보일 이름(열린 블록 중 마지막 name이 빈 글자가 아닌 것)
-export function visibleEntry(entry: StoryEntry, read: Set<UnitId>):
-  { name: string; blocks: { text: string }[] } | null;
+| 함수 | 하는 일 |
+|---|---|
+| `readSet(doc, save)` | 메인은 포인터(그 장까지 봤다)까지 **목록 순서대로 전부**, 이벤트는 체크한 것. 데이터에 없는 id는 읽은 것으로 치지 않는다 |
+| `normalizeSave(doc, save)` | 저장값을 지금 데이터에 맞춘다 — 없는 장·이벤트 id는 빼고, 이벤트는 겹치지 않게 목록 순서로 (불러올 때) |
+| `visibleEntry(entry, read)` | 첫 블록의 스토리를 읽어야 보인다. 블록은 **각자의 스토리를 읽었으면** 보인다(이벤트는 순서 없이 읽으므로). 이름은 보이는 블록 중 마지막으로 이름이 적힌 것. 돌려주는 값: `id`·`entryType`·`name`·`texts` — **숨은 블록 수·블록의 스토리 id는 넣지 않는다** (D6, 8-1) |
+| `visibleEntries(doc, read)` | 보이는 항목 전부(문서 순서) + 관련 항목은 **상대도 보일 때만, 상대의 지금 이름으로**. 자기 자신은 뺀다 |
+| `orderUnits(doc, by)` | 공개순: 한국 첫 공개일 / 작중순: 작중 순서 키. 같으면 메인 목록 순서 → 이벤트 목록 순서. 공개일을 모르면(공개순)·작중 순서를 모르면(작중순) `unknown` 묶음 |
+| `readAfterOf(doc, unit, read)` | "먼저 읽으면 좋아요" — 제목과 읽었는지. 없는 id는 뺀다 |
+| `volumesWithChapters(doc)` | 진행도 고르기(권 ▾ 장 ▾)용 — 권마다 장, 장 없는 권은 뺀다 |
+| `mainProgress(doc, save)` | 몇 장까지 봤는지 / 전체 장 수 |
 
-// release = releasedKr 오름차순(빈 글자는 뒤, 같으면 메인 목록 순서), chrono = chronoKey 오름차순, unknown은 따로
-export function orderUnits(doc: StoryDoc, by: 'release' | 'chrono'):
-  { ordered: (MainUnit | EventUnit)[]; unknown: (MainUnit | EventUnit)[] };
-```
-
-- 블록 "가장 최근" = 블록 배열 순서 (작성자가 이야기 진행 순으로 쓴다)
-- 테스트는 실제 `data/ko/story.json` 스냅샷 + 내용이 적은 초기에는 작은 고정 데이터도
-- `.svelte.ts`에서 `Set`을 바꾸면 `svelte/prefer-svelte-reactivity` — 읽은 집합은 매번 새로 만든다
+- 저장 묶음 타입 `StorySave`와 기본값 `EMPTY_SAVE`도 여기 있다 (9장)
+- 데이터는 `src/lib/story/data.ts`가 가져온다 — 스토리 화면에서만 쓰여 다른 화면 번들에 들어가지 않는다
+- 테스트 `story.test.ts`: 작은 고정 데이터(실제 게임 정보 아님)로 규칙마다 + 실제 `data/ko/story.json`으로 "정렬은 모든 단위를 한 번씩", "아무것도 안 봤으면 사전이 빔 / 다 봤으면 모든 항목이 보이고 이름이 있음", "고르기의 장을 합치면 메인 전체" — 개수를 박지 않는다
+- 공개순에서 메인 장의 공개일이 비면 그 장은 미확인 묶음으로 간다 — 메인 장은 공개일을 채워 넣는 것을 원칙으로
 
 ### 8-1. 스포일러가 HTML에 새지 않게
 
