@@ -13,12 +13,19 @@
 	떠 있는 물체 (2026-10-23, 디자인 문서 5-19)
 	- 가운데 원: 왼쪽 위가 밝은 방사형 그라데이션 + 하늘빛 번짐 (모바일·홈 링크의 orb 유틸리티와 같은 값)
 	- 프레임 전체 아래 바닥에 타원 그림자(접지 그림자) — 바닥 격자 위에 떠 있는 것처럼 보이게
+
+	가운데 원 = 부가기능 허브 링크 (2026-11-16, docs/008 4-2, 결정 D2-b)
+	- 타일처럼 SVG 안의 <a>로 감싸 누르는 영역·초점 테두리가 원 모양을 따른다
+	- 마우스를 올리거나 초점이 오면 뒤 번짐이 짙어진다 (상태 변화만 — 장식 움직임 없음, 5-18)
+	- 눌린다는 것이 보이게 워드마크 아래 흰 알약 라벨 "부가기능 ›"를 늘 둔다.
+	  원 아래는 아래 타일의 곡선이 바로 닿아 자리가 없어 원 안에 둔다. 흰 바탕 + brand-strong이라 작은 글자도 4.5:1 이상
 -->
 <script lang="ts">
 	import type { Pathname } from '$app/types';
 	import { resolve } from '$app/paths';
 	import { localizeHref } from '$lib/paraglide/runtime';
 	import type { SiteSection } from '$lib/nav';
+	import { EXTRA_HUB_PATH } from '$lib/extras';
 	import NavIcon from '$lib/icons/NavIcon.svelte';
 	import VanitasSymbol from '$lib/components/VanitasSymbol.svelte';
 	import { m } from '$lib/paraglide/messages.js';
@@ -161,23 +168,33 @@
 				/>
 			{/if}
 		{/each}
-		<!-- 가운데 원: 면(솔리드). 타일은 선 — 면과 선으로 구역을 나눈다. 뒤에 하늘빛 번짐 -->
-		<circle
-			{cx}
-			{cy}
-			r={GEO.radius + 4}
-			fill="var(--color-cyan)"
-			opacity="0.45"
-			filter="url(#glow-{uid})"
-			class="forced-colors:hidden"
-		/>
-		<circle
-			{cx}
-			{cy}
-			r={GEO.radius}
-			fill="url(#orb-{uid})"
-			class="forced-colors:fill-[CanvasText]"
-		/>
+		<!-- 가운데 원: 면(솔리드). 타일은 선 — 면과 선으로 구역을 나눈다. 뒤에 하늘빛 번짐. 부가기능 허브로 가는 링크 -->
+		<a href={href(EXTRA_HUB_PATH)} aria-label={m.extra_title()} class="group outline-none">
+			<circle
+				{cx}
+				{cy}
+				r={GEO.radius + 4}
+				fill="var(--color-cyan)"
+				filter="url(#glow-{uid})"
+				class="opacity-45 transition-opacity group-hover:opacity-80 group-focus-visible:opacity-80 forced-colors:hidden"
+			/>
+			<circle
+				{cx}
+				{cy}
+				r={GEO.radius}
+				fill="url(#orb-{uid})"
+				class="forced-colors:fill-[CanvasText]"
+			/>
+			<!-- 키보드 초점 테두리: 원과 틈 사이에 (타일 초점 테두리와 같은 굵기·색) -->
+			<circle
+				{cx}
+				{cy}
+				r={GEO.radius + GEO.gap / 2}
+				fill="none"
+				stroke-width="3"
+				class="stroke-transparent group-focus-visible:stroke-brand-strong"
+			/>
+		</a>
 	</svg>
 
 	<!-- 글자층 (누르는 건 SVG가 받는다) -->
@@ -223,5 +240,12 @@
 	>
 		<VanitasSymbol class="w-[34%]" />
 		<h1 class="font-display text-[1.75rem] font-bold tracking-wider">{m.app_title()}</h1>
+		<!-- 링크 이름은 SVG <a>의 aria-label이 맡는다 → 라벨은 두 번 읽히지 않게 숨긴다 -->
+		<span
+			aria-hidden="true"
+			class="mt-1 flex items-center gap-1 rounded-full bg-surface/94 px-3 py-0.5 text-sm font-bold text-brand-strong shadow-e1"
+		>
+			{m.extra_title()}<span class="text-base leading-none">›</span>
+		</span>
 	</div>
 </div>
