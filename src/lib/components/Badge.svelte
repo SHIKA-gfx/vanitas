@@ -1,6 +1,7 @@
 <!--
 	작은 상태 표시. 의미 색은 디자인 문서 2-4 (게임 상성표 색).
 	- neutral   테두리만 (추정 표시 등)
+	- solid     navy 면, 흰 글자 10.35 — 뜻(판정)이 없는 종류 표시의 진한 쪽 (스토리 길잡이 "메인", 2026-11-17)
 	- secured   확보 — 파랑 면, 흰 글자 4.93
 	- shortfall 부족 — Weak 주황 면, ink 글자 7.40 (주황 면 위 흰 글자는 금지)
 	- blocked   불가 — 빨강 면, 흰 글자 9.40
@@ -9,17 +10,21 @@
 	글자는 반대로 기울여 똑바로 세운다
 -->
 <script lang="ts" module>
+	/** 의미 색 — Metric도 쓴다 */
 	export type Tone = 'neutral' | 'secured' | 'shortfall' | 'blocked';
+	/** 배지에만 있는 톤까지 */
+	export type BadgeTone = Tone | 'solid';
 </script>
 
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
-	let { tone = 'neutral', children }: { tone?: Tone; children: Snippet } = $props();
+	let { tone = 'neutral', children }: { tone?: BadgeTone; children: Snippet } = $props();
 
 	// Tailwind가 찾을 수 있도록 클래스 이름을 통째로 적는다 (조립하지 않는다)
-	const TONE_CLASS: Record<Tone, string> = {
+	const TONE_CLASS: Record<BadgeTone, string> = {
 		neutral: 'border border-navy/60 text-navy',
+		solid: 'border border-navy bg-navy text-white',
 		secured: 'bg-secured text-white',
 		shortfall: 'bg-shortfall text-ink',
 		blocked: 'bg-blocked text-white'
