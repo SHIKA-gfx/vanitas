@@ -9,14 +9,23 @@
 	interface Props {
 		label: string;
 		checked: boolean;
-		/** 보이는 라벨이 목록에서 되풀이될 때(예: 줄마다 "읽었어요") 화면 낭독기에 줄 이름 */
+		/** 보이는 라벨이 목록에서 되풀이될 때(예: 줄마다 "봤어요") 화면 낭독기에 줄 이름 */
 		ariaLabel?: string;
+		/**
+		 * 켜고 끔이 곧 상태 표시일 때 (스토리 길잡이 "아직 안 봤어요" → "봤어요", 2026-11-17):
+		 * 꺼짐은 navy, 켜짐은 brand-strong 굵게. 색만이 아니라 체크와 글자가 함께 바뀐다
+		 */
+		emphasis?: boolean;
 	}
 
-	let { label, checked = $bindable(false), ariaLabel }: Props = $props();
+	let { label, checked = $bindable(false), ariaLabel, emphasis = false }: Props = $props();
 </script>
 
-<label class="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm text-ink xl:min-h-8">
+<label
+	class="flex min-h-11 cursor-pointer items-center gap-2.5 text-sm xl:min-h-8 {emphasis
+		? 'text-navy has-checked:font-bold has-checked:text-brand-strong'
+		: 'text-ink'}"
+>
 	<span class="relative flex shrink-0">
 		<input
 			type="checkbox"

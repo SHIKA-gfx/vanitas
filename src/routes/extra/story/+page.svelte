@@ -1,6 +1,6 @@
 <!--
 	/ko/extra/story — 스토리 길잡이 (2026-11-16, docs/008 5장).
-	어디까지 봤는지(진행도)를 정하면, 그 지점까지 밝혀진 내용만 보인다. 계산은 src/lib/story/story.ts.
+	어디까지 봤는지(진행도)를 정하면, 읽는 순서는 이미 본 쪽을 접고 사전은 그 지점까지 밝혀진 내용만 보인다. 계산은 src/lib/story/story.ts.
 
 	- 진행도는 저장 묶음 story (docs/008 9장) — 브라우저 저장·계정 맞추기·백업 링크로 이어진다. 공유 링크는 만들지 않는다
 	  (남의 진행도로 보면 스포일러가 된다). 칸 검사는 형까지만 하고, 없는 id는 불러올 때 normalizeSave가 뺀다
@@ -18,7 +18,13 @@
 	import { isOneOf } from '$lib/state/persist';
 	import { persistSection } from '$lib/state/saved.svelte';
 	import { storyDoc } from '$lib/story/data';
-	import { EMPTY_SAVE, normalizeSave, readSet, type StoryOrder } from '$lib/story/story';
+	import {
+		EMPTY_SAVE,
+		mainBefore,
+		normalizeSave,
+		readSet,
+		type StoryOrder
+	} from '$lib/story/story';
 	import ProgressPanel from './ProgressPanel.svelte';
 	import OrderList from './OrderList.svelte';
 	import Dictionary from './Dictionary.svelte';
@@ -62,6 +68,10 @@
 		progressTracked = true;
 		track('story-progress', { has: id ? 'yes' : 'no' });
 	}
+	/** 목록의 메인 장 체크: 켜면 그 장까지, 끄면 바로 앞 장까지 (진행도는 "이 장까지" 하나다, D5) */
+	function markMain(id: string, on: boolean) {
+		pickMain(on ? id : mainBefore(doc, id));
+	}
 	function pickOrder(by: StoryOrder) {
 		if (by === order) return;
 		order = by;
@@ -103,7 +113,7 @@
 		/>
 
 		{#if tab === 'order'}
-			<OrderList {doc} {read} {order} onOrder={pickOrder} onMark={pickMain} onEvent={markEvent} />
+			<OrderList {doc} {read} {order} onOrder={pickOrder} onMain={markMain} onEvent={markEvent} />
 		{:else}
 			<Dictionary {doc} {read} ready={mounted} />
 		{/if}
