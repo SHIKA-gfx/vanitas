@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { storyDoc } from './data';
 import {
 	EMPTY_SAVE,
+	mainBefore,
 	mainProgress,
 	normalizeSave,
 	orderUnits,
 	readAfterOf,
 	readSet,
+	splitByProgress,
 	visibleEntries,
 	visibleEntry,
 	volumesWithChapters,
@@ -190,6 +192,72 @@ describe('읽는 순서', () => {
 	});
 });
 
+describe('읽는 순서 접기', () => {
+	const split = (s: StorySave, by: 'release' | 'chrono' = 'release') => {
+		const r = splitByProgress(orderUnits(doc, by).ordered, readSet(doc, s));
+		return {
+			past: r.past.map((u) => u.id),
+			ahead: r.ahead.map((u) => u.id),
+			n: r.pastUnseenEvents
+		};
+	};
+
+	it('본 메인 장이 없으면 접지 않는다 (이벤트만 봤어도)', () => {
+		expect(split(save(null, ['e1']))).toEqual({
+			past: [],
+			ahead: ['m1', 'e1', 'm2', 'e2', 'm3'],
+			n: 0
+		});
+	});
+
+	it('가장 뒤의 본 메인 장까지 접고, 그 앞의 안 본 이벤트를 센다', () => {
+		expect(split(save('m2'))).toEqual({ past: ['m1', 'e1', 'm2'], ahead: ['e2', 'm3'], n: 1 });
+		expect(split(save('m2', ['e1'])).n).toBe(0);
+	});
+
+	it('기준 뒤의 이벤트는 봤다고 해도 접지 않는다', () => {
+		expect(split(save('m2', ['e2']))).toEqual({
+			past: ['m1', 'e1', 'm2'],
+			ahead: ['e2', 'm3'],
+			n: 1
+		});
+	});
+
+	it('정렬마다 기준 자리가 다르다', () => {
+		// 공개순 m1 e1 m2 e2 m3 / 작중순 m1 e1 m2 m3 e2
+		expect(split(save('m3'), 'release').past).toEqual(['m1', 'e1', 'm2', 'e2', 'm3']);
+		expect(split(save('m3'), 'chrono')).toEqual({
+			past: ['m1', 'e1', 'm2', 'm3'],
+			ahead: ['e2'],
+			n: 1
+		});
+	});
+
+	it('안 본 메인 장은 기준보다 앞에 놓여 있어도 접지 않는다 (읽는 순서 ≠ 공개순)', () => {
+		// 읽는 순서 a1 → b1 → a2, 공개는 a1 → x → a2 → b1
+		const d: StoryDoc = {
+			...doc,
+			main: [
+				main('a1', 'v1', 1, { releasedKr: '2021-01-01' }),
+				main('b1', 'v2', 1, { releasedKr: '2021-05-01' }),
+				main('a2', 'v1', 2, { releasedKr: '2021-03-01' })
+			],
+			events: [event('x', { releasedKr: '2021-02-01' })],
+			entries: []
+		};
+		const r = splitByProgress(orderUnits(d, 'release').ordered, readSet(d, save('b1')));
+		expect(r.past.map((u) => u.id)).toEqual(['a1', 'x', 'b1']);
+		expect(r.ahead.map((u) => u.id)).toEqual(['a2']);
+		expect(r.pastUnseenEvents).toBe(1);
+	});
+
+	it('메인 장의 봤어요를 풀면 바로 앞 장까지로 (첫 장·없는 id는 아직 안 봄)', () => {
+		expect(mainBefore(doc, 'm3')).toBe('m2');
+		expect(mainBefore(doc, 'm1')).toBeNull();
+		expect(mainBefore(doc, 'gone')).toBeNull();
+	});
+});
+
 describe('진행도 고르기', () => {
 	it('권마다 장, 장 없는 권은 뺀다', () => {
 		expect(volumesWithChapters(doc).map((v) => [v.volume.id, v.chapters.map((c) => c.id)])).toEqual(
@@ -246,6 +314,29 @@ describe('실제 데이터', () => {
 		const shown = visibleEntries(storyDoc, readSet(storyDoc, all));
 		expect(shown.map((e) => e.id)).toEqual(storyDoc.entries.map((e) => e.id));
 		for (const e of shown) expect(e.name.trim(), e.id).not.toBe('');
+	});
+
+	it('접기: 어느 장까지 봤든 두 쪽을 합치면 목록 전체, 접힌 쪽에 안 본 메인 장이 없다', () => {
+		for (const by of ['release', 'chrono'] as const) {
+			const { ordered } = orderUnits(storyDoc, by);
+			for (const upTo of [null, ...storyDoc.main.map((u) => u.id)]) {
+				const read = readSet(storyDoc, { ...EMPTY_SAVE, mainUpTo: upTo });
+				const { past, ahead, pastUnseenEvents } = splitByProgress(ordered, read);
+				const tag = `${by} ${upTo}`;
+				expect([...past, ...ahead].map((u) => u.id).sort(), tag).toEqual(
+					ordered.map((u) => u.id).sort()
+				);
+				expect(
+					past.filter((u) => 'chapter' in u && !read.has(u.id)),
+					tag
+				).toEqual([]);
+				expect(
+					ahead.filter((u) => 'chapter' in u && read.has(u.id)),
+					tag
+				).toEqual([]);
+				expect(pastUnseenEvents, tag).toBe(past.filter((u) => !('chapter' in u)).length);
+			}
+		}
 	});
 
 	it('진행도 고르기의 장을 모두 합치면 메인 전체 (권이 없는 장이 없다)', () => {

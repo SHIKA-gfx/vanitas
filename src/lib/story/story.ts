@@ -139,6 +139,57 @@ export function readAfterOf(
 	});
 }
 
+// ------------------------------------------------------------ 읽는 순서 접기 (이미 본 쪽 / 앞으로 볼 쪽)
+
+export interface ProgressSplit {
+	/** 접어 두는 쪽 — 본 메인 장, 그리고 그 지점보다 앞에 놓인 이벤트(봤다고 했든 아니든). 정렬 순서 그대로 */
+	past: StoryUnit[];
+	/** 앞으로 볼 쪽 — 안 본 메인 장, 그 지점 뒤의 이벤트. 정렬 순서 그대로 */
+	ahead: StoryUnit[];
+	/** past 안에서 아직 봤다고 하지 않은 이벤트 수 — 접힌 줄에 알린다 */
+	pastUnseenEvents: number;
+}
+
+/**
+ * 정렬된 목록을 메인 진행도로 둘로 나눈다 (2026-11-17, docs/008 D12).
+ * 기준은 이 정렬에서 **가장 뒤에 놓인 본 메인 장**이다.
+ * - 그 자리까지의 이벤트는 함께 접는다. 봤는지는 메인 진행도로 알 수 없으니 안 본 수를 센다
+ * - 안 본 메인 장은 기준보다 앞에 놓여 있어도 접지 않는다 — 공개순·작중순은 읽는 순서와 달라
+ *   먼저 공개된 장을 나중에 읽기도 한다 (예: 1부 EX 1장)
+ * - 기준 뒤의 이벤트는 봤다고 해도 접지 않는다 — 방금 체크한 줄이 눈앞에서 사라지지 않게
+ * - 본 메인 장이 없으면 접지 않는다
+ */
+export function splitByProgress(
+	ordered: readonly StoryUnit[],
+	read: ReadonlySet<UnitId>
+): ProgressSplit {
+	let upTo = -1;
+	ordered.forEach((u, i) => {
+		if (isMain(u) && read.has(u.id)) upTo = i;
+	});
+	const past: StoryUnit[] = [];
+	const ahead: StoryUnit[] = [];
+	let pastUnseenEvents = 0;
+	ordered.forEach((u, i) => {
+		if (i > upTo || (isMain(u) && !read.has(u.id))) {
+			ahead.push(u);
+			return;
+		}
+		past.push(u);
+		if (!isMain(u) && !read.has(u.id)) pastUnseenEvents++;
+	});
+	return { past, ahead, pastUnseenEvents };
+}
+
+/**
+ * 메인 장의 "봤어요"를 풀 때의 새 진행도: 목록에서 그 장 바로 앞의 장.
+ * 첫 장이면(또는 없는 id면) null = 아직 안 봄. 진행도가 "이 장까지"라서 그 장부터 뒤가 모두 안 본 것이 된다
+ */
+export function mainBefore(doc: StoryDoc, id: UnitId): UnitId | null {
+	const i = doc.main.findIndex((u) => u.id === id);
+	return i > 0 ? doc.main[i - 1].id : null;
+}
+
 // ------------------------------------------------------------ 진행도 고르기 (권 ▾ 장 ▾)
 
 export interface VolumeChapters {
